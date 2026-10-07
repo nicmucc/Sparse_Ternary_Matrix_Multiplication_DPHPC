@@ -1,3 +1,21 @@
+# TODO WEEK 1
+
+## To Implement
+
+**Baselines:**
+- **Ahmed, Matteo:** Think about the best APIs to have and set up the benchmarking infrastructure in C++.
+- **Nicola:** Simple baseline with BLAS GEMM.
+- **Alexandre:** Simple CSR and CSC baselines.
+- **Riccardo:** Use RSR / RSR++ on vector-matrix multiplication to implement sparse matrix-matrix multiplication.
+- Testing infrastructure.
+
+**Research:**
+- Start thinking about an RSR-like algorithm for sparse GEMM.
+- Do some research about CSC and CSR and whether there are papers discussing ternary sparse GEMM.
+
+---
+
+
 # Sparse Ternary Matrix Multiplication
 
 Efficient computation of `Y = XW + b` and `Y = PReLU(XW + b)`, where `W` is a sparse ternary matrix with entries in `{-1, 0, +1}`.
