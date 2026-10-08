@@ -139,7 +139,7 @@ vector<int> rsr_inference(vector<int> v, const vector<vector<int>>& permutations
 //     int n = 1024;
 //     int k = static_cast<int>(ceil(log2(n) - log2(log2(n))));
 
-//     vector<vector<int>> mat = generateBinaryRandomMatrix(n);
+//     vector<vector<int>> mat = generateBinaryRandomMatrix(n, n);
 //     vector<int> v = generateRandomVector(n);
 
 //     auto per_segs = preprocess(mat, k);

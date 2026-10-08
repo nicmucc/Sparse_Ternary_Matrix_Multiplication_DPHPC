@@ -32,18 +32,18 @@ vector<vector<int>> generateBinaryMatrix(int k) {
     return matrix;
 }
 
-vector<vector<int>> generateBinaryRandomMatrix(int n) {
+vector<vector<int>> generateBinaryRandomMatrix(int rows, int cols) {
     // Initialize the random number generator
     random_device rd;  // Seed
     mt19937 gen(rd()); // Mersenne Twister engine
     uniform_int_distribution<> dis(0, 1); // Distribution that produces 0 or 1
 
     // Initialize matrix
-    vector<vector<int>> matrix(n, vector<int>(n));
+    vector<vector<int>> matrix(rows, vector<int>(cols));
 
     // Populate the matrix with random 0s and 1s
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
             matrix[i][j] = dis(gen); // Generate a random 0 or 1
         }
     }
@@ -76,18 +76,18 @@ vector<int> copy(const vector<int>& v) {
     return v;
 }
 
-vector<vector<int>> generateRandomMatrix(int n) {
+vector<vector<int>> generateRandomMatrix(int rows, int cols) {
     // Initialize the random number generator
     random_device rd;  // Seed
     mt19937 gen(rd()); // Mersenne Twister engine
     uniform_int_distribution<> dis(0, 100); 
 
     // Initialize matrix
-    vector<vector<int>> matrix(n, vector<int>(n));
+    vector<vector<int>> matrix(rows, vector<int>(cols));
 
     // Populate the matrix with random numbers
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
             matrix[i][j] = dis(gen); // Generate a random number between 0 and 100
         }
     }
