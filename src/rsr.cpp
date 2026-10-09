@@ -94,11 +94,12 @@ pair<vector<vector<int>>, vector<vector<int>>> preprocess(vector<vector<int>>& m
     return make_pair(permutations, segs);
 }
 
-vector<int> rsr_inference(vector<int> v, const vector<vector<int>>& permutations, const vector<vector<int>>& segments, vector<vector<int>> bin_k, int k) {
+vec_t rsr_inference(vector<int> v, const vector<vector<int>>& permutations, const vector<vector<int>>& segments, tern_t bin_k, int k) {
     int n = permutations[0].size();
 
     // segmented sums
-    vector<vector<int>> us(permutations.size(), vector<int>(pow(2, k)));
+    const size_t block_size = size_t{1} << k;
+    vec_t us(permutations.size() * block_size, 0.0f);
 
     int start;
     int end;
@@ -116,18 +117,20 @@ vector<int> rsr_inference(vector<int> v, const vector<vector<int>>& permutations
             }
             // Segmented sum
             for (int index = start; index < end; index++) {
-                us[i][j] += v[permutation[index]];
+                us[i*block_size + j] += v[permutation[index]];
             }           
         }
     }
 
-    vector<int> result(permutations.size() * k);
+    vec_t result(permutations.size() * k);
 
     // Block product to Bin_k
     // TODO: change from here for RSR++
-    vector<int> partial_result;
-    for (size_t i = 0; i < us.size(); i++) {
-        partial_result = vectorMatrixMultiply(us[i], bin_k);
+    for (size_t i = 0; i < permutations.size(); i++) {
+        vec_t block(us.begin() + i * block_size, us.begin() + (i + 1) * block_size);
+        vec_t partial_result(k, 0.0f);
+        vectorMatrixMultiply(block, bin_k, partial_result);
+
         for (int j = 0; j < k; j++) {
             result[i * k + j] = partial_result[j];
         }

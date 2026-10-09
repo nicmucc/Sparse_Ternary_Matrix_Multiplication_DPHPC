@@ -1,16 +1,22 @@
 #include <stdexcept>
 #include "types.h"
 
-void vectorMatrixMultiply(const vec_t& vec, const tern_t& mat, vec_t& res, size_t K) {
-    if (vec.size() * K != mat.size()) {
-        throw std::invalid_argument("vector length must match the matrix row count");
-    }
+void vectorMatrixMultiply(const vec_t& vec, const tern_t& mat, vec_t& res) {
     
     if (vec.size() <= 0) {
         throw std::invalid_argument("vector lenght must be > 0");
     }
     size_t N = vec.size();
   
+    
+    if (res.size() <= 0) {
+        throw std::invalid_argument("result lenght must be > 0");
+    }
+    size_t K = res.size();
+
+    if (vec.size() * res.size() != mat.size()) {
+        throw std::invalid_argument("vector length must match the matrix row count");
+    }
 
     if (mat.empty()) {
         return;
@@ -18,7 +24,7 @@ void vectorMatrixMultiply(const vec_t& vec, const tern_t& mat, vec_t& res, size_
 
     for (size_t i = 0; i < K; ++i) {
         for (size_t j = 0; j < N; ++j) {
-            res[i*N + j] += vec[i] * mat[i*N + j];
+            res[i] += vec[j] * mat[j*K + i];
         }
     }
     

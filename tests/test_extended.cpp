@@ -18,11 +18,17 @@ int main() {
 
         vector<vector<int>> mat1 = generateRandomMatrix(input_rows, n);
         vector<vector<int>> mat2 = generateBinaryRandomMatrix(n, n);
-        const vector<vector<int>> reference_mat2 = mat2; //preprocessing of mat2 can change it, so we need to keep a copy of the original mat2 for comparison
-        vector<vector<int>> bin_k = generateBinaryMatrix(k);
-        vector<vector<int>> postinference_rsr(input_rows, vector<int>(n, 0));
+        tern_t reference_mat2;
+        for (const auto& row : mat2)
+            reference_mat2.insert(reference_mat2.end(), row.begin(), row.end());
+
+        tern_t bin_k;
+        for (const auto& row : generateBinaryMatrix(k))
+            bin_k.insert(bin_k.end(), row.begin(), row.end());
+
+        vector<vec_t> postinference_rsr(input_rows, vec_t(n, 0.0f));
         vector<vector<int>> postinference_rsrpp(input_rows, vector<int>(n, 0));
-        vector<vector<int>> expected(input_rows, vector<int>(n, 0));
+        vector<vec_t> expected(input_rows, vec_t(n, 0.0f));
 
         cout << "preprocessing..." << endl;
         auto per_segs = preprocess(mat2, k);
@@ -41,7 +47,8 @@ int main() {
             }
             postinference_rsr[j].resize(n);
             postinference_rsrpp[j].resize(n);
-            vectorMatrixMultiply(mat1[j], reference_mat2, expected[j], input_rows);
+            vec_t input(mat1[j].begin(), mat1[j].end());
+            vectorMatrixMultiply(input, reference_mat2, expected[j]);
         }
 
         for (size_t r = 0; r < expected.size(); ++r) {

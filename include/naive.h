@@ -20,8 +20,7 @@
 
 void vectorMatrixMultiply(const vec_t& vec, 
                           const tern_t& mat, 
-                          vec_t& res,
-                          size_t K 
+                          vec_t& res
                           );
 
 #endif
