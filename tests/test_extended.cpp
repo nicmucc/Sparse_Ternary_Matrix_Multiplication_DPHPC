@@ -41,7 +41,7 @@ int main() {
             }
             postinference_rsr[j].resize(n);
             postinference_rsrpp[j].resize(n);
-            expected[j] = vectorMatrixMultiply(mat1[j], reference_mat2);
+            vectorMatrixMultiply(mat1[j], reference_mat2, expected[j], input_rows);
         }
 
         for (size_t r = 0; r < expected.size(); ++r) {

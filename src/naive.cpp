@@ -1,29 +1,25 @@
-#include <vector>
 #include <stdexcept>
-#include "utils.h"
+#include "types.h"
 
-using namespace std;
-
-vector<int> vectorMatrixMultiply(const vector<int>& vec, const vector<vector<int>>& mat) {
-    if (vec.size() != mat.size()) {
-        throw invalid_argument("vector length must match the matrix row count");
+void vectorMatrixMultiply(const vec_t& vec, const tern_t& mat, vec_t& res, size_t K) {
+    if (vec.size() * K != mat.size()) {
+        throw std::invalid_argument("vector length must match the matrix row count");
     }
+    
+    if (vec.size() <= 0) {
+        throw std::invalid_argument("vector lenght must be > 0");
+    }
+    size_t N = vec.size();
+  
 
     if (mat.empty()) {
-        return {};
+        return;
     }
 
-    const size_t column_count = mat.front().size();
-    vector<int> result(column_count, 0);
-
-    for (size_t row = 0; row < mat.size(); ++row) {
-        if (mat[row].size() != column_count) {
-            throw invalid_argument("matrix rows must have equal lengths");
-        }
-        for (size_t column = 0; column < column_count; ++column) {
-            result[column] += vec[row] * mat[row][column];
+    for (size_t i = 0; i < K; ++i) {
+        for (size_t j = 0; j < N; ++j) {
+            res[i*N + j] += vec[i] * mat[i*N + j];
         }
     }
-
-    return result;
+    
 }

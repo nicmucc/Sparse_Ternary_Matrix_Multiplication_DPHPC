@@ -3,7 +3,7 @@ PYTHON ?= python3
 CONFIG ?= configs/temporary_config.json
 DATA_DIR ?= data/sample_001
 GENERATE_ARGS ?=
-CPPFLAGS += -Iinclude
+CPPFLAGS += -Iinclude -include types.h
 CXXFLAGS ?= -O2 -std=c++17 -Wall -Wextra
 
 BUILD_DIR := build
