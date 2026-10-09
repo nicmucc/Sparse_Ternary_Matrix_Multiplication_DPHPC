@@ -11,12 +11,12 @@ using namespace std;
 
 // Return <permutation, segmentation>
 pair<vector<int>, vector<int>> handle_block(const vector<vector<int>>& mat_block) {
-    int n = mat_block.size();
-    int k = mat_block[0].size();
+    int K = mat_block.size();
+    int block_width = mat_block[0].size();
 
     // Permutation
-    vector<int> permutation(n);
-    for (int i = 0; i < n; i++) {
+    vector<int> permutation(K);
+    for (int i = 0; i < K; i++) {
         permutation[i] = i;
     }
 
@@ -27,16 +27,16 @@ pair<vector<int>, vector<int>> handle_block(const vector<vector<int>>& mat_block
 
     
     // Segmentation
-    vector<int> seg(pow(2, k), -1);
+    vector<int> seg(pow(2, block_width), -1);
     seg[0] = 0;
-    for (int row = 0; row < n; row++) {
+    for (int row = 0; row < K; row++) {
         int value = binaryVectorToInt(mat_block[permutation[row]]);
         if (seg[value] == -1) {
             seg[value] = row;
         }
     }
     if (seg[seg.size() - 1] == -1) {
-        seg[seg.size() - 1] = n;
+        seg[seg.size() - 1] = K;
     }
     int last_one = seg[seg.size() - 1];
     for (int i = seg.size() - 2; i >= 0; i--) {
@@ -49,40 +49,40 @@ pair<vector<int>, vector<int>> handle_block(const vector<vector<int>>& mat_block
     return make_pair(permutation, seg);
 }
 
-pair<vector<vector<int>>, vector<vector<int>>> preprocess(vector<vector<int>>& mat, int k) {
-    if (mat.empty() || k <= 0) {
+pair<vector<vector<int>>, vector<vector<int>>> preprocess(vector<vector<int>>& mat, int block_width) {
+    if (mat.empty() || block_width <= 0) {
         throw invalid_argument("preprocess requires a non-empty matrix and positive block width");
     }
 
-    const int row_count = mat.size();
-    const int column_count = mat.front().size();
+    const int K = mat.size();
+    const int N = mat.front().size();
 
-    // Pad output columns so they can be processed in blocks of k. The input
+    // Pad output columns so they can be processed in blocks of block_width. The input
     // row count must stay unchanged because it determines the input vector size.
-    const int padding = (k - column_count % k) % k;
+    const int padding = (block_width - N % block_width) % block_width;
     for (auto& row : mat) {
-        if (row.size() != static_cast<size_t>(column_count)) {
+        if (row.size() != static_cast<size_t>(N)) {
             throw invalid_argument("matrix rows must have equal lengths");
         }
-        row.resize(column_count + padding, 0);
+        row.resize(N + padding, 0);
     }
 
-    const int padded_column_count = column_count + padding;
+    const int padded_N = N + padding;
 
-    vector<vector<int>> permutations(padded_column_count / k, vector<int>(row_count));
-    vector<vector<int>> segs(padded_column_count / k, vector<int>(pow(2, k)));
+    vector<vector<int>> permutations(padded_N / block_width, vector<int>(K));
+    vector<vector<int>> segs(padded_N / block_width, vector<int>(pow(2, block_width)));
 
 
     // Blocking
     int start;
     int end;
-    vector<vector<int>> block(row_count, vector<int>(k));
-    for (int i = 0; i < padded_column_count / k; i++) {
-        // cout << "block " << i + 1 << " out of " << n / k << " blocks" << endl;
-        start = i * k;
-        end = start + k;
+    vector<vector<int>> block(K, vector<int>(block_width));
+    for (int i = 0; i < padded_N / block_width; i++) {
+        // cout << "block " << i + 1 << " out of " << padded_N / block_width << " blocks" << endl;
+        start = i * block_width;
+        end = start + block_width;
         for (int col = start; col < end; col++) {
-            for (int row = 0; row < row_count; row++) {
+            for (int row = 0; row < K; row++) {
                 block[row][col - start] = mat[row][col];
             }
         }
@@ -94,42 +94,42 @@ pair<vector<vector<int>>, vector<vector<int>>> preprocess(vector<vector<int>>& m
     return make_pair(permutations, segs);
 }
 
-vec_t rsr_inference(const vec_t& v, const permutation_t& permutations, const segment_t& segments, const binary_matrix_t& bin_k, size_t N, int k) {
+vec_t rsr_inference(const vec_t& v, const permutation_t& permutations, const segment_t& segments, const binary_matrix_t& binary_patterns, size_t K, int block_width) {
      // segmented sums
-    const size_t block_size = size_t{1} << k;
-    const size_t num_blocks = permutations.size() / N;
-    vec_t us(num_blocks * block_size, 0.0f);
+    const size_t pattern_count = size_t{1} << block_width;
+    const size_t num_blocks = permutations.size() / K;
+    vec_t us(num_blocks * pattern_count, 0.0f);
 
     size_t start;
     size_t end;
     for (size_t i = 0; i < num_blocks; i++) {
         // Each block
-        for (size_t j = 0; j < block_size; j++) {
-            start = segments[i * block_size + j];
-            if (j + 1 < block_size) {
-                end = segments[i * block_size + j + 1];
+        for (size_t j = 0; j < pattern_count; j++) {
+            start = segments[i * pattern_count + j];
+            if (j + 1 < pattern_count) {
+                end = segments[i * pattern_count + j + 1];
             } else {
-                end = N;
+                end = K;
             }
             // Segmented sum
             for (size_t index = start; index < end; index++) {
-                us[i * block_size + j] +=
-                    v[permutations[i * N + index]];
+                us[i * pattern_count + j] +=
+                    v[permutations[i * K + index]];
             }
         }
     }
 
-    vec_t result(num_blocks * k);
+    vec_t result(num_blocks * block_width);
 
-    // Block product to Bin_k
+    // Block product to binary_patterns
     for (size_t i = 0; i < num_blocks; i++) {
-        vec_t block(us.begin() + i * block_size,
-                    us.begin() + (i + 1) * block_size);
-        vec_t partial_result(k, 0.0f);
-        vectorMatrixMultiply(block, bin_k, partial_result);
+        vec_t block(us.begin() + i * pattern_count,
+                    us.begin() + (i + 1) * pattern_count);
+        vec_t partial_result(block_width, 0.0f);
+        vectorMatrixMultiply(block, binary_patterns, partial_result);
 
-        for (int j = 0; j < k; j++) {
-            result[i * k + j] = partial_result[j];
+        for (int j = 0; j < block_width; j++) {
+            result[i * block_width + j] = partial_result[j];
         }
     }
     return result;

@@ -18,14 +18,14 @@ int binaryVectorToInt(const vector<int>& binaryVec) {
     return result;
 }
 
-vector<vector<int>> generateBinaryMatrix(int k) {
-    int rows = pow(2, k);  // 2^k rows
-    vector<vector<int>> matrix(rows, vector<int>(k, 0));  // Initialize matrix with 0s
+vector<vector<int>> generateBinaryMatrix(int block_width) {
+    int rows = pow(2, block_width);  // 2^block_width rows
+    vector<vector<int>> matrix(rows, vector<int>(block_width, 0));  // Initialize matrix with 0s
 
     for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < k; ++j) {
+        for (int j = 0; j < block_width; ++j) {
             // Generate the binary value for each position
-            matrix[i][k - j - 1] = (i >> j) & 1;  // Extract the j-th bit from i
+            matrix[i][block_width - j - 1] = (i >> j) & 1;  // Extract the j-th bit from i
         }
     }
 

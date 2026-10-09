@@ -5,7 +5,7 @@ using namespace std;
 
 int binaryVectorToInt(const vector<int>& binaryVec);
 
-vector<vector<int>> generateBinaryMatrix(int k);
+vector<vector<int>> generateBinaryMatrix(int block_width);
 
 vector<vector<int>> generateBinaryRandomMatrix(int rows, int cols);
 

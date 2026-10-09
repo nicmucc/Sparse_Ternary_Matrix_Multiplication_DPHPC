@@ -6,13 +6,13 @@ void vectorMatrixMultiply(const vec_t& vec, const tern_t& mat, vec_t& res) {
     if (vec.size() <= 0) {
         throw std::invalid_argument("vector lenght must be > 0");
     }
-    size_t N = vec.size();
+    size_t K = vec.size();
   
     
     if (res.size() <= 0) {
         throw std::invalid_argument("result lenght must be > 0");
     }
-    size_t K = res.size();
+    size_t N = res.size();
 
     if (vec.size() * res.size() != mat.size()) {
         throw std::invalid_argument("vector length must match the matrix row count");
@@ -22,9 +22,9 @@ void vectorMatrixMultiply(const vec_t& vec, const tern_t& mat, vec_t& res) {
         return;
     }
 
-    for (size_t i = 0; i < K; ++i) {
-        for (size_t j = 0; j < N; ++j) {
-            res[i] += vec[j] * mat[j*K + i];
+    for (size_t i = 0; i < N; ++i) {
+        for (size_t j = 0; j < K; ++j) {
+            res[i] += vec[j] * mat[j * N + i];
         }
     }
     
