@@ -27,19 +27,26 @@ int main() {
             bin_k.insert(bin_k.end(), row.begin(), row.end());
 
         vector<vec_t> postinference_rsr(input_rows, vec_t(n, 0.0f));
-        vector<vector<int>> postinference_rsrpp(input_rows, vector<int>(n, 0));
+        vector<vec_t> postinference_rsrpp(input_rows, vec_t(n, 0.0f));
         vector<vec_t> expected(input_rows, vec_t(n, 0.0f));
 
         cout << "preprocessing..." << endl;
         auto per_segs = preprocess(mat2, k);
+        permutation_t permutations;
+        segment_t segments;
+        for (const auto& block : per_segs.first)
+            permutations.insert(permutations.end(), block.begin(), block.end());
+        for (const auto& block : per_segs.second)
+            segments.insert(segments.end(), block.begin(), block.end());
 
         cout << "inference..." << endl;
 
         // perform inference for each row of mat1
         for (int j = 0; j < input_rows; ++j)
         {
-            postinference_rsr[j] = rsr_inference(mat1[j], per_segs.first, per_segs.second, bin_k, k);
-            postinference_rsrpp[j] = rsr_pp_inference(mat1[j], per_segs.first, per_segs.second, k);
+            vec_t input(mat1[j].begin(), mat1[j].end());
+            postinference_rsr[j] = rsr_inference(input, permutations, segments, bin_k, input.size(), k);
+            postinference_rsrpp[j] = rsr_pp_inference(input, permutations, segments, input.size(), k);
             if (postinference_rsr[j].size() < static_cast<size_t>(n) || postinference_rsrpp[j].size() < static_cast<size_t>(n)) 
             {
                 cout << "ERROR: inference returned too few columns" << endl;
@@ -47,7 +54,6 @@ int main() {
             }
             postinference_rsr[j].resize(n);
             postinference_rsrpp[j].resize(n);
-            vec_t input(mat1[j].begin(), mat1[j].end());
             vectorMatrixMultiply(input, reference_mat2, expected[j]);
         }
 

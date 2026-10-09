@@ -94,40 +94,37 @@ pair<vector<vector<int>>, vector<vector<int>>> preprocess(vector<vector<int>>& m
     return make_pair(permutations, segs);
 }
 
-vec_t rsr_inference(vector<int> v, const vector<vector<int>>& permutations, const vector<vector<int>>& segments, tern_t bin_k, int k) {
-    int n = permutations[0].size();
-
-    // segmented sums
+vec_t rsr_inference(const vec_t& v, const permutation_t& permutations, const segment_t& segments, const binary_matrix_t& bin_k, size_t N, int k) {
+     // segmented sums
     const size_t block_size = size_t{1} << k;
-    vec_t us(permutations.size() * block_size, 0.0f);
+    const size_t num_blocks = permutations.size() / N;
+    vec_t us(num_blocks * block_size, 0.0f);
 
-    int start;
-    int end;
-    for (size_t i = 0; i < permutations.size(); i++) {
-        const auto& segment = segments[i];
-        const auto& permutation = permutations[i];
-
+    size_t start;
+    size_t end;
+    for (size_t i = 0; i < num_blocks; i++) {
         // Each block
-        for (size_t j = 0; j < segment.size(); j++) {
-            start = segment[j];
-            if (j + 1 < segment.size()) {
-                end = segment[j + 1];
+        for (size_t j = 0; j < block_size; j++) {
+            start = segments[i * block_size + j];
+            if (j + 1 < block_size) {
+                end = segments[i * block_size + j + 1];
             } else {
-                end = n;
+                end = N;
             }
             // Segmented sum
-            for (int index = start; index < end; index++) {
-                us[i*block_size + j] += v[permutation[index]];
-            }           
+            for (size_t index = start; index < end; index++) {
+                us[i * block_size + j] +=
+                    v[permutations[i * N + index]];
+            }
         }
     }
 
-    vec_t result(permutations.size() * k);
+    vec_t result(num_blocks * k);
 
     // Block product to Bin_k
-    // TODO: change from here for RSR++
-    for (size_t i = 0; i < permutations.size(); i++) {
-        vec_t block(us.begin() + i * block_size, us.begin() + (i + 1) * block_size);
+    for (size_t i = 0; i < num_blocks; i++) {
+        vec_t block(us.begin() + i * block_size,
+                    us.begin() + (i + 1) * block_size);
         vec_t partial_result(k, 0.0f);
         vectorMatrixMultiply(block, bin_k, partial_result);
 
@@ -137,24 +134,3 @@ vec_t rsr_inference(vector<int> v, const vector<vector<int>>& permutations, cons
     }
     return result;
 }
-
-// int main() {
-//     int n = 1024;
-//     int k = static_cast<int>(ceil(log2(n) - log2(log2(n))));
-
-//     vector<vector<int>> mat = generateBinaryRandomMatrix(n, n);
-//     vector<int> v = generateRandomVector(n);
-
-//     auto per_segs = preprocess(mat, k);
-
-//     vector<int> result = rsr_inference(v, per_segs.first, per_segs.second, k);
-//     vector<int> gt = vectorMatrixMultiply(v, mat);
-
-//     for(int i = 0; i < n; i++) {
-//         if (gt[i] != result[i]) {
-//             cout << gt[i] << " " << result[i] << endl;
-//         }
-//     }
-
-//     return 0;
-// }
