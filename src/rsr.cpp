@@ -4,15 +4,33 @@
 #include <algorithm>
 #include <stdexcept>
 #include <utility>
+#include <limits>
 #include "utils.h"
 #include "naive.h"
 
 using namespace std;
 
 // Return <permutation, segmentation>
-pair<vector<int>, vector<int>> handle_block(const vector<vector<int>>& mat_block) {
-    int K = mat_block.size();
-    int block_width = mat_block[0].size();
+pair<vector<int>, vector<int>> handle_block(const tern_t& mat_block, int K, int block_width) {
+
+    const size_t pattern_count = size_t{1} << block_width;
+
+    // Permutation
+    vector<int> values(K);
+
+    for(int i = 0; i < K; i++) {
+        vector<int> row(block_width);
+
+        for(int j = 0; j < block_width; j++) {
+            row[j] = mat_block[i*block_width + j];
+
+            if(row[j] != 0 && row[j] != 1) {
+                throw invalid_argument("RSR requires binary weights (0 or 1)");
+            }
+        }
+
+        values[i] = binaryVectorToInt(row);
+    }
 
     // Permutation
     vector<int> permutation(K);
@@ -21,25 +39,28 @@ pair<vector<int>, vector<int>> handle_block(const vector<vector<int>>& mat_block
     }
 
     sort(permutation.begin(), permutation.end(), [&](int i, int j) {
-        // return vec[i] < vec[j]
-        return binaryVectorToInt(mat_block[i]) < binaryVectorToInt(mat_block[j]);
+        return values[i] < values[j];
     });
 
-    
     // Segmentation
-    vector<int> seg(pow(2, block_width), -1);
+    vector<int> seg(pattern_count, -1);
     seg[0] = 0;
+
     for (int row = 0; row < K; row++) {
-        int value = binaryVectorToInt(mat_block[permutation[row]]);
+        int value = values[permutation[row]];
+
         if (seg[value] == -1) {
             seg[value] = row;
         }
     }
-    if (seg[seg.size() - 1] == -1) {
-        seg[seg.size() - 1] = K;
+
+    if (seg.back() == -1) {
+        seg.back() = K;
     }
-    int last_one = seg[seg.size() - 1];
-    for (int i = seg.size() - 2; i >= 0; i--) {
+
+    int last_one = seg.back();
+
+    for (int i = static_cast<int>(seg.size()) - 2; i >= 0; i--) {
         if (seg[i] == -1) {
             seg[i] = last_one;
         }
@@ -49,44 +70,58 @@ pair<vector<int>, vector<int>> handle_block(const vector<vector<int>>& mat_block
     return make_pair(permutation, seg);
 }
 
-pair<vector<vector<int>>, vector<vector<int>>> preprocess(vector<vector<int>>& mat, int block_width) {
-    if (mat.empty() || block_width <= 0) {
-        throw invalid_argument("preprocess requires a non-empty matrix and positive block width");
+pair<vector<vector<int>>, vector<vector<int>>> preprocess(tern_t& mat, int block_width, const int K) {
+    
+    if (mat.empty() || K <= 0 || block_width <= 0 ||
+        block_width >= numeric_limits<int>::digits) {
+        throw invalid_argument("Invalid preprocessing dimensions");
     }
 
-    const int K = mat.size();
-    const int N = mat.front().size();
+    const int N = mat.size() / K;
+    if (mat.size() != static_cast<size_t>(K * N)) {
+        throw invalid_argument("Invalid matrix size");
+    } 
 
     // Pad output columns so they can be processed in blocks of block_width. The input
     // row count must stay unchanged because it determines the input vector size.
-    const int padding = (block_width - N % block_width) % block_width;
-    for (auto& row : mat) {
-        if (row.size() != static_cast<size_t>(N)) {
-            throw invalid_argument("matrix rows must have equal lengths");
-        }
-        row.resize(N + padding, 0);
-    }
 
+    const int padding = (block_width - N % block_width) % block_width;
     const int padded_N = N + padding;
 
-    vector<vector<int>> permutations(padded_N / block_width, vector<int>(K));
-    vector<vector<int>> segs(padded_N / block_width, vector<int>(pow(2, block_width)));
+    tern_t padded_mat(K * padded_N, 0);
+    for (int i = 0; i < K; i++) {
+        for (int j = 0; j < N; j++) {
+            padded_mat[i * (N + padding) + j] = mat[i * N + j];
+        }
+    }
+
+    mat = std::move(padded_mat);
+
+    // Allocate permutations and segments
+    const int num_blocks = padded_N / block_width;
+    const size_t pattern_count = size_t{1} << block_width;
+
+    vector<vector<int>> permutations(num_blocks, vector<int>(K));
+    vector<vector<int>> segs(num_blocks, vector<int>(pattern_count));
 
 
     // Blocking
-    int start;
-    int end;
-    vector<vector<int>> block(K, vector<int>(block_width));
-    for (int i = 0; i < padded_N / block_width; i++) {
-        // cout << "block " << i + 1 << " out of " << padded_N / block_width << " blocks" << endl;
-        start = i * block_width;
-        end = start + block_width;
-        for (int col = start; col < end; col++) {
-            for (int row = 0; row < K; row++) {
-                block[row][col - start] = mat[row][col];
+    tern_t block(K * block_width);
+
+    for (int i = 0; i < num_blocks; i++) {
+
+        int start = i * block_width;
+
+        for (int row = 0; row < K; row++) {
+            for (int col = 0; col < block_width; col++) {
+
+                block[row * block_width + col] =
+                    mat[row * padded_N + start + col];
             }
         }
-        auto per_seg = handle_block(block);
+
+        auto per_seg = handle_block(block, K, block_width);
+
         permutations[i] = per_seg.first;
         segs[i] = per_seg.second;
     }
@@ -95,10 +130,25 @@ pair<vector<vector<int>>, vector<vector<int>>> preprocess(vector<vector<int>>& m
 }
 
 vec_t rsr_inference(const vec_t& v, const permutation_t& permutations, const segment_t& segments, const binary_matrix_t& binary_patterns, size_t K, int block_width) {
-     // segmented sums
+    
+    if (K == 0 || block_width <= 0 ||
+        block_width >= numeric_limits<int>::digits) {
+        throw invalid_argument("Invalid inference dimensions");
+    }
+
+    if (v.size() != K || permutations.size() % K != 0) {
+        throw invalid_argument("Invalid input or permutation size");
+    }
+
+    // segmented sums
     const size_t pattern_count = size_t{1} << block_width;
     const size_t num_blocks = permutations.size() / K;
     vec_t us(num_blocks * pattern_count, 0.0f);
+
+    if (segments.size() != num_blocks * pattern_count ||
+        binary_patterns.size() != pattern_count * block_width) {
+        throw invalid_argument("Invalid segments or binary patterns");
+    }
 
     size_t start;
     size_t end;
