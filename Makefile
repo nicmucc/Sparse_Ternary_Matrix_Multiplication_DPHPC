@@ -56,7 +56,11 @@ help:
 	@printf '%s\n' \
 		'make             Build the executable' \
 		'make build       Build the executable' \
-		'make generate    Generate sample data' \
+		'make generate    Generate sample data using config.json' \
+ 		'                 CONFIG=path.json selects another config' \
+ 		'                 DATA_DIR=path selects the output directory' \
+ 		'                 GENERATE_ARGS="--overwrite" replaces existing data' \
+ 		'                 GENERATE_ARGS="--debug-json" also writes expected.json' \
 		'make run         Build and run the executable' \
 		'make test        Build and run correctness tests' \
 		'make clean       Remove build artifacts' \

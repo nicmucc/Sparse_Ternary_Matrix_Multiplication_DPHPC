@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <vector>
 #include <cmath>
@@ -38,13 +39,21 @@ int main(int argc, char* argv[]) {
     double atol = data.atol;
     double rtol = data.rtol;
 
-    cout << "X = " << M << "x" << K
-         << ", W = " << K << "x" << N << endl;
-
     int block_width = 1;
     if (K > 1) {
         block_width = max(1, static_cast<int>( ceil(log2(K) - log2(log2(K))) ));
     }
+
+    cout << "\n==================================================\n"
+         << "  Sparse Ternary Matrix Multiplication - Test\n"
+         << "==================================================\n\n"
+         << "  Dataset       " << directory << '\n'
+         << "  Operation     Y = XW + b\n"
+         << "  X             " << M << " x " << K << '\n'
+         << "  W             " << K << " x " << N << '\n'
+         << "  Y             " << M << " x " << N << '\n'
+         << "  Block width   " << block_width << '\n'
+         << "  Tolerances    atol=" << atol << "  rtol=" << rtol << "\n\n";
 
     // Decompose ternary W into two binary matrices
     tern_t W_pos(W.size(), 0);
@@ -70,7 +79,7 @@ int main(int argc, char* argv[]) {
         static_cast<size_t>(M) * static_cast<size_t>(N), 0.0f);
 
     // Preprocessing
-    cout << "preprocessing..." << endl;
+    cout << "[1/3] Preprocessing weights..." << endl;
 
     const auto blas_weights = blas_baseline::int2float(W);
     auto pos = preprocess(W_pos, block_width, K);
@@ -92,7 +101,7 @@ int main(int argc, char* argv[]) {
         segments_neg.insert( segments_neg.end(), block.begin(), block.end());
 
     // Inference
-    cout << "inference..." << endl;
+    cout << "[2/3] Running inference..." << endl;
 
     blas_baseline::blas_GEMM(X, blas_weights, postinference_blas, M, K, N);
     for (int row = 0; row < M; ++row) {
@@ -121,7 +130,13 @@ int main(int argc, char* argv[]) {
             rsr_neg.size() < static_cast<size_t>(N) ||
             rsrpp_pos.size() < static_cast<size_t>(N) ||
             rsrpp_neg.size() < static_cast<size_t>(N)) {
-            cerr << "ERROR: inference returned too few columns\n";
+            cerr << "\n  [FAIL] Inference returned too few columns at row "
+                 << j << " (zero-based)\n\n"
+                 << "         Required        " << N << '\n'
+                 << "         RSR positive    " << rsr_pos.size() << '\n'
+                 << "         RSR negative    " << rsr_neg.size() << '\n'
+                 << "         RSR++ positive  " << rsrpp_pos.size() << '\n'
+                 << "         RSR++ negative  " << rsrpp_neg.size() << '\n';
             return 1;
         }
 
@@ -134,6 +149,19 @@ int main(int argc, char* argv[]) {
     }
 
     // Compare with precomputed results
+    cout << "[3/3] Comparing against reference..." << endl;
+
+    const auto print_failure = [N](const char* algorithm, size_t index,
+                                    float expected, float actual, float tolerance) {
+        cerr << "\n  [FAIL] " << algorithm << " at row " << index / N
+             << ", column " << index % N << " (zero-based)\n\n"
+             << setprecision(9)
+             << "         Expected        " << expected << '\n'
+             << "         Actual          " << actual << '\n'
+             << "         Absolute error  " << abs(actual - expected) << '\n'
+             << "         Tolerance       " << tolerance << '\n';
+    };
+
     for (size_t i = 0; i < expected_linear.size(); i++) {
 
         float expected = expected_linear[i];
@@ -141,24 +169,29 @@ int main(int argc, char* argv[]) {
 
         if (!isfinite(postinference_rsr[i]) ||
             abs(postinference_rsr[i] - expected) > tolerance) {
-            cout << "ERROR RSR at index " << i << endl;
+            print_failure("RSR", i, expected, postinference_rsr[i], tolerance);
             return 1;
         }
 
         if (!isfinite(postinference_rsrpp[i]) ||
             abs(postinference_rsrpp[i] - expected) > tolerance) {
-            cout << "ERROR RSR++ at index " << i << endl;
+            print_failure("RSR++", i, expected, postinference_rsrpp[i], tolerance);
             return 1;
         }
 
         if (!isfinite(postinference_blas[i]) ||
             abs(postinference_blas[i] - expected) > tolerance) {
-            cout << "ERROR BLAS at index " << i << endl;
+            print_failure("BLAS", i, expected, postinference_blas[i], tolerance);
             return 1;
         }
     }
 
-    cout << "PASSED" << endl;
+    cout << "\n  [PASS] RSR\n"
+         << "  [PASS] RSR++\n"
+         << "  [PASS] BLAS\n\n"
+         << "--------------------------------------------------\n"
+         << "  All 3 implementations passed.\n"
+         << "==================================================\n";
 
     return 0;
 }
