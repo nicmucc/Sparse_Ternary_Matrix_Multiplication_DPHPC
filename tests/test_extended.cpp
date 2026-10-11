@@ -9,6 +9,7 @@
 #include "naive.h"
 #include "rsr.h"
 #include "rsrpp.h"
+#include "blas_baseline.h"
 #include "utils.h"
 #include "data_reader.h"
 
@@ -65,10 +66,13 @@ int main(int argc, char* argv[]) {
     // Initialize results
     vec_t postinference_rsr(M * N, 0.0f);
     vec_t postinference_rsrpp(M * N, 0.0f);
+    blas_baseline::FloatMatrix postinference_blas(
+        static_cast<size_t>(M) * static_cast<size_t>(N), 0.0f);
 
     // Preprocessing
     cout << "preprocessing..." << endl;
 
+    const auto blas_weights = blas_baseline::int2float(W);
     auto pos = preprocess(W_pos, block_width, K);
     auto neg = preprocess(W_neg, block_width, K);
 
@@ -89,6 +93,13 @@ int main(int argc, char* argv[]) {
 
     // Inference
     cout << "inference..." << endl;
+
+    blas_baseline::blas_GEMM(X, blas_weights, postinference_blas, M, K, N);
+    for (int row = 0; row < M; ++row) {
+        for (int col = 0; col < N; ++col) {
+            postinference_blas[row * N + col] += bias[col];
+        }
+    }
 
     for (int j = 0; j < M; j++) {
 
@@ -137,6 +148,12 @@ int main(int argc, char* argv[]) {
         if (!isfinite(postinference_rsrpp[i]) ||
             abs(postinference_rsrpp[i] - expected) > tolerance) {
             cout << "ERROR RSR++ at index " << i << endl;
+            return 1;
+        }
+
+        if (!isfinite(postinference_blas[i]) ||
+            abs(postinference_blas[i] - expected) > tolerance) {
+            cout << "ERROR BLAS at index " << i << endl;
             return 1;
         }
     }

@@ -5,6 +5,7 @@ DATA_DIR ?= data/sample_001
 GENERATE_ARGS ?=
 CPPFLAGS += -Iinclude -include types.h
 CXXFLAGS ?= -O2 -std=c++17 -Wall -Wextra
+BLAS_LIBS ?= -lopenblas
 
 BUILD_DIR := build
 TARGET := $(BUILD_DIR)/rsr_baseline_test
@@ -14,6 +15,7 @@ SOURCES := \
 	src/rsr.cpp \
 	src/rsrpp.cpp \
 	src/utils.cpp \
+	src/blas_baseline.cpp \
 	tests/data_reader.cpp \
 	tests/test_extended.cpp
 
@@ -30,7 +32,7 @@ build: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	mkdir -p "$(dir $@)"
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o "$@"
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@"
 
 $(BUILD_DIR)/%.o: %.cpp
 	mkdir -p "$(dir $@)"
