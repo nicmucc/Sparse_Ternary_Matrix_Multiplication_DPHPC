@@ -60,11 +60,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Generate binary patterns
-    tern_t binary_patterns;
-
-    for (const auto& row : generateBinaryMatrix(block_width)) {
-        binary_patterns.insert( binary_patterns.end(), row.begin(), row.end());
-    }
+    tern_t binary_patterns = generateBinaryMatrix(block_width);
 
     // Initialize results
     vec_t postinference_rsr(M * N, 0.0f);
