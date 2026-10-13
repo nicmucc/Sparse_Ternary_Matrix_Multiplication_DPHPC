@@ -4,14 +4,14 @@
 #include <utility>
 #include "utils.h"
 #include "naive.h"
-#include "rsr.h"
+#include "rsrpp.h"
 
 using namespace std;
 
-vector<int> step_three(vector<int> u, int k) {
-    vector<int> result(k);
-    int sum;
-    for (int i = k; i > 0; i--) {
+vec_t step_three(vec_t u, int block_width) {
+    vec_t result(block_width);
+    float sum;
+    for (int i = block_width; i > 0; i--) {
         sum = 0;
         for (int j = 1; j < pow(2, i); j += 2) {
             sum += u[j];
@@ -25,42 +25,39 @@ vector<int> step_three(vector<int> u, int k) {
     return result;
 }
 
-vector<int> rsr_pp_inference(vector<int> v, const vector<vector<int>>& permutations, const vector<vector<int>>& segments, int k) {
-    int n = permutations[0].size();
-
+vec_t rsr_pp_inference(const vec_t& v, const permutation_t& permutations,
+                       const segment_t& segments, size_t K, int block_width) {
     // segmented sums
-    vector<vector<int>> us(permutations.size(), vector<int>(pow(2, k)));
+    const size_t pattern_count = size_t{1} << block_width;
+    const size_t num_blocks = permutations.size() / K;
+    vector<vec_t> us(num_blocks, vec_t(pattern_count, 0.0f));
 
-    int start;
-    int end;
-    for (size_t i = 0; i < permutations.size(); i++) {
-        const auto& segment = segments[i];
-        const auto& permutation = permutations[i];
-
+    size_t start;
+    size_t end;
+    for (size_t i = 0; i < num_blocks; i++) {
         // Each block
-        for (size_t j = 0; j < segment.size(); j++) {
-            start = segment[j];
-            if (j + 1 < segment.size()) {
-                end = segment[j + 1];
+        for (size_t j = 0; j < pattern_count; j++) {
+            start = segments[i * pattern_count + j];
+            if (j + 1 < pattern_count) {
+                end = segments[i * pattern_count + j + 1];
             } else {
-                end = n;
+                end = K;
             }
             // Segmented sum
-            for (int index = start; index < end; index++) {
-                us[i][j] += v[permutation[index]];
-            }           
+            for (size_t index = start; index < end; index++) {
+                us[i][j] += v[permutations[i * K + index]];
+            }
         }
     }
 
-    vector<int> result(permutations.size() * k);
+    vec_t result(num_blocks * block_width);
 
-    // Block product to Bin_k
-    vector<int> partial_result;
+    // Block product to binary_patterns
+    vec_t partial_result;
     for (size_t i = 0; i < us.size(); i++) {
-        // partial_result = vectorMatrixMultiply(us[i], bin_k);
-        partial_result = step_three(us[i], k);
-        for (int j = 0; j < k; j++) {
-            result[i * k + j] = partial_result[j];
+        partial_result = step_three(us[i], block_width);
+        for (int j = 0; j < block_width; j++) {
+            result[i * block_width + j] = partial_result[j];
         }
     }
     return result;

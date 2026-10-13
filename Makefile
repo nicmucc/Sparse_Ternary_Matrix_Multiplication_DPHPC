@@ -5,7 +5,10 @@ DATA_DIR ?= data/sample_001
 GENERATE_ARGS ?=
 # Override with EIGEN_INCLUDE_DIR=/path/to/eigen (the directory containing Eigen/).
 EIGEN_INCLUDE_DIR ?= $(firstword $(wildcard /opt/homebrew/include/eigen3 /usr/local/include/eigen3 /usr/include/eigen3 build/deps/eigen-3.4.0))
-CPPFLAGS += -Iinclude -isystem "$(EIGEN_INCLUDE_DIR)"
+BLAS_CPPFLAGS ?= $(shell pkg-config --cflags-only-I openblas)
+BLAS_LIBS ?= $(shell pkg-config --libs openblas)
+CPPFLAGS += -Iinclude -isystem $(EIGEN_INCLUDE_DIR) $(BLAS_CPPFLAGS)
+CPPFLAGS += $(shell pkg-config --cflags nlohmann_json)
 CXXFLAGS ?= -O2 -std=c++17 -Wall -Wextra
 
 BUILD_DIR := build
@@ -18,6 +21,8 @@ SOURCES := \
 	src/rsrpp.cpp \
 	src/utils.cpp \
 	src/eigen_baseline.cpp \
+	src/blas_baseline.cpp \
+	tests/data_reader.cpp \
 	tests/test_extended.cpp
 
 OBJECTS := $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
@@ -41,7 +46,8 @@ check-eigen:
 	}
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(LDLIBS) -o "$@"
+	mkdir -p "$(dir $@)"
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@"
 
 $(EIGEN_TARGET): $(EIGEN_OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(EIGEN_OBJECTS) $(LDLIBS) -o "$@"
@@ -54,7 +60,7 @@ generate:
 	$(PYTHON) scripts/generate_data.py --config "$(CONFIG)" --out "$(DATA_DIR)" $(GENERATE_ARGS)
 
 run test: $(TARGET) $(EIGEN_TARGET)
-	"./$(TARGET)"
+	"./$(TARGET)" "$(DATA_DIR)"
 	"./$(EIGEN_TARGET)"
 
 clean:
@@ -77,9 +83,8 @@ help:
  		'                 GENERATE_ARGS="--debug-json" also writes expected.json' \
 		'make run         Build and run the executable' \
 		'make test        Build and run correctness tests' \
-		'make clean       Remove build artifacts; keep build/ and .gitignore' \
-		'make clean-data  Remove everything inside data/; keep data/' \
-		'make clean-all   Clean build artifacts and data/' \
-		'make help        Show this help'
+		'make clean       Remove build artifacts' \
+		'make clean-data  Remove generated data' \
+		'make clean-all   Clean build artifacts and data'
 
 -include $(DEPS)

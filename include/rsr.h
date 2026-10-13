@@ -1,8 +1,9 @@
 #include <vector>
 #include <utility>
+#include "types.h"
 
 using namespace std;
 
-pair<vector<vector<int>>, vector<vector<int>>> preprocess(vector<vector<int>>& mat, int k);
+pair<vector<vector<int>>, vector<vector<int>>> preprocess(tern_t& mat_block, int K, int block_width);
 
-vector<int> rsr_inference(vector<int> v, const vector<vector<int>>& permutations, const vector<vector<int>>& segments, vector<vector<int>> bin_k, int k);
+vec_t rsr_inference(const vec_t& v, const permutation_t& permutations, const segment_t& segments, const binary_matrix_t& binary_patterns, size_t K, int block_width);
