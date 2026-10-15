@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
 
 #include "naive.h"
@@ -96,6 +97,53 @@ void run_eigen_api_checks() {
 
     if (rejected != 4) {
         throw runtime_error("invalid Eigen inputs were not rejected");
+    }
+}
+
+void run_rsr_api_checks() {
+    // N is not a multiple of block_width, so preprocessing must use padding
+    // internally without changing the caller's weights.
+    const tern_t weights = {
+        1, 0, 1,
+        0, 1, 0,
+    };
+    const auto preprocessed = preprocess(weights, 2, 2);
+
+    if (preprocessed.first.size() != 2 ||
+        preprocessed.second.size() != 2) {
+        throw runtime_error("RSR preprocessing produced an invalid block count");
+    }
+
+    const vec_t valid_input(2, 1.0f);
+    const permutation_t valid_permutations = {0, 1};
+    const segment_t valid_segments = {0, 1};
+    int rejected = 0;
+
+    try { rsr_pp_inference({}, {}, {}, 0, 1); }
+    catch (const invalid_argument&) { ++rejected; }
+    try {
+        rsr_pp_inference(valid_input, valid_permutations,
+                         valid_segments, 2, 0);
+    } catch (const invalid_argument&) { ++rejected; }
+    try {
+        rsr_pp_inference(valid_input, valid_permutations, valid_segments, 2,
+                         numeric_limits<int>::digits);
+    } catch (const invalid_argument&) { ++rejected; }
+    try {
+        rsr_pp_inference(vec_t(1, 1.0f), valid_permutations,
+                         valid_segments, 2, 1);
+    } catch (const invalid_argument&) { ++rejected; }
+    try {
+        rsr_pp_inference(valid_input, permutation_t{0},
+                         valid_segments, 2, 1);
+    } catch (const invalid_argument&) { ++rejected; }
+    try {
+        rsr_pp_inference(valid_input, valid_permutations,
+                         segment_t{0}, 2, 1);
+    } catch (const invalid_argument&) { ++rejected; }
+
+    if (rejected != 6) {
+        throw runtime_error("invalid RSR++ inputs were not rejected");
     }
 }
 
@@ -308,13 +356,14 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Run focused Eigen API and edge-case checks
-    cout << "[4/4] Running Eigen API checks..." << endl;
+    // Run focused API and edge-case checks
+    cout << "[4/4] Running API checks..." << endl;
 
     try {
+        run_rsr_api_checks();
         run_eigen_api_checks();
     } catch (const exception& error) {
-        cerr << "\n  [FAIL] Eigen API checks: " << error.what() << '\n';
+        cerr << "\n  [FAIL] API checks: " << error.what() << '\n';
         return 1;
     }
 
@@ -323,6 +372,7 @@ int main(int argc, char* argv[]) {
          << "  [PASS] BLAS\n"
          << "  [PASS] Eigen CSR\n"
          << "  [PASS] Eigen CSC\n"
+         << "  [PASS] RSR API checks\n"
          << "  [PASS] Eigen API checks\n\n"
          << "--------------------------------------------------\n"
          << "  All implementations and checks passed.\n"

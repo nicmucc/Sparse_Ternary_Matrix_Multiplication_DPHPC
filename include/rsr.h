@@ -4,6 +4,7 @@
 
 using namespace std;
 
-pair<vector<vector<int>>, vector<vector<int>>> preprocess(tern_t& mat_block, int K, int block_width);
+pair<vector<vector<int>>, vector<vector<int>>> preprocess(
+    const tern_t& mat, int block_width, int K);
 
 vec_t rsr_inference(const vec_t& v, const permutation_t& permutations, const segment_t& segments, const binary_matrix_t& binary_patterns, size_t K, int block_width);

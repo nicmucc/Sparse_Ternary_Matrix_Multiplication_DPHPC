@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <limits>
+#include <stdexcept>
 #include <utility>
 #include "utils.h"
 #include "naive.h"
@@ -27,10 +29,23 @@ vec_t step_three(vec_t u, int block_width) {
 
 vec_t rsr_pp_inference(const vec_t& v, const permutation_t& permutations,
                        const segment_t& segments, size_t K, int block_width) {
+    if (K == 0 || block_width <= 0 ||
+        block_width >= numeric_limits<int>::digits) {
+        throw invalid_argument("Invalid inference dimensions");
+    }
+
+    if (v.size() != K || permutations.size() % K != 0) {
+        throw invalid_argument("Invalid input or permutation size");
+    }
+
     // segmented sums
     const size_t pattern_count = size_t{1} << block_width;
     const size_t num_blocks = permutations.size() / K;
     vector<vec_t> us(num_blocks, vec_t(pattern_count, 0.0f));
+
+    if (segments.size() != num_blocks * pattern_count) {
+        throw invalid_argument("Invalid segments");
+    }
 
     size_t start;
     size_t end;

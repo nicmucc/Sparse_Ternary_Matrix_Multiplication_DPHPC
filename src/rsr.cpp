@@ -70,7 +70,8 @@ pair<vector<int>, vector<int>> handle_block(const tern_t& mat_block, int K, int 
     return make_pair(permutation, seg);
 }
 
-pair<vector<vector<int>>, vector<vector<int>>> preprocess(tern_t& mat, int block_width, const int K) {
+pair<vector<vector<int>>, vector<vector<int>>> preprocess(
+    const tern_t& mat, int block_width, int K) {
     
     if (mat.empty() || K <= 0 || block_width <= 0 ||
         block_width >= numeric_limits<int>::digits) {
@@ -91,11 +92,9 @@ pair<vector<vector<int>>, vector<vector<int>>> preprocess(tern_t& mat, int block
     tern_t padded_mat(K * padded_N, 0);
     for (int i = 0; i < K; i++) {
         for (int j = 0; j < N; j++) {
-            padded_mat[i * (N + padding) + j] = mat[i * N + j];
+            padded_mat[i * padded_N + j] = mat[i * N + j];
         }
     }
-
-    mat = std::move(padded_mat);
 
     // Allocate permutations and segments
     const int num_blocks = padded_N / block_width;
@@ -116,7 +115,7 @@ pair<vector<vector<int>>, vector<vector<int>>> preprocess(tern_t& mat, int block
             for (int col = 0; col < block_width; col++) {
 
                 block[row * block_width + col] =
-                    mat[row * padded_N + start + col];
+                    padded_mat[row * padded_N + start + col];
             }
         }
 
