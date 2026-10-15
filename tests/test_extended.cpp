@@ -18,6 +18,89 @@
 using namespace std;
 using eigen_baseline::DenseMatrix;
 
+namespace {
+
+void check_eigen_case(const DenseMatrix& X, const DenseMatrix& W,
+                      const DenseMatrix& expected) {
+    const auto csr = eigen_baseline::preprocess_csr(W);
+    const auto csc = eigen_baseline::preprocess_csc(W);
+    const auto nonzeros = (W.array() != 0.0f).count();
+
+    if (!csr.isCompressed() || !csc.isCompressed() ||
+        csr.nonZeros() != nonzeros || csc.nonZeros() != nonzeros) {
+        throw runtime_error("weights must contain only compressed nonzeros");
+    }
+
+    DenseMatrix csr_output(X.rows(), W.cols());
+    DenseMatrix csc_output(X.rows(), W.cols());
+
+    // Repeat with dirty outputs to verify assignment does not accumulate.
+    for (int repeat = 0; repeat < 2; ++repeat) {
+        csr_output.setConstant(123.0f);
+        csc_output.setConstant(-456.0f);
+
+        eigen_baseline::multiply(X, csr, csr_output);
+        eigen_baseline::multiply(X, csc, csc_output);
+
+        for (Eigen::Index row = 0; row < expected.rows(); ++row) {
+            for (Eigen::Index col = 0; col < expected.cols(); ++col) {
+                const float tolerance =
+                    1e-6f + 1e-5f * abs(expected(row, col));
+
+                if (!isfinite(csr_output(row, col)) ||
+                    !isfinite(csc_output(row, col)) ||
+                    abs(csr_output(row, col) - expected(row, col)) > tolerance ||
+                    abs(csc_output(row, col) - expected(row, col)) > tolerance) {
+                    throw runtime_error("CSR/CSC output differs from reference");
+                }
+            }
+        }
+    }
+}
+
+void run_eigen_api_checks() {
+    DenseMatrix X(2, 3);
+    X << 0.5f, -2.0f, 3.0f,
+         -1.5f, 4.0f, -0.25f;
+
+    DenseMatrix W(3, 4);
+    // Rectangular ternary weights, with an empty row and an empty column.
+    W << -1, 0, 1, 0,
+          0, 0, 0, 0,
+          1, 0, -1, 1;
+
+    DenseMatrix expected(2, 4);
+    expected << 2.5f, 0, -2.5f, 3.0f,
+                1.25f, 0, -1.25f, -0.25f;
+
+    check_eigen_case(X, W, expected);
+    check_eigen_case(X, DenseMatrix::Zero(3, 4),
+                     DenseMatrix::Zero(2, 4));
+    check_eigen_case(DenseMatrix::Constant(1, 1, -0.5f),
+                     DenseMatrix::Constant(1, 1, -1.0f),
+                     DenseMatrix::Constant(1, 1, 0.5f));
+
+    const auto csr = eigen_baseline::preprocess_csr(W);
+    const auto csc = eigen_baseline::preprocess_csc(W);
+    DenseMatrix output;
+    int rejected = 0;
+
+    try { eigen_baseline::multiply(DenseMatrix::Zero(1, 2), csr, output); }
+    catch (const invalid_argument&) { ++rejected; }
+    try { eigen_baseline::multiply(DenseMatrix::Zero(1, 2), csc, output); }
+    catch (const invalid_argument&) { ++rejected; }
+    try { eigen_baseline::to_dense({{1, 2}, {3}}); }
+    catch (const invalid_argument&) { ++rejected; }
+    try { eigen_baseline::multiply(X, csr, X); }
+    catch (const invalid_argument&) { ++rejected; }
+
+    if (rejected != 4) {
+        throw runtime_error("invalid Eigen inputs were not rejected");
+    }
+}
+
+} // namespace
+
 int main(int argc, char* argv[]) {
 
     const string directory = (argc > 1) ? argv[1] : "data/sample_001";
@@ -82,7 +165,7 @@ int main(int argc, char* argv[]) {
         static_cast<size_t>(M) * static_cast<size_t>(N), 0.0f);
 
     // Preprocessing
-    cout << "[1/3] Preprocessing weights..." << endl;
+    cout << "[1/4] Preprocessing weights..." << endl;
 
     const auto blas_weights = blas_baseline::int2float(W);
     const DenseMatrix eigen_x = Eigen::Map<const DenseMatrix>(X.data(), M, K);
@@ -90,6 +173,15 @@ int main(int argc, char* argv[]) {
 
     const auto csr_w = eigen_baseline::preprocess_csr(eigen_w);
     const auto csc_w = eigen_baseline::preprocess_csc(eigen_w);
+
+    const auto eigen_nonzeros = (eigen_w.array() != 0.0f).count();
+    if (!csr_w.isCompressed() || !csc_w.isCompressed() ||
+        csr_w.nonZeros() != eigen_nonzeros ||
+        csc_w.nonZeros() != eigen_nonzeros) {
+        cerr << "\n  [FAIL] Eigen preprocessing did not produce compressed "
+             << "matrices containing only nonzero weights.\n";
+        return 1;
+    }
 
     DenseMatrix eigen_csr(M, N);
     DenseMatrix eigen_csc(M, N);
@@ -113,7 +205,7 @@ int main(int argc, char* argv[]) {
         segments_neg.insert( segments_neg.end(), block.begin(), block.end());
 
     // Inference
-    cout << "[2/3] Running inference..." << endl;
+    cout << "[2/4] Running inference..." << endl;
 
     blas_baseline::blas_GEMM(X, blas_weights, postinference_blas, M, K, N);
     eigen_baseline::multiply(eigen_x, csr_w, eigen_csr);
@@ -166,7 +258,7 @@ int main(int argc, char* argv[]) {
     }
 
     // Compare with precomputed results
-    cout << "[3/3] Comparing against reference..." << endl;
+    cout << "[3/4] Comparing against reference..." << endl;
 
     const auto print_failure = [N](const char* algorithm, size_t index,
                                     float expected, float actual, float tolerance) {
@@ -216,11 +308,24 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    // Run focused Eigen API and edge-case checks
+    cout << "[4/4] Running Eigen API checks..." << endl;
+
+    try {
+        run_eigen_api_checks();
+    } catch (const exception& error) {
+        cerr << "\n  [FAIL] Eigen API checks: " << error.what() << '\n';
+        return 1;
+    }
+
     cout << "\n  [PASS] RSR\n"
          << "  [PASS] RSR++\n"
-         << "  [PASS] BLAS\n\n"
+         << "  [PASS] BLAS\n"
+         << "  [PASS] Eigen CSR\n"
+         << "  [PASS] Eigen CSC\n"
+         << "  [PASS] Eigen API checks\n\n"
          << "--------------------------------------------------\n"
-         << "  All 3 implementations passed.\n"
+         << "  All implementations and checks passed.\n"
          << "==================================================\n";
 
     return 0;

@@ -13,7 +13,6 @@ CXXFLAGS ?= -O2 -std=c++17 -Wall -Wextra
 
 BUILD_DIR := build
 TARGET := $(BUILD_DIR)/rsr_baseline_test
-EIGEN_TARGET := $(BUILD_DIR)/eigen_baseline_test
 
 SOURCES := \
 	src/naive.cpp \
@@ -27,8 +26,6 @@ SOURCES := \
 
 OBJECTS := $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
 DEPS := $(OBJECTS:.o=.d)
-EIGEN_OBJECTS := $(BUILD_DIR)/src/eigen_baseline.o $(BUILD_DIR)/tests/test_eigen_baseline.o
-DEPS += $(BUILD_DIR)/tests/test_eigen_baseline.d
 
 .DEFAULT_GOAL := all
 
@@ -36,7 +33,7 @@ DEPS += $(BUILD_DIR)/tests/test_eigen_baseline.d
 
 all: build
 
-build: $(TARGET) $(EIGEN_TARGET)
+build: $(TARGET)
 
 check-eigen:
 	@test -f "$(EIGEN_INCLUDE_DIR)/Eigen/Core" || { \
@@ -49,9 +46,6 @@ $(TARGET): $(OBJECTS)
 	mkdir -p "$(dir $@)"
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@"
 
-$(EIGEN_TARGET): $(EIGEN_OBJECTS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(EIGEN_OBJECTS) $(LDLIBS) -o "$@"
-
 $(BUILD_DIR)/%.o: %.cpp | check-eigen
 	mkdir -p "$(dir $@)"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c "$<" -o "$@"
@@ -59,12 +53,11 @@ $(BUILD_DIR)/%.o: %.cpp | check-eigen
 generate:
 	$(PYTHON) scripts/generate_data.py --config "$(CONFIG)" --out "$(DATA_DIR)" $(GENERATE_ARGS)
 
-run test: $(TARGET) $(EIGEN_TARGET)
+run test: $(TARGET)
 	"./$(TARGET)" "$(DATA_DIR)"
-	"./$(EIGEN_TARGET)"
 
 clean:
-	find "$(BUILD_DIR)" -type f \( -name '*.o' -o -name '*.d' -o -name '$(notdir $(TARGET))' -o -name '$(notdir $(EIGEN_TARGET))' \) -delete
+	find "$(BUILD_DIR)" -type f \( -name '*.o' -o -name '*.d' -o -name '$(notdir $(TARGET))' -o -name 'eigen_baseline_test' \) -delete
 
 clean-data:
 	find data -mindepth 1 -delete
