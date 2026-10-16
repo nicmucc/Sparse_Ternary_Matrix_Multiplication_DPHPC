@@ -29,7 +29,7 @@ DEPS := $(OBJECTS:.o=.d)
 
 .DEFAULT_GOAL := all
 
-.PHONY: all build check-eigen generate run test clean clean-data clean-all help
+.PHONY: all build check-eigen data run test clean clean-data clean-all help
 
 all: build
 
@@ -50,7 +50,7 @@ $(BUILD_DIR)/%.o: %.cpp | check-eigen
 	mkdir -p "$(dir $@)"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c "$<" -o "$@"
 
-generate:
+data:
 	$(PYTHON) scripts/generate_data.py --config "$(CONFIG)" --out "$(DATA_DIR)" $(GENERATE_ARGS)
 
 run test: $(TARGET)
@@ -69,7 +69,7 @@ help:
 		'make             Build the executable' \
 		'make build       Build the executable' \
 		'                 EIGEN_INCLUDE_DIR=path selects Eigen headers' \
-		'make generate    Generate sample data using config.json' \
+		'make data 		  Generate sample data using config.json' \
  		'                 CONFIG=path.json selects another config' \
  		'                 DATA_DIR=path selects the output directory' \
  		'                 GENERATE_ARGS="--overwrite" replaces existing data' \
