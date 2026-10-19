@@ -209,7 +209,7 @@ int main(int argc, char* argv[]) {
     // Initialize results
     vec_t postinference_rsr(M * N, 0.0f);
     vec_t postinference_rsrpp(M * N, 0.0f);
-    blas_baseline::FloatMatrix postinference_blas(
+    vec_t postinference_blas(
         static_cast<size_t>(M) * static_cast<size_t>(N), 0.0f);
 
     // Preprocessing
@@ -255,7 +255,7 @@ int main(int argc, char* argv[]) {
     // Inference
     cout << "[2/4] Running inference..." << endl;
 
-    blas_baseline::blas_GEMM(X, blas_weights, postinference_blas, M, K, N);
+    blas_baseline::multiply(X, blas_weights, postinference_blas, M, K, N);
     eigen_baseline::multiply(eigen_x, csr_w, eigen_csr);
     eigen_baseline::multiply(eigen_x, csc_w, eigen_csc);
     

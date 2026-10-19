@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
         }, Y.data()},
 
         {"BLAS", [&]() {
-            blas_baseline::blas_GEMM(X, blas_weights, Y, M, K, N);
+            blas_baseline::multiply(X, blas_weights, Y, M, K, N);
         }, Y.data()},
 
         {"Eigen CSR", [&]() {

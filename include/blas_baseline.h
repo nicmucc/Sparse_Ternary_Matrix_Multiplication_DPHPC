@@ -1,14 +1,13 @@
 #pragma once
-#include<cblas.h>
-#include <vector>
 
-namespace blas_baseline{
+#include <cstddef>
 
-    using IntMatrix = std::vector<int>;
-    using FloatMatrix = std::vector<float>;
+#include "types.h"
 
-    FloatMatrix int2float(const IntMatrix &M);
-    void blas_GEMM(const FloatMatrix& X, const FloatMatrix& W, FloatMatrix& Y, const int M, const int K, const int N);
-    IntMatrix float2int(const FloatMatrix &M);
+namespace blas_baseline {
+
+vec_t int2float(const tern_t& matrix);
+void multiply(const vec_t& X, const vec_t& W, vec_t& Y,
+              std::size_t M, std::size_t K, std::size_t N);
 
 } // blas_baseline namespace
