@@ -13,6 +13,14 @@
 - Start thinking about an RSR-like algorithm for sparse GEMM.
 - Do some research about CSC and CSR and whether there are papers discussing ternary sparse GEMM.
 
+
+# TODO WEEK 28/10 -> 04/11
+
+## To Implement
+
+- **Matteo & Nicola & Riccardo:** Import missing code, set up benchmarking, c++ exposure, tracking performance, architecture design, roofline plots
+- **Alexandre & Ahmed:** Pytorch implementation of the algorithm
+
 ---
 
 
