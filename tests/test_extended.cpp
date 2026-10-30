@@ -16,6 +16,8 @@
 #include "eigen_baseline.h"
 #include "data_reader.h"
 
+void run_ternary_baseline_checks(const SampleData& data);
+
 using namespace std;
 using eigen_baseline::DenseMatrix;
 
@@ -362,6 +364,7 @@ int main(int argc, char* argv[]) {
     try {
         run_rsr_api_checks();
         run_eigen_api_checks();
+        run_ternary_baseline_checks(data);
     } catch (const exception& error) {
         cerr << "\n  [FAIL] API checks: " << error.what() << '\n';
         return 1;
@@ -372,6 +375,9 @@ int main(int argc, char* argv[]) {
          << "  [PASS] BLAS\n"
          << "  [PASS] Eigen CSR\n"
          << "  [PASS] Eigen CSC\n"
+         << "  [PASS] SSR basic / unrolled / tree\n"
+         << "  [PASS] TCSC basic / merged\n"
+         << "  [PASS] SSR/TCSC edge cases and API checks\n"
          << "  [PASS] RSR API checks\n"
          << "  [PASS] Eigen API checks\n\n"
          << "--------------------------------------------------\n"

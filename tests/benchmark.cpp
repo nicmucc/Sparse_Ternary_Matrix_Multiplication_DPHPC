@@ -12,6 +12,8 @@
 #include "naive.h"
 #include "rsr.h"
 #include "rsrpp.h"
+#include "ssr_baseline.h"
+#include "tcsc_baseline.h"
 #include "timing.h"
 #include "utils.h"
 
@@ -35,6 +37,7 @@ int main(int argc, char* argv[]) {
 
     const int measured_runs = argc > 2 ? std::stoi(argv[2]) : 501;
     const int warmup_runs = argc > 3 ? std::stoi(argv[3]) : 200;
+    const int ssr_block_width = argc > 4 ? std::stoi(argv[4]) : 6;
 
     if (measured_runs < 1 || warmup_runs < 0) {
         std::cerr << "Runs must be positive; warmup runs must be non-negative.\n";
@@ -89,6 +92,20 @@ int main(int argc, char* argv[]) {
     const auto csr_w = eigen_baseline::preprocess_csr(eigen_w);
     const auto csc_w = eigen_baseline::preprocess_csc(eigen_w);
 
+    const auto ssr_w = ssr_baseline::preprocess(W, K, N, ssr_block_width);
+    const auto tcsc_w = tcsc_baseline::preprocess(W, K, N);
+    std::cout << "SSR segment width: " << ssr_block_width
+              << "\nOptimized backend: "
+              << (ssr_baseline::avx2_available() ? "AVX2" : "scalar fallback")
+              << "\nSSR tree path: "
+              << (ssr_baseline::avx2_available()
+                      ? (ssr_block_width >= 2 && ssr_block_width <= 6
+                             ? "specialized tree" : "unrolled fallback")
+                      : "scalar fallback")
+              << std::endl;
+
+    vec_t ssr_basic_y(M * N), ssr_unrolled_y(M * N), ssr_tree_y(M * N);
+    vec_t tcsc_basic_y(M * N), tcsc_merged_y(M * N);
     vec_t Y(data.M * data.N);
     DenseMatrix eigen_y(M, N);
 
@@ -135,6 +152,26 @@ int main(int argc, char* argv[]) {
                 }
             }
         }, Y.data()},
+
+        {"SSR basic", [&]() {
+            ssr_baseline::multiply_basic(X, ssr_w, ssr_basic_y, M);
+        }, ssr_basic_y.data()},
+
+        {"SSR unrolled", [&]() {
+            ssr_baseline::multiply_unrolled(X, ssr_w, ssr_unrolled_y, M);
+        }, ssr_unrolled_y.data()},
+
+        {"SSR tree", [&]() {
+            ssr_baseline::multiply_tree(X, ssr_w, ssr_tree_y, M);
+        }, ssr_tree_y.data()},
+
+        {"TCSC basic", [&]() {
+            tcsc_baseline::multiply_basic(X, tcsc_w, tcsc_basic_y, M);
+        }, tcsc_basic_y.data()},
+
+        {"TCSC merged", [&]() {
+            tcsc_baseline::multiply_merged(X, tcsc_w, tcsc_merged_y, M);
+        }, tcsc_merged_y.data()},
 
         {"BLAS", [&]() {
             blas_baseline::multiply(X, blas_weights, Y, M, K, N);
