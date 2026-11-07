@@ -1,20 +1,30 @@
 CXX ?= c++
 PYTHON ?= python3
+PROFILE ?= release
+BUILD_DIR ?= build/$(PROFILE)
 CONFIG ?= configs/temporary_config.json
 DATA_DIR ?= data/sample_001
-RUNS ?= 501
-WARMUP_RUNS ?= 100
-SSR_BLOCK_WIDTH ?= 6
+TEST_DATA ?=
+BENCHMARK_ARGS ?=
+GENERATE_ARGS ?=
 AVX2 ?= 1
 OPENMP ?= 0
-GENERATE_ARGS ?=
-# Override with EIGEN_INCLUDE_DIR=/path/to/eigen (the directory containing Eigen/).
-EIGEN_INCLUDE_DIR ?= $(firstword $(wildcard /opt/homebrew/include/eigen3 /usr/local/include/eigen3 /usr/include/eigen3 build/deps/eigen-3.4.0))
+
+ifeq ($(PROFILE),scalar)
+AVX2 := 0
+else ifeq ($(PROFILE),sanitizer)
+CXXFLAGS ?= -O1 -g -std=c++17 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
+else ifeq ($(PROFILE),openmp)
+OPENMP := 1
+else ifneq ($(PROFILE),release)
+$(error PROFILE must be release, scalar, sanitizer, or openmp)
+endif
+
+CXXFLAGS ?= -O3 -std=c++17 -Wall -Wextra
+EIGEN_CPPFLAGS ?= $(shell pkg-config --cflags eigen3)
 BLAS_CPPFLAGS ?= $(shell pkg-config --cflags-only-I openblas)
 BLAS_LIBS ?= $(shell pkg-config --libs openblas)
-CPPFLAGS += -Iinclude -isystem $(EIGEN_INCLUDE_DIR) $(BLAS_CPPFLAGS)
-CPPFLAGS += $(shell pkg-config --cflags nlohmann_json)
-CXXFLAGS ?= -O2 -std=c++17 -Wall -Wextra
+CPPFLAGS += -Iinclude $(EIGEN_CPPFLAGS) $(BLAS_CPPFLAGS) $(shell pkg-config --cflags nlohmann_json)
 ifeq ($(AVX2),0)
 CPPFLAGS += -DTERNARY_BASELINE_DISABLE_AVX2
 endif
@@ -23,86 +33,55 @@ CXXFLAGS += -fopenmp
 LDFLAGS += -fopenmp
 endif
 
-BUILD_DIR := build
-TARGET := $(BUILD_DIR)/rsr_baseline_test
+CONFIG_HASH := $(shell { printf '%s\n' "$(CXX)" "$(CPPFLAGS)" "$(CXXFLAGS)" "$(LDFLAGS)" "$(LDLIBS)" "$(BLAS_LIBS)"; $(CXX) --version; } | cksum | awk '{print $$1}')
+OBJECT_DIR := $(BUILD_DIR)/obj/$(CONFIG_HASH)
+SOURCES := $(wildcard src/baselines/*.cpp src/utils/*.cpp)
+OBJECTS := $(SOURCES:%.cpp=$(OBJECT_DIR)/%.o)
+TEST_OBJECTS := $(OBJECTS) $(OBJECT_DIR)/tests/test_baselines.o
+BENCHMARK_OBJECTS := $(OBJECTS) $(OBJECT_DIR)/src/benchmark.o
+TARGET := $(BUILD_DIR)/test_baselines
 BENCHMARK_TARGET := $(BUILD_DIR)/benchmark
+BUILD_CONFIG := $(BUILD_DIR)/config.txt
+DEPS := $(sort $(TEST_OBJECTS:.o=.d) $(BENCHMARK_OBJECTS:.o=.d))
 
-SOURCES := \
-	src/naive.cpp \
-	src/rsr.cpp \
-	src/rsrpp.cpp \
-	src/utils.cpp \
-	src/eigen_baseline.cpp \
-	src/blas_baseline.cpp \
-	src/data_reader.cpp \
-	src/ssr_baseline.cpp \
-	src/tcsc_baseline.cpp \
-	tests/test_ternary_baselines.cpp \
-	tests/test_extended.cpp
+.DEFAULT_GOAL := build
+.PHONY: build test run benchmark data clean help FORCE
 
-OBJECTS := $(SOURCES:%.cpp=$(BUILD_DIR)/%.o)
-BENCHMARK_OBJECTS := $(filter-out $(BUILD_DIR)/tests/test_extended.o $(BUILD_DIR)/tests/test_ternary_baselines.o,$(OBJECTS)) $(BUILD_DIR)/tests/benchmark.o
-DEPS := $(sort $(OBJECTS:.o=.d) $(BENCHMARK_OBJECTS:.o=.d))
+build: $(TARGET) $(BENCHMARK_TARGET)
 
-.DEFAULT_GOAL := all
+$(BUILD_CONFIG): FORCE
+	@mkdir -p "$(BUILD_DIR)"
+	@{ printf '%s\n' "$(CXX)" "$(CPPFLAGS)" "$(CXXFLAGS)" "$(LDFLAGS)" "$(LDLIBS)" "$(BLAS_LIBS)"; $(CXX) --version; } > "$@.tmp"
+	@cmp -s "$@" "$@.tmp" || cp "$@.tmp" "$@"
+	@rm -f "$@.tmp"
 
-.PHONY: all build check-eigen data run test benchmark clean clean-data clean-all help
-
-all: build
-
-build: $(TARGET)
-
-check-eigen:
-	@test -f "$(EIGEN_INCLUDE_DIR)/Eigen/Core" || { \
-		echo 'Eigen headers not found. On macOS: brew install eigen'; \
-		echo 'Or set EIGEN_INCLUDE_DIR to the directory containing Eigen/.'; \
-		exit 1; \
-	}
-
-$(TARGET): $(OBJECTS)
-	mkdir -p "$(dir $@)"
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@"
-
-$(BUILD_DIR)/%.o: %.cpp | check-eigen
-	mkdir -p "$(dir $@)"
+$(OBJECT_DIR)/%.o: %.cpp | $(BUILD_CONFIG)
+	@mkdir -p "$(dir $@)"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c "$<" -o "$@"
 
-$(BENCHMARK_TARGET): $(BENCHMARK_OBJECTS)
-	mkdir -p "$(dir $@)"
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(BENCHMARK_OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@"
+$(TARGET): $(TEST_OBJECTS) FORCE | $(BUILD_CONFIG)
+	@if ! cmp -s "$(BUILD_CONFIG)" "$@.config" || test -n "$(filter-out FORCE,$?)"; then \
+		$(CXX) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@" && cp "$(BUILD_CONFIG)" "$@.config"; \
+	fi
+
+$(BENCHMARK_TARGET): $(BENCHMARK_OBJECTS) FORCE | $(BUILD_CONFIG)
+	@if ! cmp -s "$(BUILD_CONFIG)" "$@.config" || test -n "$(filter-out FORCE,$?)"; then \
+		$(CXX) $(CXXFLAGS) $(LDFLAGS) $(BENCHMARK_OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@" && cp "$(BUILD_CONFIG)" "$@.config"; \
+	fi
+
+test run: $(TARGET)
+	"$(TARGET)" $(TEST_DATA)
+
+benchmark: $(BENCHMARK_TARGET)
+	"$(BENCHMARK_TARGET)" $(BENCHMARK_ARGS)
 
 data:
 	$(PYTHON) scripts/generate_data.py --config "$(CONFIG)" --out "$(DATA_DIR)" $(GENERATE_ARGS)
 
-run test: $(TARGET)
-	"./$(TARGET)" "$(DATA_DIR)"
-
-benchmark: $(BENCHMARK_TARGET)
-	"./$(BENCHMARK_TARGET)" "$(DATA_DIR)" "$(RUNS)" "$(WARMUP_RUNS)" "$(SSR_BLOCK_WIDTH)"
-
 clean:
-	find "$(BUILD_DIR)" -type f \( -name '*.o' -o -name '*.d' -o -name '$(notdir $(BENCHMARK_TARGET))' -o -name '$(notdir $(TARGET))' -o -name 'eigen_baseline_test' \) -delete
-
-clean-data:
-	find data -mindepth 1 -delete
-
-clean-all: clean clean-data
+	@test ! -d "$(BUILD_DIR)" || find "$(BUILD_DIR)" -type f \( -name '*.o' -o -name '*.d' -o -name '*.config' -o -name 'benchmark' -o -name 'test_baselines' -o -name 'config.txt' \) -delete
 
 help:
-	@printf '%s\n' \
-		'make             Build the executable' \
-		'make build       Build the executable' \
-		'                 EIGEN_INCLUDE_DIR=path selects Eigen headers' \
-		'make data 		  Generate sample data using config.json' \
- 		'                 CONFIG=path.json selects another config' \
- 		'                 DATA_DIR=path selects the output directory' \
- 		'                 GENERATE_ARGS="--overwrite" replaces existing data' \
- 		'                 GENERATE_ARGS="--debug-json" also writes expected.json' \
-		'make run         Build and run the executable' \
-		'make test        Build and run correctness tests' \
-		'make benchmark   Run benchmarks (SSR_BLOCK_WIDTH=6, AVX2=1, OPENMP=0)' \
-		'make clean       Remove build artifacts' \
-		'make clean-data  Remove generated data' \
-		'make clean-all   Clean build artifacts and data'
+	@printf '%s\n' 'make build       Build tests and benchmark' 'make test        Run self-contained correctness tests' 'make benchmark   Print benchmark CSV (BENCHMARK_ARGS="--m 1 --k 64 --n 64")' 'make data        Generate optional file-based reference data' 'make clean       Remove artifacts for the selected profile' 'PROFILE=release|scalar|sanitizer|openmp selects an isolated build' 'TEST_DATA=path runs additional dataset checks'
 
 -include $(DEPS)

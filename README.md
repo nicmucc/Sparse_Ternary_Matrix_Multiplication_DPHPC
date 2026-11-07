@@ -1,166 +1,154 @@
-# TODO WEEK 1
-
-## To Implement
-
-**Baselines:**
-- **Ahmed, Matteo:** Think about the best APIs to have and set up the benchmarking infrastructure in C++.
-- **Nicola:** Simple baseline with BLAS GEMM.
-- **Alexandre:** Simple CSR and CSC baselines.
-- **Riccardo:** Use RSR / RSR++ on vector-matrix multiplication to implement sparse matrix-matrix multiplication.
-- Testing infrastructure.
-
-**Research:**
-- Start thinking about an RSR-like algorithm for sparse GEMM.
-- Do some research about CSC and CSR and whether there are papers discussing ternary sparse GEMM.
-
-
-# TODO WEEK 28/10 -> 04/11
-
-## To Implement
-
-- **Matteo & Nicola & Riccardo:** Import missing code, set up benchmarking, c++ exposure, tracking performance, architecture design, roofline plots
-- **Alexandre & Ahmed:** Pytorch implementation of the algorithm
-
----
-
-
 # Sparse Ternary Matrix Multiplication
 
-Efficient computation of `Y = XW + b` and `Y = PReLU(XW + b)`, where `W` is a sparse ternary matrix with entries in `{-1, 0, +1}`.
+CPU computation of `Y = XW`, with FP32 activations and weights in `{-1, 0, +1}`.
+Sparse pattern reduction groups input rows with matching patterns in small column
+blocks, computes each group sum once, and reuses it across the matching outputs.
 
-## Problem
+## Layout
 
-| Symbol | Shape | Description |
-|--------|-------|-------------|
-| `X` | `(M, K)` | Dense input matrix |
-| `W` | `(K, N)` | Sparse ternary weight matrix |
-| `b` | `N` | Dense bias vector |
-| `Y` | `(M, N)` | Output |
-
-Because `W` only contains `-1`, `0` and `+1`, multiplications reduce to additions and subtractions, and zeros can be skipped entirely. `PReLU` follows the [PyTorch implementation](https://pytorch.org/docs/stable/generated/torch.nn.PReLU.html).
-
-## Goal
-
-Accelerate the computation of `Y` by exploiting the structure of the ternary matrix (not by speeding up naive GEMM), using either:
-
-- **OpenMP / MPI** (CPU), or
-- **CUDA** (GPU)
-
-Candidate approaches: a Ternary CSC/CSR format with a sparse kernel, or an algorithm derived from [RSR++](https://arxiv.org/html/2411.06360v3). We are free to design our own sparse format and preprocessing step.
-
-## Planned Structure
-
-```
-.
-├── src/          # Implementation (formats, kernels, PReLU fusion)
-├── baselines/    # Naive GEMM / reference implementations
-├── tests/        # Correctness tests against a reference (e.g. PyTorch)
-├── bench/        # Benchmark scripts and results
-├── docs/         # Algorithm design notes
-└── README.md
+```text
+include/                 Public headers and shared test/benchmark adapters
+src/baselines/           Naive, BLAS, Eigen CSR/CSC, RSR/RSR++, SSR, TCSC
+src/utils/               Dataset reader and pattern utilities
+src/benchmark.cpp        Calibrated benchmark executable
+tests/test_baselines.cpp Self-contained correctness and API checks
+scripts/benchmark.py     Reproducible parameter sweeps
+scripts/generate_data.py Optional file-based reference datasets
+configs/                 Dataset configurations
+build/                   Build profiles, results, and generated files
 ```
 
-## Project Breakdown
+## Build and test
 
-- **20%** Algorithm design
-- **40%** Implementation
-- **40%** Benchmarking
+Requires a C++17 compiler, Make, pkg-config, Eigen, OpenBLAS, and nlohmann-json.
+On macOS: `brew install eigen openblas nlohmann-json pkg-config`.
+Python sweeps use only the standard library. The optional dataset generator
+requires NumPy (`python3 -m pip install -r requirements.txt`).
+
+```sh
+make -j4
+make test
+make PROFILE=scalar test
+make PROFILE=sanitizer CXX=clang++ test
+OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 make PROFILE=openmp test
+```
+
+Profiles use separate directories under `build/`. Compiler identity and flags are
+recorded in `config.txt` and select configuration-specific object paths. Changing
+flags rebuilds as needed; returning to cached flags relinks the correct objects.
+OpenMP requires compiler/runtime support. On macOS, use a compiler with OpenMP
+support for that profile. AVX2 dispatch is runtime-selected on x86; ARM uses scalar
+fallbacks. Sanitizers must be supported by the selected compiler.
+
+Tests need no generated files. Every implementation uses the same deterministic
+cases: rectangular and padded shapes, zero/sign-only weights, empty rows and
+columns, repeated calls into dirty outputs, general FP32 values, cancellation,
+all supported block widths, and a row index of 32768. Focused Eigen, RSR++, and
+SSR/TCSC API checks are retained.
+
+The reference accumulates serialized FP32 inputs in FP64. Comparisons use
+`atol + rtol*abs(reference) + 2*gamma(K+4)*sum(abs(terms))`,
+where `gamma(n)=n*u/(1-n*u)` and `u=2^-24`. This allows accumulation rounding near
+zero without choosing a fixed larger absolute tolerance. Bias contributes to the
+absolute sum in dataset tests. Exact dyadic cases also run with strict comparisons.
+
+Optional external reference data:
+
+```sh
+make data PYTHON=.venv/bin/python
+make test TEST_DATA=data/sample_001
+```
+
+The legacy generator includes bias and PReLU files. Tests compare its linear result;
+PReLU is outside the current kernel benchmark.
+
+## Benchmark
+
+```sh
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 make benchmark
+build/release/benchmark --m 64 --k 512 --n 256 --sparsity 0.95 --width 6 \
+  --samples 15 --min-ms 10 --inputs 1 --seed 42 --pattern-rows 0
+python3 scripts/benchmark.py --out build/results
+```
+
+The C++ executable prints CSV to stdout and errors to stderr. It validates every
+implementation and input against FP64 before timing. All kernels measure
+`Y=XW`; bias and activation are excluded. Inputs, row adapters, Eigen conversions,
+outputs, and available reusable workspace are prepared before timing. RSR/RSR++
+and SSR still allocate temporaries inside their public APIs. All results are
+labelled `api_call_xw` and include each API's internal allocations and necessary
+output copies. They are not allocation-free inner-loop measurements.
+
+Each implementation calibrates a batch to at least `--min-ms`; calibration also
+warms up the complete input pool. Each measured repetition shuffles implementation
+order. CSV reports median, p10, p90, calls per batch, preprocessing time, stored
+weight/metadata bytes, and speedup over BLAS. Preprocessing is measured once per
+format, including weight conversion, and shared across variants. It excludes
+input adaptation and is a setup-cost estimate, not a repeated preprocessing
+microbenchmark. Stored bytes count vector payloads, excluding allocator overhead,
+inputs, output/scratch, and discarded conversion intermediates. TCSC's public
+format retains both basic and merged metadata, so both are counted.
+
+`--inputs 1` measures warm reuse. Larger pools rotate distinct prepared inputs;
+weights remain reused. This does not forcibly flush caches. The logical FP32 pool
+size is reported; row and Eigen adapters retain additional input copies. Select a
+pool larger than the target machine's cache to study changing-input workloads.
+
+`--pattern-rows 0` generates independent weight rows. A positive value repeats
+that many prototype rows, exposing pattern reuse at the same expected sparsity.
+CSV reports actual sparsity and the total distinct nonzero ternary patterns across
+column blocks. Both RSR and SSR use `--width`, enabling explicit block-size sweeps.
+An optional `--dataset path` uses existing X/W files for the first input, with
+additional inputs generated from the seed. Dataset bias/activation are excluded.
+
+## Sweeps
+
+`scripts/benchmark.py` builds the requested executable and sweeps shapes, sparsity,
+width, prototype-row count, seeds, and input-pool sizes. It writes
+`benchmark.csv` and `run.json` containing CPU/platform information, compiler flags,
+commit and dirty status, thread settings, and executed commands.
+
+```sh
+python3 scripts/benchmark.py --shapes 1x64x64 17x257x37 \
+  --sparsities 0.5 0.95 --widths 4 6 --pattern-rows 0 8 \
+  --seeds 42 43 --input-counts 1 8 --threads 1
+python3 scripts/benchmark.py --large --out build/large-results
+```
+
+`--large` adds a 32x4096x4096 case whose dense integer weights alone occupy
+64 MiB. Prepared formats need substantially more memory. Compare this case with
+the small presets on the target CPU; cache sizes vary. Run timing experiments
+without competing builds or other benchmark processes. Single-thread comparisons
+are the default; use `--profile openmp` for thread-scaling experiments.
+
+## Baseline provenance
+
+SSR and TCSC adapt selected FP32 CPU code from
+[fpgasystems/ternaryLLM](https://github.com/fpgasystems/ternaryLLM/tree/68d384425261d60bfbde5ff079c33a474c1eb28e),
+commit `68d384425261d60bfbde5ff079c33a474c1eb28e`.
+Copyright (c) 2025 FPGA @ Systems Group, ETH Zurich, MIT license.
+SSR contributors: Adeline Pittet, Valerie Verdan, Shien Zhu.
+CPU implementation contributors: Mila Kjoseva, Shien Zhu.
+
+Local adaptations include rectangular row-major interfaces, corrected SSR strides
+and batch tails, padded-output cropping, runtime AVX2 dispatch, 32-bit TCSC indices,
+unaligned SIMD accesses, column-group tails, and opt-in OpenMP.
+See [RSR++](https://arxiv.org/html/2411.06360v3) for the original algorithm.
 
 ## Team
 
-- Nicola Mucciaccio
-- Matteo Meciani
-- Riccardo Polo
-- Alexandre Raybaut
-- Ahmed Tlili
+Nicola Mucciaccio, Matteo Meciani, Riccardo Polo, Alexandre Raybaut, Ahmed Tlili.
+Supervisor: Tanja Srindran.
 
-**Supervisor:** Tanja Srindran (tanja.srindran@inf.ethz.ch)
-
-## References
-
-1. [PyTorch documentation: PReLU](https://pytorch.org/docs/stable/generated/torch.nn.PReLU.html)
-2. [An Efficient Matrix Multiplication Algorithm for Accelerating Inference in Binary and Ternary Neural Networks (RSR++)](https://arxiv.org/html/2411.06360v3)
-
-
-## Imported CPU baselines
-
-SSR and TCSC follow the same header/source layout as the other baselines:
-
-```text
-include/ssr_baseline.h          Public SSR interface and preprocessed weights
-include/tcsc_baseline.h         Public TCSC interface and preprocessed weights
-src/ssr_baseline.cpp            SSR preprocessing, basic, AVX2 unrolled and tree
-src/tcsc_baseline.cpp           TCSC formats, preprocessing, basic and AVX2 merged
-src/ternary_baseline_common.h   Internal dimension checks and AVX2 detection
-tests/test_ternary_baselines.cpp Correctness and edge-case checks
-licenses/ternaryllm.LICENSE     Original upstream MIT license
-```
-
-Each algorithm's implementation is self-contained in its source file. Imported
-helpers are private to that file; test and benchmark code use the public headers.
-All variants compute row-major `Y = XW`, with FP32 activations and ternary weights.
-Bias and activation are applied by the caller. Preprocess weights once and reuse
-the returned structure; keep its fields unchanged and use distinct input/output
-vectors. Dimensions and flattened offsets must fit signed 32-bit indexing.
+## Plot results
 
 ```sh
-make test
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 make benchmark RUNS=101 WARMUP_RUNS=20
-# SSR segment width: 1..8; default 6; specialized tree kernels cover 2..6.
-make benchmark SSR_BLOCK_WIDTH=4
-# Use separate build directories when changing compiler/SIMD/threading flags.
-make BUILD_DIR=build/scalar AVX2=0 test
-OMP_NUM_THREADS=2 make BUILD_DIR=build/openmp OPENMP=1 test
+python3 scripts/plot_benchmarks.py --csv build/results/benchmark.csv
 ```
 
-The benchmark adds SSR basic, SSR unrolled, SSR tree, TCSC basic, and TCSC merged
-alongside Naive, BLAS, Eigen CSR/CSC, RSR, and RSR++. It prints the selected SIMD
-backend and SSR tree path. GCC/Clang x86 builds select AVX2 at runtime; other
-machines and `AVX2=0` builds use the basic scalar implementations. Tree widths
-1, 7, and 8 use the AVX2 unrolled kernel when available. OpenMP is disabled by
-default; set BLAS and OpenMP thread counts explicitly for comparisons.
-
-Weight preprocessing and input conversion happen outside timing. SSR's upstream
-temporary allocations and output copy remain inside timing; TCSC reuses its
-output buffer. All variants use the same inputs, weights, and bias. The correctness
-suite covers the existing reference dataset plus zero/sign-only weights, empty
-rows/columns, partial SIMD batches and column groups, all supported SSR widths,
-repeated dirty outputs, invalid inputs, and a row index of 32768.
-
-### Upstream source and local changes
-
-Selected code comes from
-[fpgasystems/ternaryLLM](https://github.com/fpgasystems/ternaryLLM/tree/68d384425261d60bfbde5ff079c33a474c1eb28e),
-commit `68d384425261d60bfbde5ff079c33a474c1eb28e`.
-The original [MIT license](licenses/ternaryllm.LICENSE) and copyright are preserved:
-Copyright (c) 2025 FPGA @ Systems Group, ETH Zurich.
-
-| Local source | Upstream source and imported implementation |
-| --- | --- |
-| `src/ssr_baseline.cpp` | `SSR/SSR/ssr.cpp`: `handle_block_ssr`, `ssr_preprocess`; `SSR/SSR/ssr.h`: scalar SSR; `SSR/SSR/ssr_vec.cpp`: FP32 unroll16 and tree specializations L2 through L6 |
-| `src/tcsc_baseline.cpp` | `ternaryLLM_CPU/src/TCSC.hpp`: `SparseFormat`, first `MergedTCSC_Group` constructor; `GEMM_CPU_FP32.cpp`: row-major `TCSC_Naive_oneFor` and `TCSC_Merged_GroupMin_1xG8_AVX2` |
-| `src/ternary_baseline_common.h` | Local validation, compiler feature guards, and runtime AVX2 detection |
-
-SSR contributors: Adeline Pittet, Valerie Verdan, Shien Zhu.
-CPU implementation contributors: Mila Kjoseva, Shien Zhu.
-See the upstream README for the SSR DATE 2026 and ternaryLLM TECS 2026 citations.
-
-The imported arithmetic is retained with these compatibility/correctness changes:
-
-- Adapt to the repository's flat row-major types and keep imported helpers private.
-- Correct scalar SSR input/permutation strides from segment width `L` to inner
-  dimension `K`, accept the activation vector by const reference, and share its
-  row helper with the SIMD batch cleanup.
-- Process complete eight-row batches in the generated SSR tree kernels and use
-  scalar cleanup for remaining rows. Crop padded output columns to `M x N`.
-- Use function-level AVX2 target attributes and aligned SIMD scratch storage.
-- Widen TCSC row indices from signed 16-bit to signed 32-bit and use unaligned
-  SIMD loads/stores for ordinary vector buffers and arbitrary output strides.
-- Build merged metadata for complete groups of eight columns; compute the
-  remaining columns with scalar TCSC. Use GroupMin with non-interleaved indices.
-- Guard OpenMP pragmas so threading is opt-in.
-
-The import includes the selected FP32 CPU implementations. INT8, AVX-512,
-Uniform TCSC, hardware-specific parameter lookup tables, model code, and upstream
-benchmark executables are outside this subset. The retained TCSC constructor
-contains other grouping branches, which the public interface does not expose.
+Requires Matplotlib and NumPy. Writes four PNG plots, a combined PDF, and a
+short summary under `build/results/plots/`. The overview holds width 6,
+warm inputs, and independent rows fixed; override with `--width`, `--mode`,
+and `--pattern-rows`. The effects plot pairs configurations before aggregating.
+Seed ratios use geometric means. Target sparsity comes from the adjacent
+`run.json`; actual sparsity can vary by seed. Padded CSV columns are accepted.
