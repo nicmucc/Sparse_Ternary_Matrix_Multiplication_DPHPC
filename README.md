@@ -10,33 +10,34 @@ blocks, computes each group sum once, and reuses it across the matching outputs.
 include/                 Public headers and shared test/benchmark adapters
 src/baselines/           Naive, BLAS, Eigen CSR/CSC, RSR/RSR++, SSR, TCSC
 src/utils/               Dataset reader and pattern utilities
-src/benchmark.cpp        Calibrated benchmark executable
-tests/test_baselines.cpp Self-contained correctness and API checks
+src/benchmark.cpp          Calibrated benchmark executable
+src/test_baselines.cpp     Self-contained correctness and API checks
 scripts/plot_benchmarks.py Plots for `make sweep` results
-scripts/generate_data.py Optional file-based reference datasets
-configs/                 Dataset configurations
-build/                   Build profiles, results, and generated files
+scripts/generate_data.py   Optional file-based reference datasets
+configs/                   Dataset configurations
+build/                     Build profiles and sweep results
+out/plots/                 Generated plots
 ```
 
 ## Build and test
 
 Requires a C++17 compiler, Make, pkg-config, Eigen, OpenBLAS, and nlohmann-json.
 On macOS: `brew install eigen openblas nlohmann-json pkg-config`.
-Python sweeps use only the standard library. The optional dataset generator
-requires NumPy (`python3 -m pip install -r requirements.txt`).
+Plotting requires Matplotlib. The optional dataset generator requires NumPy
+(`python3 -m pip install -r requirements.txt`).
 
 ```sh
 make -j4
 make test
-make PROFILE=scalar test
-make PROFILE=sanitizer CXX=clang++ test
-OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 make PROFILE=openmp test
+make PROFILE=native test                 # -march=native / -mcpu=native
+make PROFILE=scalar test                 # imported AVX2 kernels disabled
+make PROFILE=sanitizer CXX=clang++ test  # ASan + UBSan
+make PROFILE=openmp THREADS=2 test
 ```
 
-Profiles use separate directories under `build/`. Compiler identity, flags, and
-the source-file list are recorded in `config.txt` and select configuration-specific
-object paths. Changing
-flags rebuilds as needed; returning to cached flags relinks the correct objects.
+Each profile builds in its own `build/<profile>/`. Compiler, flags, and source
+list are recorded in `config.txt`; if any of them change, that profile's objects
+are rebuilt. `make clean` removes the selected profile's directory.
 OpenMP requires compiler/runtime support. On macOS, use a compiler with OpenMP
 support for that profile. AVX2 dispatch is runtime-selected on x86; ARM uses scalar
 fallbacks. Sanitizers must be supported by the selected compiler.
@@ -68,7 +69,7 @@ PReLU is outside the current kernel benchmark.
 ## Benchmark
 
 ```sh
-OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 make benchmark
+make benchmark BENCHMARK_ARGS="--m 64 --k 512 --n 256"
 build/release/benchmark --m 64 --k 512 --n 256 --sparsity 0.95 --width 6 \
   --samples 15 --min-ms 10 --inputs 1 --seed 42 --pattern-rows 0
 ```
@@ -115,16 +116,19 @@ additional inputs generated from the seed. Dataset bias/activation are excluded;
 ## Sweeps
 
 ```sh
-make sweep    # runs tests, then writes build/results/{sparsity,size}.csv
-make plot     # writes out/plots/*.pdf
+make plot             # runs missing or stale sweeps, then writes out/plots/*.pdf
+make sweep            # re-measures both sweeps (sweep-sparsity / sweep-size for one)
 ```
 
-`make sweep` runs two sweeps. The first varies sparsity (`SPARSITIES`) at a fixed
+There are two sweeps. The first varies sparsity (`SPARSITIES`) at a fixed
 `SWEEP_M x SWEEP_K x SWEEP_N` (default 16x1024x1024). The second varies `K = N`
 (`SIZES`, default 256 to 2048) at `SWEEP_M` and `SIZE_SPARSITY` (default 0.95).
 `SWEEP_ARGS` is passed to every run (default `--width 6 --samples 15 --min-ms 10`),
 and `THREADS` sets `OMP_NUM_THREADS` and `OPENBLAS_NUM_THREADS` (default 1).
-Override any of them on the command line:
+Results go to `build/results/{sparsity,size}.csv`. `make plot` re-measures a sweep
+only if its CSV is missing, the benchmark was rebuilt, or its settings changed.
+Sweeps always run one at a time, even under `make -j`. Override any setting on
+the command line:
 
 ```sh
 make sweep SPARSITIES="0.9 0.99" SIZES="512 1024 2048 4096" RESULTS_DIR=build/run2

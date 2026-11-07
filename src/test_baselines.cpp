@@ -154,6 +154,8 @@ void run_rsr_api_checks() {
     }
 }
 
+// Runs every registered kernel twice on X*W and compares against `expected`
+// (which includes the bias). exact = true requires bit-exact results.
 void check_case(const vec_t& X, const tern_t& W, const vec_t& bias,
                 const vec_t& expected, int M, int K, int N, int width,
                 double atol = 1e-6, double rtol = 1e-5, bool exact = false) {
@@ -171,6 +173,10 @@ void check_case(const vec_t& X, const tern_t& W, const vec_t& bias,
             baseline_suite::validate(impl, 0, reference, tolerances);
 }
 
+// Weight modes: 0 all zero, 1 all +1, 2 all -1, 3 random ternary, 4 random with
+// empty rows/columns, 5 structured SIMD groups, 6 single row at index K-1,
+// 7 random FP32 inputs, 8 heavy cancellation. Modes 0-6 use exactly
+// representable inputs and must match exactly.
 void generated_case(int M, int K, int N, int width, int mode, std::mt19937& rng) {
     vec_t X(static_cast<std::size_t>(M) * K);
     tern_t W(static_cast<std::size_t>(K) * N);
@@ -197,7 +203,6 @@ void generated_case(int M, int K, int N, int width, int mode, std::mt19937& rng)
         // Row 32768 must retain its full 32-bit index.
         for (int col = 0; col < N; ++col) W[(K - 1) * N + col] = col % 2 ? -1 : 1;
     }
-
     if (mode == 7) {
         std::uniform_real_distribution<float> values(-3.0f, 3.0f);
         for (float& x : X) x = values(rng);
@@ -209,6 +214,7 @@ void generated_case(int M, int K, int N, int width, int mode, std::mt19937& rng)
                 X[row * K + k] = (k % 2 ? -1.0f : 1.0f) + (k % 7) * 0.0001f;
     }
 
+    // FP64 reference, rounded to FP32
     vec_t expected(static_cast<std::size_t>(M) * N);
     for (int row = 0; row < M; ++row) {
         for (int col = 0; col < N; ++col) {
@@ -229,6 +235,8 @@ void check_invalid_inputs() {
         catch (const std::invalid_argument&) { return; }
         throw std::runtime_error("SSR/TCSC accepted an invalid input");
     };
+
+    // Invalid preprocessing arguments
     for (int width : {0, 9}) {
         must_reject([&] { ssr_baseline::preprocess({1}, 1, 1, width); });
     }
@@ -239,6 +247,7 @@ void check_invalid_inputs() {
     must_reject([] { ssr_baseline::preprocess({1}, 0, 1); });
     must_reject([] { tcsc_baseline::preprocess({1}, 1, -1); });
 
+    // Wrong input size, M = 0, and aliased input/output
     const auto ssr = ssr_baseline::preprocess({1, -1}, 2, 1);
     const auto tcsc = tcsc_baseline::preprocess({1, -1}, 2, 1);
     using SsrKernel = void (*)(const vec_t&, const ssr_baseline::Weights&, vec_t&, int);
@@ -251,6 +260,7 @@ void check_invalid_inputs() {
         vec_t alias{1, 2};
         must_reject([&] { kernel(alias, ssr, alias, 1); });
     }
+
     using TcscKernel = void (*)(const vec_t&, const tcsc_baseline::Weights&, vec_t&, int);
     for (TcscKernel kernel : {tcsc_baseline::multiply_basic,
                               tcsc_baseline::multiply_merged}) {
@@ -276,19 +286,27 @@ void run_generated_checks() {
     for (int width = 1; width <= 8; ++width) {
         generated_case(17, 19, 19, width, 5, rng);
     }
+
     generated_case(2, 32769, 9, 6, 6, rng);
+
+    // Large-K FP32 and cancellation cases with several seeds
     for (int seed : {17, 42, 123}) {
         std::mt19937 extra(seed);
         generated_case(17, 4096, 9, 6, 7, extra);
         generated_case(17, 4096, 9, 6, 8, extra);
     }
+
     check_invalid_inputs();
 }
 
+// Checks the benchmark harness itself: registration and validate() rejecting
+// broken kernels.
 void run_harness_checks() {
     using namespace baseline_suite;
     static_assert(!std::is_copy_constructible<Suite>::value);
     static_assert(!std::is_move_constructible<Suite>::value);
+
+    // All kernels registered and correct on a 1x1x1 case
     const std::vector<vec_t> inputs{{1.0f}, {-2.0f}};
     const tern_t weights{1};
     Suite suite(inputs, weights, 1, 1, 1, 6);
@@ -303,13 +321,18 @@ void run_harness_checks() {
     }
     if (!std::includes(registered.begin(), registered.end(), required.begin(), required.end()))
         throw runtime_error("Missing baseline registration");
+
     const auto must_reject = [](const std::function<void()>& call) {
         try { call(); }
         catch (const std::exception&) { return; }
         throw runtime_error("Harness accepted an invalid kernel");
     };
+
+    // Duplicate registration
     suite.kernels.push_back(suite.kernels.front());
     must_reject([&] { validate_registry(suite.kernels); });
+
+    // No-op kernel, partial write, wrong output size, output shrunk by run
     vec_t output{1.0f, 2.0f};
     Kernel broken{"broken", [](std::size_t) {},
         [&] { return OutputView{output.data(), output.size()}; }, 0, 0, "test"};
@@ -321,6 +344,8 @@ void run_harness_checks() {
     broken.output = [&] { return OutputView{output.data(), output.size()}; };
     broken.run = [&](std::size_t) { output.resize(1); };
     must_reject([&] { validate(broken, 0, {1.0, 2.0}, {0.0, 0.0}); });
+
+    // Invalid suite construction: no inputs, negative M, wrong weight size
     must_reject([&] { Suite invalid({}, weights, 1, 1, 1, 6); });
     must_reject([&] { Suite invalid(inputs, weights, -1, 1, 1, 6); });
     must_reject([&] { Suite invalid(inputs, weights, 1, 2, 1, 6); });

@@ -1,123 +1,203 @@
-CXX ?= c++
-PYTHON ?= python3
-PROFILE ?= release
+# Run `make help` for the list of targets.
+
+# --- Settings (override on the command line) --------------------------------
+
+# release | native | scalar | sanitizer | openmp
+PROFILE   ?= release
 BUILD_DIR ?= build/$(PROFILE)
-CONFIG ?= configs/temporary_config.json
-DATA_DIR ?= data/sample_001
-TEST_DATA ?=
+PYTHON    ?= python3
+THREADS   ?= 1
+
+TEST_DATA      ?=
 BENCHMARK_ARGS ?=
-GENERATE_ARGS ?=
-AVX2 ?= 1
-OPENMP ?= 0
-THREADS ?= 1
+
 RESULTS_DIR ?= build/results
-PLOT_DIR ?= out/plots
-SWEEP_ARGS ?= --width 6 --samples 15 --min-ms 10
-# Sparsity sweep at a fixed M x K x N
-SWEEP_M ?= 16
-SWEEP_K ?= 1024
-SWEEP_N ?= 1024
+PLOT_DIR    ?= out/plots
+SWEEP_ARGS  ?= --width 6 --samples 15 --min-ms 10
+
+# Sparsity sweep at SWEEP_M x SWEEP_K x SWEEP_N
+SWEEP_M    ?= 16
+SWEEP_K    ?= 1024
+SWEEP_N    ?= 1024
 SPARSITIES ?= 0.5 0.7 0.8 0.9 0.95 0.98 0.99
-# Size sweep: K = N = each value, at fixed M and sparsity
-SIZES ?= 256 512 1024 2048
+
+# Size sweep with K = N = each value
+SIZES         ?= 256 512 1024 2048
 SIZE_SPARSITY ?= 0.95
 
-ifeq ($(PROFILE),scalar)
-AVX2 := 0
+CONFIG        ?= configs/temporary_config.json
+DATA_DIR      ?= data/sample_001
+GENERATE_ARGS ?=
+
+# --- Flags -------------------------------------------------------------------
+
+OPT_FLAGS := -O3
+AVX2      := 1
+OPENMP    := 0
+
+ifeq ($(PROFILE),release)
+else ifeq ($(PROFILE),native)
+  OPT_FLAGS += $(if $(filter arm64 aarch64,$(shell uname -m)),-mcpu=native,-march=native)
+else ifeq ($(PROFILE),scalar)
+  AVX2 := 0
 else ifeq ($(PROFILE),sanitizer)
-CXXFLAGS ?= -O1 -g -std=c++17 -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer
+  OPT_FLAGS := -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer
 else ifeq ($(PROFILE),openmp)
-OPENMP := 1
-else ifneq ($(PROFILE),release)
-$(error PROFILE must be release, scalar, sanitizer, or openmp)
+  OPENMP := 1
+else
+  $(error PROFILE must be release, native, scalar, sanitizer, or openmp)
 endif
 
-CXXFLAGS ?= -O3 -std=c++17 -Wall -Wextra
-EIGEN_CPPFLAGS ?= $(shell pkg-config --cflags eigen3)
-BLAS_CPPFLAGS ?= $(shell pkg-config --cflags-only-I openblas)
-BLAS_LIBS ?= $(shell pkg-config --libs openblas)
-CPPFLAGS += -Iinclude $(EIGEN_CPPFLAGS) $(BLAS_CPPFLAGS) $(shell pkg-config --cflags nlohmann_json)
-ifeq ($(AVX2),0)
-CPPFLAGS += -DTERNARY_BASELINE_DISABLE_AVX2
-endif
 ifeq ($(OPENMP),1)
-CXXFLAGS += -fopenmp
-LDFLAGS += -fopenmp
+  OPT_FLAGS += -fopenmp
 endif
 
-SOURCES := $(wildcard src/baselines/*.cpp src/utils/*.cpp)
-CONFIG_HASH := $(shell { printf '%s\n' "$(CXX)" "$(CPPFLAGS)" "$(CXXFLAGS)" "$(LDFLAGS)" "$(LDLIBS)" "$(BLAS_LIBS)" "$(SOURCES)"; $(CXX) --version; } | cksum | awk '{print $$1}')
-OBJECT_DIR := $(BUILD_DIR)/obj/$(CONFIG_HASH)
-OBJECTS := $(SOURCES:%.cpp=$(OBJECT_DIR)/%.o)
-TEST_OBJECTS := $(OBJECTS) $(OBJECT_DIR)/tests/test_baselines.o
-BENCHMARK_OBJECTS := $(OBJECTS) $(OBJECT_DIR)/src/benchmark.o
-TARGET := $(BUILD_DIR)/test_baselines
-BENCHMARK_TARGET := $(BUILD_DIR)/benchmark
+# `:=` so pkg-config runs once, not on every use
+DEP_CPPFLAGS ?= $(shell pkg-config --cflags-only-I eigen3 nlohmann_json openblas)
+BLAS_LIBS    ?= $(shell pkg-config --libs openblas)
+DEP_CPPFLAGS := $(DEP_CPPFLAGS)
+BLAS_LIBS    := $(BLAS_LIBS)
+
+CXXFLAGS ?= $(OPT_FLAGS) -std=c++17 -Wall -Wextra
+CPPFLAGS += -Iinclude $(DEP_CPPFLAGS)
+LDLIBS   += $(BLAS_LIBS)
+
+ifeq ($(AVX2),0)
+  CPPFLAGS += -DTERNARY_BASELINE_DISABLE_AVX2
+endif
+
+# --- Files -------------------------------------------------------------------
+
+OBJ_DIR    := $(BUILD_DIR)/obj
+SOURCES    := $(wildcard src/baselines/*.cpp src/utils/*.cpp)
+OBJECTS    := $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
+TEST_MAIN  := $(OBJ_DIR)/src/test_baselines.o
+BENCH_MAIN := $(OBJ_DIR)/src/benchmark.o
+
+TEST_BIN     := $(BUILD_DIR)/test_baselines
+BENCH_BIN    := $(BUILD_DIR)/benchmark
 BUILD_CONFIG := $(BUILD_DIR)/config.txt
-DEPS := $(sort $(TEST_OBJECTS:.o=.d) $(BENCHMARK_OBJECTS:.o=.d))
+TESTS_PASSED := $(BUILD_DIR)/tests.passed
 
-.DEFAULT_GOAL := build
-.PHONY: build test run benchmark sweep plot data clean help FORCE
+SPARSITY_CSV  := $(RESULTS_DIR)/sparsity.csv
+SIZE_CSV      := $(RESULTS_DIR)/size.csv
+SPARSITY_ARGS := $(RESULTS_DIR)/sparsity.args
+SIZE_ARGS     := $(RESULTS_DIR)/size.args
 
-build: $(TARGET) $(BENCHMARK_TARGET)
+RUN_ENV := OMP_NUM_THREADS=$(THREADS) OPENBLAS_NUM_THREADS=$(THREADS)
 
-$(BUILD_CONFIG): FORCE
-	@mkdir -p "$(BUILD_DIR)"
-	@{ printf '%s\n' "$(CXX)" "$(CPPFLAGS)" "$(CXXFLAGS)" "$(LDFLAGS)" "$(LDLIBS)" "$(BLAS_LIBS)" "$(SOURCES)"; $(CXX) --version; } > "$@.tmp"
-	@cmp -s "$@" "$@.tmp" || cp "$@.tmp" "$@"
-	@rm -f "$@.tmp"
+# If compiler, flags, or source list changed since the last build, drop the old
+# build. Checked here rather than via timestamps because make 3.81 (macOS) only
+# compares whole seconds and can miss a change right after a build.
+BUILD_STATE := $(CXX) | $(CPPFLAGS) | $(CXXFLAGS) | $(LDFLAGS) | $(LDLIBS) | $(SOURCES) | $(shell $(CXX) --version | head -1)
+ifneq ($(BUILD_STATE),$(shell cat "$(BUILD_CONFIG)" 2>/dev/null))
+  $(shell rm -rf "$(OBJ_DIR)" "$(TEST_BIN)" "$(BENCH_BIN)" "$(TESTS_PASSED)"; mkdir -p "$(BUILD_DIR)"; printf '%s' '$(BUILD_STATE)' > "$(BUILD_CONFIG)")
+endif
 
-$(OBJECT_DIR)/%.o: %.cpp | $(BUILD_CONFIG)
-	@mkdir -p "$(dir $@)"
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c "$<" -o "$@"
+# --- Helpers -----------------------------------------------------------------
 
-$(TARGET): $(TEST_OBJECTS) FORCE | $(BUILD_CONFIG)
-	@if ! cmp -s "$(BUILD_CONFIG)" "$@.config" || test -n "$(filter-out FORCE,$?)"; then \
-		$(CXX) $(CXXFLAGS) $(LDFLAGS) $(TEST_OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@" && cp "$(BUILD_CONFIG)" "$@.config"; \
-	fi
-
-$(BENCHMARK_TARGET): $(BENCHMARK_OBJECTS) FORCE | $(BUILD_CONFIG)
-	@if ! cmp -s "$(BUILD_CONFIG)" "$@.config" || test -n "$(filter-out FORCE,$?)"; then \
-		$(CXX) $(CXXFLAGS) $(LDFLAGS) $(BENCHMARK_OBJECTS) $(LDLIBS) $(BLAS_LIBS) -o "$@" && cp "$(BUILD_CONFIG)" "$@.config"; \
-	fi
-
-test run: $(TARGET)
-	"$(TARGET)" $(TEST_DATA)
-
-benchmark: $(TARGET) $(BENCHMARK_TARGET)
-	"$(TARGET)" $(TEST_DATA)
-	"$(BENCHMARK_TARGET)" $(BENCHMARK_ARGS)
-
-# Runs the benchmark once per sweep point and concatenates the CSVs (header kept once).
-BENCH_ENV := OMP_NUM_THREADS=$(THREADS) OPENBLAS_NUM_THREADS=$(THREADS)
-define append_run
-	echo "$(1)"; $(BENCH_ENV) "$(BENCHMARK_TARGET)" $(1) $(SWEEP_ARGS) > "$$out.tmp" || exit 1; \
-	if [ -f "$$out" ]; then tail -n +2 "$$out.tmp" >> "$$out"; else mv "$$out.tmp" "$$out"; fi
+# $(call write_if_changed,file,lines): only touch `file` when its content changes
+define write_if_changed
+@mkdir -p "$(dir $(1))"
+@printf '%s\n' $(2) > "$(1).tmp"
+@if cmp -s "$(1)" "$(1).tmp"; then rm "$(1).tmp"; else mv "$(1).tmp" "$(1)"; fi
 endef
 
-sweep: $(TARGET) $(BENCHMARK_TARGET)
-	"$(TARGET)"
-	@mkdir -p "$(RESULTS_DIR)"
-	@out="$(RESULTS_DIR)/sparsity.csv"; rm -f "$$out"; \
-	for s in $(SPARSITIES); do \
-		$(call append_run,--m $(SWEEP_M) --k $(SWEEP_K) --n $(SWEEP_N) --sparsity $$s); \
-	done; rm -f "$$out.tmp"
-	@out="$(RESULTS_DIR)/size.csv"; rm -f "$$out"; \
-	for s in $(SIZES); do \
-		$(call append_run,--m $(SWEEP_M) --k $$s --n $$s --sparsity $(SIZE_SPARSITY)); \
-	done; rm -f "$$out.tmp"
-	@echo "Results in $(RESULTS_DIR)/sparsity.csv and $(RESULTS_DIR)/size.csv"
+# $(call run_sweep,csv,values,args with $$x): one run per value, one CSV header
+define run_sweep
+@rm -f "$(1).tmp"
+@for x in $(2); do \
+	echo "benchmark $(3)"; \
+	$(RUN_ENV) "$(BENCH_BIN)" $(3) $(SWEEP_ARGS) > "$(1).run" || exit 1; \
+	if [ -f "$(1).tmp" ]; then tail -n +2 "$(1).run" >> "$(1).tmp"; \
+	else mv "$(1).run" "$(1).tmp"; fi; \
+done; \
+rm -f "$(1).run"; mv "$(1).tmp" "$(1)"
+endef
 
-plot:
+SPARSITY_LINES = "$(PROFILE)" "$(RUN_ENV)" "$(SWEEP_ARGS)" "$(SWEEP_M) $(SWEEP_K) $(SWEEP_N)" "$(SPARSITIES)"
+SIZE_LINES     = "$(PROFILE)" "$(RUN_ENV)" "$(SWEEP_ARGS)" "$(SWEEP_M)" "$(SIZES)" "$(SIZE_SPARSITY)"
+
+# --- Build -------------------------------------------------------------------
+
+.DEFAULT_GOAL := build
+.PHONY: build test benchmark sweep sweep-sparsity sweep-size plot data clean help FORCE
+
+build: $(TEST_BIN) $(BENCH_BIN)
+
+$(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p "$(@D)"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c "$<" -o "$@"
+
+$(TEST_BIN): $(OBJECTS) $(TEST_MAIN)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o "$@"
+
+$(BENCH_BIN): $(OBJECTS) $(BENCH_MAIN)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o "$@"
+
+-include $(OBJECTS:.o=.d) $(TEST_MAIN:.o=.d) $(BENCH_MAIN:.o=.d)
+
+# --- Test and benchmark ------------------------------------------------------
+
+test: $(TEST_BIN)
+	$(RUN_ENV) "$(TEST_BIN)" $(TEST_DATA)
+
+$(TESTS_PASSED): $(TEST_BIN)
+	$(RUN_ENV) "$(TEST_BIN)"
+	@touch "$@"
+
+benchmark: $(TESTS_PASSED) $(BENCH_BIN)
+	$(RUN_ENV) "$(BENCH_BIN)" $(BENCHMARK_ARGS)
+
+# --- Sweeps and plots --------------------------------------------------------
+
+# A CSV is re-measured when missing, when the benchmark was rebuilt, or when
+# its sweep settings changed. `make sweep` always re-measures.
+
+$(SPARSITY_ARGS): FORCE
+	$(call write_if_changed,$@,$(SPARSITY_LINES))
+
+$(SIZE_ARGS): FORCE
+	$(call write_if_changed,$@,$(SIZE_LINES))
+
+$(SPARSITY_CSV): $(BENCH_BIN) $(TESTS_PASSED) $(SPARSITY_ARGS)
+	$(call run_sweep,$@,$(SPARSITIES),--m $(SWEEP_M) --k $(SWEEP_K) --n $(SWEEP_N) --sparsity $$x)
+
+$(SIZE_CSV): $(BENCH_BIN) $(TESTS_PASSED) $(SIZE_ARGS)
+	$(call run_sweep,$@,$(SIZES),--m $(SWEEP_M) --k $$x --n $$x --sparsity $(SIZE_SPARSITY))
+
+sweep:          SWEEP_CSVS = $(SPARSITY_CSV) $(SIZE_CSV)
+sweep-sparsity: SWEEP_CSVS = $(SPARSITY_CSV)
+sweep-size:     SWEEP_CSVS = $(SIZE_CSV)
+
+# Build in parallel, then measure with -j1 so sweeps never run concurrently.
+sweep sweep-sparsity sweep-size: $(BENCH_BIN) $(TESTS_PASSED)
+	@rm -f $(SWEEP_CSVS)
+	@$(MAKE) --no-print-directory -j1 $(SWEEP_CSVS)
+
+plot: $(BENCH_BIN) $(TESTS_PASSED)
+	@$(MAKE) --no-print-directory -j1 $(SPARSITY_CSV) $(SIZE_CSV)
 	$(PYTHON) scripts/plot_benchmarks.py "$(RESULTS_DIR)" "$(PLOT_DIR)"
+
+# --- Misc --------------------------------------------------------------------
 
 data:
 	$(PYTHON) scripts/generate_data.py --config "$(CONFIG)" --out "$(DATA_DIR)" $(GENERATE_ARGS)
 
 clean:
-	@test ! -d "$(BUILD_DIR)" || find "$(BUILD_DIR)" -type f \( -name '*.o' -o -name '*.d' -o -name '*.config' -o -name 'benchmark' -o -name 'test_baselines' -o -name 'config.txt' \) -delete
+	rm -rf "$(BUILD_DIR)"
 
 help:
-	@printf '%s\n' 'make build       Build tests and benchmark' 'make test        Run self-contained correctness tests' 'make benchmark   Print benchmark CSV (BENCHMARK_ARGS="--m 1 --k 64 --n 64")' 'make sweep       Run sparsity and size sweeps into RESULTS_DIR' 'make plot        Plot sweep results into PLOT_DIR''make data        Generate optional file-based reference data' 'make clean       Remove artifacts for the selected profile' 'PROFILE=release|scalar|sanitizer|openmp selects an isolated build' 'TEST_DATA=path runs additional dataset checks'
-
--include $(DEPS)
+	@printf '%s\n' \
+		'make                 Build tests and benchmark' \
+		'make test            Run correctness tests (TEST_DATA=dir adds dataset checks)' \
+		'make benchmark       One run, CSV to stdout (BENCHMARK_ARGS="--m 1 --k 64 --n 64")' \
+		'make sweep           Re-measure both sweeps into RESULTS_DIR' \
+		'make sweep-sparsity  Re-measure only the sparsity sweep' \
+		'make sweep-size      Re-measure only the size sweep' \
+		'make plot            Plot into PLOT_DIR (runs sweeps if missing or stale)' \
+		'make data            Generate optional file-based reference data' \
+		'make clean           Remove the build directory of the selected profile' \
+		'' \
+		'PROFILE=release|native|scalar|sanitizer|openmp   separate build per profile' \
+		'THREADS=n                                        threads for test/benchmark runs'
