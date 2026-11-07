@@ -5,11 +5,12 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "baseline_suite.h"

@@ -57,12 +57,13 @@ def configuration_effects(rows, names):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--csv", type=Path, default=Path("build/results/benchmark.csv"))
+    parser.add_argument("--csv", type=Path, required=True)
     parser.add_argument("--out", type=Path)
     parser.add_argument("--width", type=int, default=6)
     parser.add_argument("--inputs", type=int, default=1)
     parser.add_argument("--pattern-rows", type=int, default=0)
     args = parser.parse_args()
+    rows = read_rows(args.csv)
     out = args.out or args.csv.parent / "plots"
     out.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("MPLCONFIGDIR", str(out / ".matplotlib"))
@@ -73,7 +74,6 @@ def main():
     from matplotlib.backends.backend_pdf import PdfPages
     from matplotlib.colors import TwoSlopeNorm
 
-    rows = read_rows(args.csv)
     run = args.csv.parent / "run.json"
     metadata = json.loads(run.read_text()) if run.exists() else {}
     targets = sorted({row["target"] for row in rows})

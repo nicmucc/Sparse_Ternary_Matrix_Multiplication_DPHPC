@@ -107,7 +107,8 @@ pool larger than the target machine's cache to study changing-input workloads.
 `--pattern-rows 0` generates independent weight rows. A positive value repeats
 that many prototype rows, exposing pattern reuse at the same expected sparsity.
 CSV records requested `target_sparsity`, actual `sparsity`, and the total distinct
-nonzero ternary patterns across column blocks. Both RSR and SSR use `--width`, enabling explicit block-size sweeps.
+nonzero ternary patterns across column blocks. Both RSR and SSR use
+`--width`, enabling explicit block-size sweeps.
 An optional `--dataset path` uses existing X/W files for the first input, with
 additional inputs generated from the seed. Dataset bias/activation are excluded;
 `target_sparsity` is empty for file-based datasets.
@@ -177,4 +178,3 @@ output view (pointer and element count), preprocessing estimate, weight bytes,
 and backend label. The shared tests and benchmark visit every registration.
 Keep inputs and weights alive and unchanged while the noncopyable suite exists.
 Use owned state captured by callbacks when additional preparation is needed.
-
