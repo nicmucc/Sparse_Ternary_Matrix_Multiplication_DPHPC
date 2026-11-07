@@ -12,7 +12,7 @@ src/baselines/           Naive, BLAS, Eigen CSR/CSC, RSR/RSR++, SSR, TCSC
 src/utils/               Dataset reader and pattern utilities
 src/benchmark.cpp        Calibrated benchmark executable
 tests/test_baselines.cpp Self-contained correctness and API checks
-scripts/benchmark.py     Reproducible parameter sweeps
+scripts/plot_benchmarks.py Plots for `make sweep` results
 scripts/generate_data.py Optional file-based reference datasets
 configs/                 Dataset configurations
 build/                   Build profiles, results, and generated files
@@ -71,7 +71,6 @@ PReLU is outside the current kernel benchmark.
 OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 make benchmark
 build/release/benchmark --m 64 --k 512 --n 256 --sparsity 0.95 --width 6 \
   --samples 15 --min-ms 10 --inputs 1 --seed 42 --pattern-rows 0
-python3 scripts/benchmark.py --out build/results/run-001
 ```
 
 The C++ executable prints CSV to stdout and errors to stderr. It validates every
@@ -115,26 +114,26 @@ additional inputs generated from the seed. Dataset bias/activation are excluded;
 
 ## Sweeps
 
-`scripts/benchmark.py` builds and runs correctness tests before sweeping shapes,
-sparsity, width, prototype-row count, seeds, and input-pool sizes. It writes
-`benchmark.csv`, `samples.csv`, and `run.json`. Summary and sample rows join on
-`case` and `implementation`. Metadata records CPU/platform information, compiler
-flags, commit and dirty status, requested thread settings, and executed commands.
-The default output is a timestamped directory under `build/results`. An explicit
-`--out` must name a new directory; existing results are never overwritten.
-
 ```sh
-python3 scripts/benchmark.py --shapes 1x64x64 17x257x37 \
-  --sparsities 0.5 0.95 --widths 4 6 --pattern-rows 0 8 \
-  --seeds 42 43 --input-counts 1 8 --threads 1
-python3 scripts/benchmark.py --large --out build/large-results
+make sweep    # runs tests, then writes build/results/{sparsity,size}.csv
+make plot     # writes out/plots/*.pdf
 ```
 
-`--large` adds a 32x4096x4096 case whose dense integer weights alone occupy
-64 MiB. Prepared formats need substantially more memory. Compare this case with
-the small presets on the target CPU; cache sizes vary. Run timing experiments
-without competing builds or other benchmark processes. Single-thread comparisons
-are the default; use `--profile openmp` for thread-scaling experiments.
+`make sweep` runs two sweeps. The first varies sparsity (`SPARSITIES`) at a fixed
+`SWEEP_M x SWEEP_K x SWEEP_N` (default 16x1024x1024). The second varies `K = N`
+(`SIZES`, default 256 to 2048) at `SWEEP_M` and `SIZE_SPARSITY` (default 0.95).
+`SWEEP_ARGS` is passed to every run (default `--width 6 --samples 15 --min-ms 10`),
+and `THREADS` sets `OMP_NUM_THREADS` and `OPENBLAS_NUM_THREADS` (default 1).
+Override any of them on the command line:
+
+```sh
+make sweep SPARSITIES="0.9 0.99" SIZES="512 1024 2048 4096" RESULTS_DIR=build/run2
+make plot RESULTS_DIR=build/run2 PLOT_DIR=out/plots/run2
+```
+
+`make plot` (Matplotlib) produces runtime vs sparsity, runtime vs size, and speedup
+over BLAS vs sparsity. Run timing experiments without competing builds or other
+benchmark processes.
 
 ## Baseline provenance
 
@@ -156,21 +155,7 @@ See [RSR++](https://arxiv.org/html/2411.06360v3) for the original algorithm.
 Nicola Mucciaccio, Matteo Meciani, Riccardo Polo, Alexandre Raybaut, Ahmed Tlili.
 Supervisor: Tanja Srindran.
 
-## Plot results
-
-```sh
-python3 scripts/plot_benchmarks.py --csv build/results/run-001/benchmark.csv
-```
-
-Requires Matplotlib and NumPy. Writes up to four PNG plots, a combined PDF,
-and a short summary under the CSV directory's `plots/`. The overview holds width
-6, one input, and independent rows fixed; override with `--width`, `--inputs`,
-and `--pattern-rows`. Different input counts are never pooled. The effects plot
-compares the smallest and largest measured values for each varying setting,
-pairing configurations before aggregating. Seed ratios use geometric means.
-Target sparsity is read directly from each CSV row; for file-based datasets,
-actual sparsity is used. Missing combinations are omitted from the summary.
-Older CSV files without `target_sparsity` must be regenerated.
+## Adding an implementation
 
 To add an implementation, compile its source under `src/baselines/` and append a
 `Kernel` registration in `include/baseline_suite.h`: name, input-index callback,
