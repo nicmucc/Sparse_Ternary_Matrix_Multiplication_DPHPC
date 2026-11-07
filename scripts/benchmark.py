@@ -25,7 +25,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", choices=["release", "scalar", "sanitizer", "openmp"], default="release")
     parser.add_argument("--build-dir", type=Path)
-    parser.add_argument("--out", type=Path, default=Path("build/results"))
+    parser.add_argument("--out", type=Path)
     parser.add_argument("--shapes", nargs="+", default=["1x64x64", "17x257x37", "64x512x256"])
     parser.add_argument("--sparsities", nargs="+", type=float, default=[0.5, 0.95])
     parser.add_argument("--widths", nargs="+", type=int, default=[4, 6])
@@ -39,13 +39,18 @@ def main():
     args = parser.parse_args()
     if args.threads < 1:
         parser.error("--threads must be positive")
+    if args.out is None:
+        args.out = Path("build/results") / datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    if args.out.exists():
+        parser.error(f"Output directory already exists: {args.out}")
     env = dict(os.environ, OMP_NUM_THREADS=str(args.threads),
                OPENBLAS_NUM_THREADS=str(args.threads))
     if args.build_dir is None:
         args.build_dir = Path("build") / args.profile
     binary = args.build_dir / "benchmark"
-    command(["make", f"PROFILE={args.profile}", f"BUILD_DIR={args.build_dir}", str(binary)], env=env)
-    args.out.mkdir(parents=True, exist_ok=True)
+    command(["make", f"PROFILE={args.profile}", f"BUILD_DIR={args.build_dir}",
+             "test", str(binary)], env=env)
+    args.out.mkdir(parents=True)
     cpu_model = platform.processor()
     if platform.system() == "Darwin":
         cpu_model = command(["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True).stdout.strip()
@@ -67,11 +72,13 @@ def main():
     if args.large:
         shapes.append("32x4096x4096")
     output = args.out / "benchmark.csv"
-    with output.open("w", newline="") as stream:
+    with output.open("x", newline="") as stream, (args.out / "samples.csv").open("x", newline="") as raw:
         writer = None
-        for shape, sparsity, width, patterns, seed, inputs in itertools.product(
-                shapes, args.sparsities, args.widths, args.pattern_rows,
-                args.seeds, args.input_counts):
+        sample_writer = csv.writer(raw)
+        sample_writer.writerow(["case", "implementation", "sample", "iterations", "mean_us"])
+        cases = itertools.product(shapes, args.sparsities, args.widths, args.pattern_rows,
+                                  args.seeds, args.input_counts)
+        for case, (shape, sparsity, width, patterns, seed, inputs) in enumerate(cases):
             m, k, n = map(int, shape.lower().split("x"))
             cmd = [str(binary), "--m", str(m), "--k", str(k), "--n", str(n),
                    "--sparsity", str(sparsity), "--width", str(width),
@@ -84,10 +91,19 @@ def main():
             result = command(cmd, env=env, capture_output=True)
             reader = csv.DictReader(io.StringIO(result.stdout))
             if writer is None:
-                writer = csv.DictWriter(stream, fieldnames=reader.fieldnames)
+                fields = ["case"] + [field for field in reader.fieldnames if field != "sample_us"]
+                writer = csv.DictWriter(stream, fieldnames=fields)
                 writer.writeheader()
-            writer.writerows(reader)
+            for row in reader:
+                samples = row.pop("sample_us").split(";")
+                if len(samples) != int(row["samples"]):
+                    raise ValueError("Benchmark sample count does not match CSV")
+                writer.writerow(dict(case=case, **row))
+                for sample, value in enumerate(samples):
+                    sample_writer.writerow([case, row["implementation"], sample,
+                                            row["iterations"], value])
             stream.flush()
+            raw.flush()
     print(output)
 
 

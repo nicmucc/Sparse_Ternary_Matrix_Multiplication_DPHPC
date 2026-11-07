@@ -5,6 +5,8 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <set>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -24,13 +26,53 @@ inline double microseconds(Clock::duration elapsed) {
     return std::chrono::duration<double, std::micro>(elapsed).count();
 }
 
+struct OutputView {
+    float* data;
+    std::size_t size;
+};
+
 struct Kernel {
     std::string name;
     std::function<void(std::size_t)> run;
-    std::function<float*()> output;
+    std::function<OutputView()> output;
     double preprocess_us;
     std::size_t weight_bytes;
+    std::string backend;
 };
+
+inline std::size_t matrix_size(int rows, int cols) {
+    if (rows <= 0 || cols <= 0 ||
+        static_cast<std::size_t>(rows) * cols > std::numeric_limits<int>::max())
+        throw std::invalid_argument("Matrix dimensions exceed supported range");
+    return static_cast<std::size_t>(rows) * cols;
+}
+
+inline void validate_registry(const std::vector<Kernel>& kernels) {
+    std::set<std::string> names;
+    for (const auto& kernel : kernels)
+        if (kernel.name.empty() || !names.insert(kernel.name).second ||
+            !kernel.run || !kernel.output || kernel.backend.empty())
+            throw std::invalid_argument("Invalid or duplicate kernel registration");
+}
+
+inline void validate(Kernel& kernel, std::size_t input,
+                     const std::vector<double>& reference,
+                     const std::vector<double>& tolerances) {
+    if (reference.empty() || reference.size() != tolerances.size())
+        throw std::invalid_argument("Invalid validation reference");
+    auto output = kernel.output();
+    if (!output.data || output.size != reference.size())
+        throw std::runtime_error(kernel.name + ": wrong output size");
+    std::fill_n(output.data, output.size, std::numeric_limits<float>::quiet_NaN());
+    kernel.run(input);
+    output = kernel.output();
+    if (!output.data || output.size != reference.size())
+        throw std::runtime_error(kernel.name + ": wrong output size");
+    for (std::size_t i = 0; i < reference.size(); ++i)
+        if (!std::isfinite(output.data[i]) ||
+            std::abs(output.data[i] - reference[i]) > tolerances[i])
+            throw std::runtime_error(kernel.name + ": mismatch at index " + std::to_string(i));
+}
 
 class Suite {
     const std::vector<vec_t>& inputs;
@@ -58,11 +100,30 @@ class Suite {
 public:
     std::vector<Kernel> kernels;
 
+    Suite(const Suite&) = delete;
+    Suite& operator=(const Suite&) = delete;
+    Suite(Suite&&) = delete;
+    Suite& operator=(Suite&&) = delete;
+
     Suite(const std::vector<vec_t>& X, const tern_t& W, int m, int k, int n, int l)
-        : inputs(X), weights(W), M(m), K(k), N(n), width(l),
-          output(static_cast<std::size_t>(m) * n), row_output(n), eigen_output(m, n) {
-        if (m <= 0 || k <= 0 || n <= 0 || l < 1 || l > 8)
-            throw std::invalid_argument("Invalid suite dimensions or block width");
+        : inputs(X), weights(W), M(m), K(k), N(n), width(l) {
+        if (l < 1 || l > 8 || inputs.empty())
+            throw std::invalid_argument("Invalid input pool or block width");
+        const auto output_size = matrix_size(M, N);
+        const auto input_size = matrix_size(M, K);
+        if (W.size() != matrix_size(K, N))
+            throw std::invalid_argument("Weight size must equal K*N");
+        const auto padded_N = ((static_cast<std::size_t>(N) + width - 1) / width) * width;
+        if (padded_N > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            throw std::invalid_argument("Padded dimension exceeds supported range");
+        matrix_size(K, static_cast<int>(padded_N));
+        matrix_size(M, static_cast<int>(padded_N));
+        for (const auto& x : inputs)
+            if (x.size() != input_size)
+                throw std::invalid_argument("Input size must equal M*K");
+        output.resize(output_size);
+        row_output.resize(N);
+        eigen_output.resize(M, N);
         for (const auto& x : inputs) {
             std::vector<vec_t> input_rows;
             for (int row = 0; row < M; ++row)
@@ -70,14 +131,14 @@ public:
             rows.push_back(std::move(input_rows));
             eigen_inputs.emplace_back(Eigen::Map<const eigen_baseline::DenseMatrix>(x.data(), M, K));
         }
-        auto data = [this] { return output.data(); };
+        auto data = [this] { return OutputView{output.data(), output.size()}; };
         kernels.push_back({"Naive", [this](std::size_t input) {
             for (int row = 0; row < M; ++row) {
                 std::fill(row_output.begin(), row_output.end(), 0.0f);
                 vectorMatrixMultiply(rows[input][row], weights, row_output);
                 std::copy(row_output.begin(), row_output.end(), output.begin() + row * N);
             }
-        }, data, 0, W.size() * sizeof(int)});
+        }, data, 0, W.size() * sizeof(int), "portable"});
 
         auto start = Clock::now();
         tern_t positive(W.size()), negative(W.size());
@@ -105,7 +166,7 @@ public:
                     for (int col = 0; col < N; ++col) output[row * N + col] = p[col] - n[col];
                 }
             }, data, rsr_setup + (plus ? 0 : pattern_setup),
-                rsr_bytes + (plus ? 0 : patterns.size() * sizeof(int))});
+                rsr_bytes + (plus ? 0 : patterns.size() * sizeof(int)), "portable"});
         }
 
         start = Clock::now();
@@ -114,14 +175,20 @@ public:
         const auto ssr_bytes = (ssr.permutations_pos.size() + ssr.permutations_neg.size()
                              + ssr.segments_pos.size() + ssr.segments_neg.size()) * sizeof(int);
         using Ssr = void (*)(const vec_t&, const ssr_baseline::Weights&, vec_t&, int);
-        const std::pair<const char*, Ssr> ssr_kernels[] = {
-            {"SSR basic", ssr_baseline::multiply_basic},
-            {"SSR unrolled", ssr_baseline::multiply_unrolled},
-            {"SSR tree", ssr_baseline::multiply_tree}};
+        struct SsrKernel { const char* name; Ssr run; std::string backend; };
+        const bool avx2 = ssr_baseline::avx2_available();
+        const std::string unrolled = !avx2 || M < 16 ? "scalar_fallback" :
+            M % 16 ? "avx2_scalar_tail" : "avx2";
+        const std::string tree = width < 2 || width > 6 ? unrolled :
+            !avx2 || M < 8 ? "scalar_fallback" : M % 8 ? "avx2_scalar_tail" : "avx2";
+        const SsrKernel ssr_kernels[] = {
+            {"SSR basic", ssr_baseline::multiply_basic, "scalar"},
+            {"SSR unrolled", ssr_baseline::multiply_unrolled, unrolled},
+            {"SSR tree", ssr_baseline::multiply_tree, tree}};
         for (const auto& item : ssr_kernels)
-            kernels.push_back({item.first, [this, f=item.second](std::size_t i) {
+            kernels.push_back({item.name, [this, f=item.run](std::size_t i) {
                 f(inputs[i], ssr, output, M);
-            }, data, ssr_setup, ssr_bytes});
+            }, data, ssr_setup, ssr_bytes, item.backend});
 
         start = Clock::now();
         tcsc = tcsc_baseline::preprocess(W, K, N);
@@ -131,17 +198,19 @@ public:
             + tcsc.metadata.size() + tcsc.row_index.size()) * sizeof(std::int32_t);
         kernels.push_back({"TCSC basic", [this](std::size_t i) {
             tcsc_baseline::multiply_basic(inputs[i], tcsc, output, M);
-        }, data, tcsc_setup, tcsc_bytes});
+        }, data, tcsc_setup, tcsc_bytes, "scalar"});
         kernels.push_back({"TCSC merged", [this](std::size_t i) {
             tcsc_baseline::multiply_merged(inputs[i], tcsc, output, M);
-        }, data, tcsc_setup, tcsc_bytes});
+        }, data, tcsc_setup, tcsc_bytes,
+            !tcsc_baseline::avx2_available() ? "scalar_fallback" :
+                N < 8 ? "scalar_tail" : N % 8 ? "avx2_scalar_tail" : "avx2"});
 
         start = Clock::now();
         float_weights = blas_baseline::int2float(W);
         const double conversion = microseconds(Clock::now() - start);
         kernels.push_back({"BLAS", [this](std::size_t i) {
             blas_baseline::multiply(inputs[i], float_weights, output, M, K, N);
-        }, data, conversion, float_weights.size() * sizeof(float)});
+        }, data, conversion, float_weights.size() * sizeof(float), "openblas"});
         const Eigen::Map<const eigen_baseline::DenseMatrix> dense(float_weights.data(), K, N);
         start = Clock::now();
         csr = eigen_baseline::preprocess_csr(dense);
@@ -151,14 +220,15 @@ public:
         const double csc_setup = conversion + microseconds(Clock::now() - start);
         kernels.push_back({"Eigen CSR", [this](std::size_t i) {
             eigen_baseline::multiply(eigen_inputs[i], csr, eigen_output);
-        }, [this] { return eigen_output.data(); }, csr_setup,
+        }, [this] { return OutputView{eigen_output.data(), static_cast<std::size_t>(eigen_output.size())}; }, csr_setup,
             static_cast<std::size_t>(csr.nonZeros()) * (sizeof(float) + sizeof(int))
-                + static_cast<std::size_t>(csr.outerSize() + 1) * sizeof(int)});
+                + static_cast<std::size_t>(csr.outerSize() + 1) * sizeof(int), "eigen"});
         kernels.push_back({"Eigen CSC", [this](std::size_t i) {
             eigen_baseline::multiply(eigen_inputs[i], csc, eigen_output);
-        }, [this] { return eigen_output.data(); }, csc_setup,
+        }, [this] { return OutputView{eigen_output.data(), static_cast<std::size_t>(eigen_output.size())}; }, csc_setup,
             static_cast<std::size_t>(csc.nonZeros()) * (sizeof(float) + sizeof(int))
-                + static_cast<std::size_t>(csc.outerSize() + 1) * sizeof(int)});
+                + static_cast<std::size_t>(csc.outerSize() + 1) * sizeof(int), "eigen"});
+        validate_registry(kernels);
     }
 };
 

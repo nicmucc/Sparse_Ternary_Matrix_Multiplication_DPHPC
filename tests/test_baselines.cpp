@@ -9,6 +9,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <type_traits>
 #include <vector>
 
 #include "baseline_suite.h"
@@ -158,23 +159,15 @@ void check_case(const vec_t& X, const tern_t& W, const vec_t& bias,
     const std::vector<vec_t> inputs{X};
     baseline_suite::Suite suite(inputs, W, M, K, N, width);
     const auto sums = baseline_suite::error_bounds(X, W, M, K, N);
-    for (auto& impl : suite.kernels) {
-        for (int repeat = 0; repeat < 2; ++repeat) {
-            std::fill_n(impl.output(), expected.size(),
-                        std::numeric_limits<float>::quiet_NaN());
-            impl.run(0);
-            for (std::size_t i = 0; i < expected.size(); ++i) {
-                const double actual = static_cast<double>(impl.output()[i]) + bias[i % N];
-                const double tolerance = exact ? 0.0 : baseline_suite::tolerance(
-                    sums[i] + std::abs(bias[i % N]), expected[i], K, atol, rtol);
-                if (!std::isfinite(actual) || std::abs(actual - expected[i]) > tolerance)
-                    throw std::runtime_error(impl.name + ": mismatch at index " +
-                        std::to_string(i) + " (M,K,N,L=" + std::to_string(M) + "," +
-                        std::to_string(K) + "," + std::to_string(N) + "," +
-                        std::to_string(width) + ")");
-            }
-        }
+    std::vector<double> reference(expected.size()), tolerances(expected.size());
+    for (std::size_t i = 0; i < expected.size(); ++i) {
+        reference[i] = static_cast<double>(expected[i]) - bias[i % N];
+        tolerances[i] = exact ? 0.0 : baseline_suite::tolerance(
+            sums[i] + std::abs(bias[i % N]), expected[i], K, atol, rtol);
     }
+    for (auto& impl : suite.kernels)
+        for (int repeat = 0; repeat < 2; ++repeat)
+            baseline_suite::validate(impl, 0, reference, tolerances);
 }
 
 void generated_case(int M, int K, int N, int width, int mode, std::mt19937& rng) {
@@ -283,12 +276,59 @@ void run_generated_checks() {
         generated_case(17, 19, 19, width, 5, rng);
     }
     generated_case(2, 32769, 9, 6, 6, rng);
+    for (int seed : {17, 42, 123}) {
+        std::mt19937 extra(seed);
+        generated_case(17, 4096, 9, 6, 7, extra);
+        generated_case(17, 4096, 9, 6, 8, extra);
+    }
     check_invalid_inputs();
+}
+
+void run_harness_checks() {
+    using namespace baseline_suite;
+    static_assert(!std::is_copy_constructible<Suite>::value);
+    static_assert(!std::is_move_constructible<Suite>::value);
+    const std::vector<vec_t> inputs{{1.0f}, {-2.0f}};
+    const tern_t weights{1};
+    Suite suite(inputs, weights, 1, 1, 1, 6);
+    const std::set<std::string> required{
+        "Naive", "RSR", "RSR++", "SSR basic", "SSR unrolled", "SSR tree",
+        "TCSC basic", "TCSC merged", "BLAS", "Eigen CSR", "Eigen CSC"};
+    std::set<std::string> registered;
+    for (auto& kernel : suite.kernels) {
+        registered.insert(kernel.name);
+        validate(kernel, 0, {1.0}, {0.0});
+        validate(kernel, 1, {-2.0}, {0.0});
+    }
+    if (!std::includes(registered.begin(), registered.end(), required.begin(), required.end()))
+        throw runtime_error("Missing baseline registration");
+    const auto must_reject = [](const std::function<void()>& call) {
+        try { call(); }
+        catch (const std::exception&) { return; }
+        throw runtime_error("Harness accepted an invalid kernel");
+    };
+    suite.kernels.push_back(suite.kernels.front());
+    must_reject([&] { validate_registry(suite.kernels); });
+    vec_t output{1.0f, 2.0f};
+    Kernel broken{"broken", [](std::size_t) {},
+        [&] { return OutputView{output.data(), output.size()}; }, 0, 0, "test"};
+    must_reject([&] { validate(broken, 0, {1.0, 2.0}, {0.0, 0.0}); });
+    broken.run = [&](std::size_t) { output[0] = 1.0f; };
+    must_reject([&] { validate(broken, 0, {1.0, 2.0}, {0.0, 0.0}); });
+    broken.output = [&] { return OutputView{output.data(), 1}; };
+    must_reject([&] { validate(broken, 0, {1.0, 2.0}, {0.0, 0.0}); });
+    broken.output = [&] { return OutputView{output.data(), output.size()}; };
+    broken.run = [&](std::size_t) { output.resize(1); };
+    must_reject([&] { validate(broken, 0, {1.0, 2.0}, {0.0, 0.0}); });
+    must_reject([&] { Suite invalid({}, weights, 1, 1, 1, 6); });
+    must_reject([&] { Suite invalid(inputs, weights, -1, 1, 1, 6); });
+    must_reject([&] { Suite invalid(inputs, weights, 1, 2, 1, 6); });
 }
 
 } // namespace
 
 int main(int argc, char* argv[]) try {
+    run_harness_checks();
     run_rsr_api_checks();
     run_eigen_api_checks();
     run_generated_checks();

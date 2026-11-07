@@ -33,9 +33,9 @@ CXXFLAGS += -fopenmp
 LDFLAGS += -fopenmp
 endif
 
-CONFIG_HASH := $(shell { printf '%s\n' "$(CXX)" "$(CPPFLAGS)" "$(CXXFLAGS)" "$(LDFLAGS)" "$(LDLIBS)" "$(BLAS_LIBS)"; $(CXX) --version; } | cksum | awk '{print $$1}')
-OBJECT_DIR := $(BUILD_DIR)/obj/$(CONFIG_HASH)
 SOURCES := $(wildcard src/baselines/*.cpp src/utils/*.cpp)
+CONFIG_HASH := $(shell { printf '%s\n' "$(CXX)" "$(CPPFLAGS)" "$(CXXFLAGS)" "$(LDFLAGS)" "$(LDLIBS)" "$(BLAS_LIBS)" "$(SOURCES)"; $(CXX) --version; } | cksum | awk '{print $$1}')
+OBJECT_DIR := $(BUILD_DIR)/obj/$(CONFIG_HASH)
 OBJECTS := $(SOURCES:%.cpp=$(OBJECT_DIR)/%.o)
 TEST_OBJECTS := $(OBJECTS) $(OBJECT_DIR)/tests/test_baselines.o
 BENCHMARK_OBJECTS := $(OBJECTS) $(OBJECT_DIR)/src/benchmark.o
@@ -51,7 +51,7 @@ build: $(TARGET) $(BENCHMARK_TARGET)
 
 $(BUILD_CONFIG): FORCE
 	@mkdir -p "$(BUILD_DIR)"
-	@{ printf '%s\n' "$(CXX)" "$(CPPFLAGS)" "$(CXXFLAGS)" "$(LDFLAGS)" "$(LDLIBS)" "$(BLAS_LIBS)"; $(CXX) --version; } > "$@.tmp"
+	@{ printf '%s\n' "$(CXX)" "$(CPPFLAGS)" "$(CXXFLAGS)" "$(LDFLAGS)" "$(LDLIBS)" "$(BLAS_LIBS)" "$(SOURCES)"; $(CXX) --version; } > "$@.tmp"
 	@cmp -s "$@" "$@.tmp" || cp "$@.tmp" "$@"
 	@rm -f "$@.tmp"
 
@@ -72,7 +72,8 @@ $(BENCHMARK_TARGET): $(BENCHMARK_OBJECTS) FORCE | $(BUILD_CONFIG)
 test run: $(TARGET)
 	"$(TARGET)" $(TEST_DATA)
 
-benchmark: $(BENCHMARK_TARGET)
+benchmark: $(TARGET) $(BENCHMARK_TARGET)
+	"$(TARGET)" $(TEST_DATA)
 	"$(BENCHMARK_TARGET)" $(BENCHMARK_ARGS)
 
 data:

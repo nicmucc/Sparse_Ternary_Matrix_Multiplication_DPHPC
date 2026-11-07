@@ -38,10 +38,15 @@ int main(int argc, char** argv) try {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<float> activation(-3,3);
     std::uniform_real_distribution<double> probability(0,1);
+    matrix_size(M, K); matrix_size(K, N); matrix_size(M, N);
     tern_t W;
     std::vector<vec_t> inputs;
     if (!dataset.empty()) {
         auto data=read_sample(dataset);
+        if (data.M > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
+            data.K > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
+            data.N > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            throw std::invalid_argument("Dataset dimensions exceed supported range");
         M=data.M; K=data.K; N=data.N;
         W=std::move(data.W);
         inputs.push_back(std::move(data.X));
@@ -65,13 +70,11 @@ int main(int argc, char** argv) try {
             for (int k=0; k<K; ++k)
                 for (int col=0; col<N; ++col)
                     reference[row*N+col]+=static_cast<double>(inputs[input][row*K+k])*W[k*N+col];
-        for (auto& kernel:suite.kernels) {
-            kernel.run(input);
-            for (std::size_t j=0; j<reference.size(); ++j)
-                if (!std::isfinite(kernel.output()[j]) ||
-                    std::abs(kernel.output()[j]-reference[j])>tolerance(bounds[j],reference[j],K))
-                    throw std::runtime_error(kernel.name+" failed validation at "+std::to_string(j));
-        }
+        std::vector<double> tolerances(reference.size());
+        for (std::size_t j=0; j<reference.size(); ++j)
+            tolerances[j]=tolerance(bounds[j],reference[j],K);
+        for (auto& kernel:suite.kernels)
+            validate(kernel,input,reference,tolerances);
     }
 
     std::vector<std::size_t> iterations(suite.kernels.size(),1);
@@ -82,15 +85,18 @@ int main(int argc, char** argv) try {
         const auto start=Clock::now();
         for (std::size_t i=0;i<count;++i) {
             kernel.run(i%inputs.size());
-            checksum=kernel.output()[(i*17)%(static_cast<std::size_t>(M)*N)];
+            checksum=kernel.output().data[(i*17)%(static_cast<std::size_t>(M)*N)];
         }
         return microseconds(Clock::now()-start);
     };
     for (std::size_t i=0;i<suite.kernels.size();++i) {
         // Calibration doubles as warmup. Cover the complete input pool in each batch.
         iterations[i]=inputs.size();
-        while (batch(i,iterations[i])<min_ms*1000)
+        while (batch(i,iterations[i])<min_ms*1000) {
+            if (iterations[i]>std::numeric_limits<std::size_t>::max()/2)
+                throw std::runtime_error("Benchmark calibration overflow");
             iterations[i]*=2;
+        }
     }
     std::vector<std::size_t> order(suite.kernels.size());
     std::iota(order.begin(),order.end(),0);
@@ -99,12 +105,14 @@ int main(int argc, char** argv) try {
         for (auto i:order) timings[i].push_back(batch(i,iterations[i])/iterations[i]);
     }
     std::vector<double> medians;
-    for (auto& times:timings) {
+    for (auto times:timings) {
         std::sort(times.begin(),times.end());
         medians.push_back(samples%2 ? times[samples/2] : (times[samples/2-1]+times[samples/2])/2);
     }
     const auto blas=std::find_if(suite.kernels.begin(),suite.kernels.end(),
                                 [](const Kernel& k){return k.name=="BLAS";})-suite.kernels.begin();
+    if (blas==static_cast<std::ptrdiff_t>(suite.kernels.size()))
+        throw std::runtime_error("BLAS reference is not registered");
     const auto nonzero=std::count_if(W.begin(),W.end(),[](int w){return w!=0;});
     std::size_t pattern_count=0;
     for (int col=0;col<N;col+=width) {
@@ -118,28 +126,25 @@ int main(int argc, char** argv) try {
     }
     const char* omp=std::getenv("OMP_NUM_THREADS");
     const char* blas_threads=std::getenv("OPENBLAS_NUM_THREADS");
-    std::cout<<"implementation,m,k,n,sparsity,width,seed,pattern_rows,nonzero_patterns,mode,inputs,input_pool_bytes,backend,omp_threads,blas_threads,preprocess_us,weight_bytes,median_us,p10_us,p90_us,speedup_blas,iterations,samples,scope\n";
+    std::cout<<"implementation,m,k,n,target_sparsity,sparsity,width,seed,pattern_rows,nonzero_patterns,mode,inputs,input_pool_bytes,backend,omp_threads,blas_threads,preprocess_us,weight_bytes,median_us,p10_us,p90_us,speedup_blas,iterations,samples,scope,sample_us\n";
     for (std::size_t i=0;i<suite.kernels.size();++i) {
         const auto& kernel=suite.kernels[i];
-        const auto& t=timings[i];
-        std::string backend="portable";
-        if (kernel.name=="BLAS") backend="openblas";
-        else if (kernel.name.rfind("Eigen",0)==0) backend="eigen";
-        else if (kernel.name=="SSR basic" || kernel.name=="TCSC basic") backend="scalar";
-        else if (kernel.name.rfind("SSR",0)==0 || kernel.name=="TCSC merged")
-            backend=ssr_baseline::avx2_available() ? "avx2" : "scalar_fallback";
-        if (kernel.name=="SSR tree" && ssr_baseline::avx2_available() && (width<2 || width>6))
-            backend="avx2_unrolled_fallback";
-        std::cout<<std::setprecision(10)<<kernel.name<<','<<M<<','<<K<<','<<N<<','
-            <<1.0-static_cast<double>(nonzero)/W.size()<<','<<width<<','<<seed<<','<<repeat_rows
+        auto t=timings[i];
+        std::sort(t.begin(),t.end());
+        std::cout<<std::setprecision(10)<<kernel.name<<','<<M<<','<<K<<','<<N<<',';
+        if (dataset.empty()) std::cout<<sparsity;
+        std::cout<<','<<1.0-static_cast<double>(nonzero)/W.size()<<','<<width<<','<<seed<<','<<repeat_rows
             <<','<<pattern_count<<','<<(input_count==1 ? "warm" : "rotating")<<','<<input_count
             <<','<<static_cast<std::size_t>(input_count)*M*K*sizeof(float)
-            <<','<<backend
+            <<','<<kernel.backend
             <<','<<(omp?omp:"unset")<<','<<(blas_threads?blas_threads:"unset")
             <<','<<kernel.preprocess_us<<','<<kernel.weight_bytes<<','<<medians[i]
             <<','<<t[static_cast<std::size_t>((samples-1)*0.1)]
             <<','<<t[static_cast<std::size_t>((samples-1)*0.9)]
-            <<','<<medians[blas]/medians[i]<<','<<iterations[i]<<','<<samples<<",api_call_xw\n";
+            <<','<<medians[blas]/medians[i]<<','<<iterations[i]<<','<<samples<<",api_call_xw,";
+        for (std::size_t sample=0;sample<timings[i].size();++sample)
+            std::cout<<(sample ? ";" : "")<<timings[i][sample];
+        std::cout<<'\n';
     }
     (void)checksum;
     return 0;

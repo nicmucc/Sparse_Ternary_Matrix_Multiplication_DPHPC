@@ -9,12 +9,58 @@ from collections import defaultdict
 from pathlib import Path
 
 
+def read_rows(path):
+    with path.open() as stream:
+        rows = [{k.strip(): v.strip() for k, v in row.items()}
+                for row in csv.DictReader(stream)]
+    if not rows or "target_sparsity" not in rows[0]:
+        raise ValueError("CSV must contain target_sparsity; rerun the benchmark")
+    integer = ["m", "k", "n", "width", "seed", "pattern_rows", "inputs",
+               "omp_threads", "blas_threads"]
+    real = ["sparsity", "median_us", "speedup_blas", "preprocess_us", "weight_bytes"]
+    for row in rows:
+        for key in integer:
+            row[key] = int(row[key]) if row[key] != "unset" else -1
+        for key in real:
+            row[key] = float(row[key])
+        row["target"] = float(row["target_sparsity"]) if row["target_sparsity"] else row["sparsity"]
+        row["shape"] = (row["m"], row["k"], row["n"])
+    if len({(r["omp_threads"], r["blas_threads"], r["scope"]) for r in rows}) != 1:
+        raise ValueError("Plot one thread configuration and measurement scope at a time")
+    return rows
+
+
+def configuration_effects(rows, names):
+    effects, labels = [], []
+    for varying, label in [("pattern_rows", "Prototype rows"),
+                           ("inputs", "Input count"), ("width", "Block width")]:
+        levels = sorted({row[varying] for row in rows})
+        if len(levels) < 2:
+            continue
+        a, b = levels[0], levels[-1]
+        groups = defaultdict(dict)
+        fields = ["implementation", "shape", "target", "seed", "width",
+                  "pattern_rows", "inputs", "omp_threads", "blas_threads", "scope"]
+        fields.remove(varying)
+        for row in rows:
+            if row[varying] in (a, b):
+                groups[tuple(row[k] for k in fields)][row[varying]] = row["median_us"]
+        paired = defaultdict(list)
+        for key, values in groups.items():
+            if a in values and b in values:
+                paired[key[0]].append(values[a] / values[b])
+        effects.append([math.exp(statistics.mean(math.log(x) for x in paired[name]))
+                        if paired[name] else math.nan for name in names])
+        labels.append(f"{label} {b} vs {a}")
+    return effects, labels
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--csv", type=Path, default=Path("build/results/benchmark.csv"))
     parser.add_argument("--out", type=Path)
     parser.add_argument("--width", type=int, default=6)
-    parser.add_argument("--mode", default="warm", choices=["warm", "rotating"])
+    parser.add_argument("--inputs", type=int, default=1)
     parser.add_argument("--pattern-rows", type=int, default=0)
     args = parser.parse_args()
     out = args.out or args.csv.parent / "plots"
@@ -25,37 +71,21 @@ def main():
     import matplotlib.pyplot as plt
     import numpy as np
     from matplotlib.backends.backend_pdf import PdfPages
-    from matplotlib.colors import Normalize, TwoSlopeNorm
+    from matplotlib.colors import TwoSlopeNorm
 
-    rows = [{k.strip(): v.strip() for k, v in row.items()}
-            for row in csv.DictReader(args.csv.open())]
-    integer = ["m", "k", "n", "width", "seed", "pattern_rows", "inputs",
-               "omp_threads", "blas_threads"]
-    real = ["sparsity", "median_us", "speedup_blas", "preprocess_us", "weight_bytes"]
-    for row in rows:
-        for key in integer:
-            row[key] = int(row[key]) if row[key] != "unset" else -1
-        for key in real:
-            row[key] = float(row[key])
-        row["shape"] = (row["m"], row["k"], row["n"])
+    rows = read_rows(args.csv)
     run = args.csv.parent / "run.json"
     metadata = json.loads(run.read_text()) if run.exists() else {}
-    targets = metadata.get("arguments", {}).get("sparsities", [0.5, 0.95])
-    targets = sorted(set(float(x) for x in targets))
-    for row in rows:
-        row["target"] = min(targets, key=lambda x: abs(x-row["sparsity"]))
-    thread_settings = {(r["omp_threads"], r["blas_threads"]) for r in rows}
-    if len(thread_settings) != 1:
-        raise ValueError("Plot one thread configuration at a time")
+    targets = sorted({row["target"] for row in rows})
     names = list(dict.fromkeys(r["implementation"] for r in rows))
     shapes = sorted({r["shape"] for r in rows})
     columns = [(shape, target) for shape in shapes for target in targets]
     labels = [f"{m} × {k} × {n}\n{target:.0%} zeros"
               for (m, k, n), target in columns]
     selected = [r for r in rows if r["width"] == args.width
-                and r["mode"] == args.mode and r["pattern_rows"] == args.pattern_rows]
+                and r["inputs"] == args.inputs and r["pattern_rows"] == args.pattern_rows]
     if not selected:
-        raise ValueError("No rows match the selected width, mode, and pattern count")
+        raise ValueError("No rows match the selected width, input count, and pattern count")
     geomean = lambda xs: math.exp(statistics.mean(math.log(x) for x in xs))
     def matrix(field, subset=selected, aggregate=statistics.median):
         groups = defaultdict(list)
@@ -74,7 +104,7 @@ def main():
         pdf.savefig(fig, bbox_inches="tight")
         plt.close(fig)
 
-    context = (f"Width {args.width} · {args.mode} inputs · "
+    context = (f"Width {args.width} · {args.inputs} input(s) · "
                + ("independent weight rows" if args.pattern_rows == 0
                   else f"{args.pattern_rows} repeating prototype rows"))
     machine = metadata.get("cpu", metadata.get("machine", ""))
@@ -109,33 +139,16 @@ def main():
     fig.subplots_adjust(top=0.83, bottom=0.17, left=0.16, right=0.97)
     save(fig, "01-speedup")
 
-    effects = []
-    # Pair configurations before aggregation, so shapes, seeds and thread counts match.
-    for varying, a, b, title in [
-        ("pattern_rows", 0, 8, "Repeating rows\nindependent time / repeated time"),
-        ("inputs", 1, 8, "Changing inputs\nwarm time / rotating time"),
-        ("width", 4, 6, "Block width\nwidth 4 time / width 6 time")]:
-        group = defaultdict(dict)
-        fields = ["implementation", "shape", "target", "seed", "width",
-                  "pattern_rows", "inputs", "omp_threads", "blas_threads"]
-        fields.remove(varying)
-        for row in rows:
-            if row[varying] in (a, b):
-                group[tuple(row[k] for k in fields)][row[varying]] = row["median_us"]
-        paired = defaultdict(list)
-        for key, values in group.items():
-            if a in values and b in values:
-                paired[key[0]].append(values[a]/values[b])
-        effects.append([geomean(paired[name]) if paired[name] else np.nan for name in names])
-    fig, ax = plt.subplots(figsize=(11, 7.5))
-    values = np.array(effects).T
-    ratio_heatmap(ax, values, ["8 repeating rows\nvs independent", "8 rotating inputs\nvs warm reuse",
-                              "Block width 6\nvs width 4"], "Above 1× means the changed configuration is faster")
-    fig.suptitle("What changes performance?", x=0.12, ha="left", fontsize=19, weight="bold")
-    fig.text(0.12, 0.90, "Geometric mean of matched pairs across all other measured settings", fontsize=11)
-    fig.text(0.12, 0.015, "Blue = improvement · red = slowdown. Pattern repetition can also change actual sparsity.\nMatched shapes, target sparsity, seeds, and threads. Times include API-internal allocations.\n"+str(machine), fontsize=10)
-    fig.subplots_adjust(top=0.82, bottom=0.18, left=0.18, right=0.97)
-    save(fig, "02-configuration-effects")
+    effects, effect_labels = configuration_effects(rows, names)
+    if effects:
+        fig, ax = plt.subplots(figsize=(11, 7.5))
+        ratio_heatmap(ax, np.array(effects).T, effect_labels,
+                      "Above 1× means the changed configuration is faster")
+        fig.suptitle("What changes performance?", x=0.12, ha="left", fontsize=19, weight="bold")
+        fig.text(0.12, 0.90, "Geometric mean of matched pairs across all other measured settings", fontsize=11)
+        fig.text(0.12, 0.015, "Blue = improvement · red = slowdown. Pattern repetition can also change actual sparsity.\nMatched shapes, target sparsity, seeds, and threads. Times include API-internal allocations.\n"+str(machine), fontsize=10)
+        fig.subplots_adjust(top=0.82, bottom=0.18, left=0.18, right=0.97)
+        save(fig, "02-configuration-effects")
 
     latency = matrix("median_us")
     fig, axes = plt.subplots(1, len(shapes), figsize=(5*len(shapes), 7), squeeze=False)
@@ -169,7 +182,8 @@ def main():
         (axes[1], "weight_bytes", 1024, "Stored weights and metadata", "KiB")]:
         values = matrix(field)/divisor
         positive = values[np.isfinite(values) & (values>0)]
-        transformed = np.ma.masked_invalid(np.log10(np.maximum(values, min(positive)/2)))
+        floor = float(positive.min()) / 2 if positive.size else 1.0
+        transformed = np.ma.masked_invalid(np.log10(np.maximum(values, floor)))
         ax.imshow(transformed, cmap="Blues", aspect="auto")
         ax.set_xticks(range(len(labels)), labels, rotation=30, ha="right", fontsize=10)
         ax.set_yticks(range(len(names)), names)
@@ -179,7 +193,7 @@ def main():
             for j in range(len(labels)):
                 value = values[i,j]
                 if np.isfinite(value):
-                    v = math.log10(max(value, min(positive)/2))
+                    v = math.log10(max(value, floor))
                     midpoint = (float(transformed.min())+float(transformed.max()))/2
                     text = f"{value:.3g}"
                     ax.text(j,i,text,ha="center",va="center",
@@ -195,6 +209,8 @@ def main():
     summary = []
     times = matrix("median_us")
     for j, ((m,k,n), target) in enumerate(columns):
+        if not np.isfinite(times[:,j]).any():
+            continue
         best = int(np.nanargmin(times[:,j]))
         summary.append(f"{m}x{k}x{n}, {target:.0%} zeros: {names[best]} "
                        f"({times[best,j]:.3g} us; {speedups[best,j]:.2f}x BLAS)")
