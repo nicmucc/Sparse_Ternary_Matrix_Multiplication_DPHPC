@@ -76,12 +76,11 @@ DATA_FILES     := $(wildcard $(DATA_DIR)/*/*.bin $(DATA_DIR)/*/metadata.json)
 
 RUN_ENV := OMP_NUM_THREADS=$(THREADS) OPENBLAS_NUM_THREADS=$(THREADS)
 
-# If compiler, flags, or source list changed since the last build, drop the old
-# build. Checked here rather than via timestamps because make 3.81 (macOS) only
-# compares whole seconds and can miss a change right after a build.
+# Force affected targets when configuration changes, even within one timestamp tick.
 BUILD_STATE := $(CXX) | $(CPPFLAGS) | $(CXXFLAGS) | $(LDFLAGS) | $(LDLIBS) | $(SOURCES) | $(shell $(CXX) --version | head -1)
+BUILD_CHANGED :=
 ifneq ($(BUILD_STATE),$(shell cat "$(BUILD_CONFIG)" 2>/dev/null))
-  $(shell rm -rf "$(OBJ_DIR)" "$(TEST_BIN)" "$(BENCH_BIN)" "$(TESTS_PASSED)"; mkdir -p "$(BUILD_DIR)"; printf '%s' '$(BUILD_STATE)' > "$(BUILD_CONFIG)")
+  BUILD_CHANGED := FORCE
 endif
 
 # --- Helpers -----------------------------------------------------------------
@@ -103,15 +102,20 @@ SWEEP_COMMAND = $(RUN_ENV) $(PYTHON) scripts/run_benchmarks.py "$(BENCH_BIN)" "$
 
 build: $(TEST_BIN) $(BENCH_BIN)
 
-$(OBJ_DIR)/%.o: %.cpp
+$(BUILD_CONFIG): $(BUILD_CHANGED)
+	@rm -rf "$(OBJ_DIR)" "$(TEST_BIN)" "$(BENCH_BIN)" "$(TESTS_PASSED)"
+	@mkdir -p "$(@D)"
+	@printf '%s' '$(BUILD_STATE)' > "$@"
+
+$(OBJ_DIR)/%.o: %.cpp $(BUILD_CONFIG) $(BUILD_CHANGED)
 	@mkdir -p "$(@D)"
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c "$<" -o "$@"
 
-$(TEST_BIN): $(OBJECTS) $(TEST_MAIN)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o "$@"
+$(TEST_BIN): $(OBJECTS) $(TEST_MAIN) $(BUILD_CHANGED)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(filter %.o,$^) $(LDLIBS) -o "$@"
 
-$(BENCH_BIN): $(OBJECTS) $(BENCH_MAIN)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o "$@"
+$(BENCH_BIN): $(OBJECTS) $(BENCH_MAIN) $(BUILD_CHANGED)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(filter %.o,$^) $(LDLIBS) -o "$@"
 
 -include $(OBJECTS:.o=.d) $(TEST_MAIN:.o=.d) $(BENCH_MAIN:.o=.d)
 
@@ -120,7 +124,7 @@ $(BENCH_BIN): $(OBJECTS) $(BENCH_MAIN)
 test: $(TEST_BIN)
 	$(RUN_ENV) "$(TEST_BIN)" $(TEST_DATA)
 
-$(TESTS_PASSED): $(TEST_BIN)
+$(TESTS_PASSED): $(TEST_BIN) $(BUILD_CHANGED)
 	$(RUN_ENV) "$(TEST_BIN)"
 	@touch "$@"
 
@@ -130,16 +134,18 @@ benchmark: $(TESTS_PASSED) $(BENCH_BIN)
 # --- Sweeps and plots --------------------------------------------------------
 
 # Re-measure when inputs, executable, runner, or settings change.
-# The phony sweep target always re-measures every manifest entry sequentially.
+# Explicit sweeps force the shared CSV target, so sweep and plot cannot race.
+ifneq ($(filter sweep,$(MAKECMDGOALS)),)
+$(SWEEP_CSV): FORCE
+endif
 
 $(SWEEP_SETTINGS): FORCE
 	$(call write_if_changed,$@,$(SWEEP_LINES))
 
-$(SWEEP_CSV): $(BENCH_BIN) $(TESTS_PASSED) $(SWEEP_SETTINGS) $(DATA_MANIFEST) $(DATA_FILES) scripts/run_benchmarks.py
+$(SWEEP_CSV): $(BENCH_BIN) $(TESTS_PASSED) $(SWEEP_SETTINGS) $(DATA_MANIFEST) $(DATA_FILES) scripts/run_benchmarks.py $(BUILD_CHANGED)
 	$(SWEEP_COMMAND)
 
-sweep: $(BENCH_BIN) $(TESTS_PASSED) $(SWEEP_SETTINGS) $(DATA_MANIFEST)
-	$(SWEEP_COMMAND)
+sweep: $(SWEEP_CSV)
 
 plot: $(SWEEP_CSV)
 	$(PYTHON) scripts/plot_benchmarks.py "$(RESULTS_DIR)" "$(PLOT_DIR)"
