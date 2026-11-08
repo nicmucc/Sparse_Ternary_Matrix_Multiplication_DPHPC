@@ -1,10 +1,13 @@
 """
-Generate the original small test sample in data/sample_001.
+Generate reference samples or the datasets for both default benchmark sweeps.
 
 Usage:
-    python3 outputs/generate_sample.py
-    python3 outputs/generate_sample.py --config config.json
-    python3 outputs/generate_sample.py --out data/sample_001 --overwrite
+    python3 scripts/generate_data.py --config configs/temporary_config.json
+    python3 scripts/generate_data.py --benchmark-suite
+    python3 scripts/generate_data.py --benchmark-suite --seed 42 --overwrite
+
+The benchmark suite defaults to data/benchmarks and seeds 17, 42, and 123.
+Single samples default to data/sample_001.
 
 Config files override selected DEFAULT_CONFIG fields.
 Expected outputs are little-endian float32, stored in row-major order.
@@ -29,6 +32,7 @@ DEFAULT_CONFIG = {
     "seed": 42,
     "x_min": -3,
     "x_max": 3,
+    "x_distribution": "integer",
     "bias": [0.5, -0.5],
     "alpha": [0.25],
     "target_zero_fraction": 0.5,
@@ -63,6 +67,8 @@ def validate_config(config):
     for key in ("seed", "x_min", "x_max"):
         if type(config[key]) is not int:
             raise ValueError(f"{key} must be an integer")
+    if config["x_distribution"] not in ("integer", "uniform"):
+        raise ValueError("x_distribution must be integer or uniform")
     if config["x_min"] > config["x_max"]:
         raise ValueError("x_min must not exceed x_max")
 
@@ -99,9 +105,10 @@ def generate_inputs(config):
     rng = random.Random(config["seed"])
     M, K, N = (config[key] for key in ("M", "K", "N"))
 
+    draw_activation = rng.uniform if config["x_distribution"] == "uniform" else rng.randint
     X = np.fromiter(
         (
-            rng.randint(config["x_min"], config["x_max"])
+            draw_activation(config["x_min"], config["x_max"])
             for _ in range(M * K)
         ),
         dtype="<f4",
@@ -212,7 +219,7 @@ def write_sample(directory, case_id, config, inputs, debug_json):
     metadata = {
         "case_id": case_id,
         "format_version": 2,
-        "generator_version": 2,
+        "generator_version": 3,
         "config": config,
         "layout": "row_major",
         "byte_order": "little",
@@ -247,27 +254,73 @@ def write_sample(directory, case_id, config, inputs, debug_json):
     write_json(directory / "metadata.json", metadata)
 
 
+def generate_benchmark_suite(directory, seed, debug_json):
+    cases = {(1024, sparsity) for sparsity in (0.5, 0.7, 0.8, 0.9, 0.95, 0.98, 0.99)}
+    cases.update((size, 0.95) for size in (256, 512, 1024, 2048))
+    seeds = (seed,) if seed is not None else (17, 42, 123)
+    datasets = []
+
+    for size, sparsity in sorted(cases):
+        for case_seed in seeds:
+            config = DEFAULT_CONFIG.copy()
+            config.update({
+                "M": 16,
+                "K": size,
+                "N": size,
+                "seed": case_seed,
+                "x_distribution": "uniform",
+                "target_zero_fraction": sparsity,
+                "bias": [0.0] * size,
+                "alpha": [1.0],
+            })
+            validate_config(config)
+
+            case_id = f"m16_k{size}_n{size}_s{sparsity:g}_seed{case_seed}"
+            case_dir = directory / case_id
+            case_dir.mkdir()
+            inputs = generate_inputs(config)
+            write_sample(case_dir, case_id, config, inputs, debug_json)
+            datasets.append({
+                "path": case_id,
+                "M": 16,
+                "K": size,
+                "N": size,
+                "target_zero_fraction": sparsity,
+                "seed": case_seed,
+            })
+            print(f"Generated {case_id}")
+
+    write_json(directory / "manifest.json", {"datasets": datasets})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path)
-    parser.add_argument("--out", type=Path, default=Path("data/sample_001"))
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--benchmark-suite", action="store_true")
     parser.add_argument("--seed", type=int)
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--debug-json", action="store_true")
     args = parser.parse_args()
 
-    config = load_config(args.config, args.seed)
-    out = args.out.absolute()
+    if args.benchmark_suite and args.config is not None:
+        parser.error("--config and --benchmark-suite cannot be combined")
+    config = None if args.benchmark_suite else load_config(args.config, args.seed)
+    default_out = "data/benchmarks" if args.benchmark_suite else "data/sample_001"
+    out = (args.out or Path(default_out)).absolute()
     if out.is_symlink() or (out.exists() and not out.is_dir()):
         raise ValueError(f"Output must be a regular directory: {out}")
     if out.exists() and not args.overwrite:
-        raise FileExistsError(f"{out} already exists; use --overwrite")
+        return
 
-    inputs = generate_inputs(config)
     out.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=f".{out.name}.", dir=out.parent))
     try:
-        write_sample(temporary, out.name, config, inputs, args.debug_json)
+        if args.benchmark_suite:
+            generate_benchmark_suite(temporary, args.seed, args.debug_json)
+        else:
+            inputs = generate_inputs(config)
+            write_sample(temporary, out.name, config, inputs, args.debug_json)
         if out.exists():
             if not args.overwrite:
                 raise FileExistsError(f"{out} already exists")

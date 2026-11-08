@@ -4,7 +4,7 @@ import shutil
 import sys
 from collections import defaultdict
 from pathlib import Path
-from statistics import stdev
+from statistics import median, stdev
 
 import matplotlib
 
@@ -28,13 +28,17 @@ STYLE = {
 }
 
 
-def read(path, x_field):
+def read(rows, x_field):
+    grouped = defaultdict(list)
+    for row in rows:
+        grouped[(row["implementation"], float(row[x_field]))].append(row)
+
     series = defaultdict(list)
-    with path.open() as stream:
-        for row in csv.DictReader(stream):
-            samples = [float(value) for value in row.get("sample_us", "").split(";") if value]
-            series[row["implementation"]].append(
-                (float(row[x_field]), float(row["median_us"]), samples))
+    for (name, x), datasets in grouped.items():
+        centre = median(float(row["median_us"]) for row in datasets)
+        samples = [float(value) for row in datasets
+                   for value in row.get("sample_us", "").split(";") if value]
+        series[name].append((x, centre, samples))
     return {name: sorted(points) for name, points in series.items()}
 
 
@@ -55,7 +59,7 @@ def draw(ax, series):
         xs = [x for x, _, _ in points]
         ys = [median for _, median, _ in points]
 
-        # Samples are batch averages; preserve medians as the curve centres
+        # Pool batch averages across seeds; curves use medians of dataset medians
         spreads = [stdev(samples) if len(samples) > 1 else 0
                    for _, _, samples in points]
         if any(spreads):
@@ -69,7 +73,7 @@ def draw(ax, series):
 
 
 def legend(ax):
-    title = r"Bands: $\pm 1$ sample SD" if ax.collections else None
+    title = r"Bands: $\pm 1$ pooled sample SD" if ax.collections else None
     ax.legend(frameon=False, loc="upper left", bbox_to_anchor=(1.01, 1),
               fontsize=10, title=title)
 
@@ -96,10 +100,26 @@ def main():
         "font.serif": ["Computer Modern Roman"],
     })
 
-    with (results / "sparsity.csv").open() as stream:
-        first = next(csv.DictReader(stream))
-    shape = f"M={first['m']}, K={first['k']}, N={first['n']}"
-    by_sparsity = read(results / "sparsity.csv", "target_sparsity")
+    with (results / "benchmarks.csv").open() as stream:
+        rows = list(csv.DictReader(stream))
+
+    # Identify the generated sweep families from the measured configurations
+    shapes = defaultdict(set)
+    size_groups = defaultdict(set)
+    for row in rows:
+        shapes[(row["m"], row["k"], row["n"])].add(row["target_sparsity"])
+        if row["k"] == row["n"]:
+            size_groups[(row["m"], row["target_sparsity"])].add(row["k"])
+    sparsity_shape = max(shapes, key=lambda shape: len(shapes[shape]))
+    size_group = max(size_groups, key=lambda group: len(size_groups[group]))
+
+    sparsity_rows = [row for row in rows
+                     if (row["m"], row["k"], row["n"]) == sparsity_shape]
+    size_rows = [row for row in rows
+                 if row["k"] == row["n"]
+                 and (row["m"], row["target_sparsity"]) == size_group]
+    shape = "M={}, K={}, N={}".format(*sparsity_shape)
+    by_sparsity = read(sparsity_rows, "target_sparsity")
 
     fig, ax = plt.subplots(figsize=(8, 5))
     draw(ax, by_sparsity)
@@ -110,9 +130,7 @@ def main():
     legend(ax)
     save(fig, out, "runtime_vs_sparsity")
 
-    with (results / "size.csv").open() as stream:
-        first = next(csv.DictReader(stream))
-    by_size = read(results / "size.csv", "k")
+    by_size = read(size_rows, "k")
     fig, ax = plt.subplots(figsize=(8, 5))
     draw(ax, by_size)
     ax.set_xscale("log", base=2)
@@ -120,27 +138,30 @@ def main():
     sizes = sorted({x for points in by_size.values() for x, _, _ in points})
     ax.set_xticks(sizes, [str(int(s)) for s in sizes])
     ax.xaxis.set_minor_formatter(NullFormatter())
-    zeros = percent(float(first["target_sparsity"]), None)
-    style_axes(ax, f"Runtime vs size (M={first['m']}, {zeros} zeros)",
+    zeros = percent(float(size_group[1]), None)
+    style_axes(ax, f"Runtime vs size (M={size_group[0]}, {zeros} zeros)",
                "K = N", r"Median time per call ($\mu$s, log scale, lower is better)")
     legend(ax)
     save(fig, out, "runtime_vs_size")
 
-    blas = {x: (median, samples) for x, median, samples in by_sparsity["BLAS"]}
-    speedups = {}
-    for name, points in by_sparsity.items():
-        if name == "BLAS":
+    blas = {row["dataset"]: row for row in sparsity_rows if row["implementation"] == "BLAS"}
+    speedup_rows = []
+    for row in sparsity_rows:
+        if row["implementation"] == "BLAS":
             continue
 
-        # Match repetitions so the spread includes noise in both implementations
-        speedups[name] = [
-            (x, blas[x][0] / median,
-             [b / t for b, t in zip(blas[x][1], samples)])
-            for x, median, samples in points
-        ]
+        # Pair each implementation with BLAS on the same saved dataset
+        baseline = blas[row["dataset"]]
+        samples = [float(value) for value in row.get("sample_us", "").split(";") if value]
+        blas_samples = [float(value) for value in baseline.get("sample_us", "").split(";") if value]
+        speedup_rows.append({
+            **row,
+            "median_us": float(baseline["median_us"]) / float(row["median_us"]),
+            "sample_us": ";".join(str(b / t) for b, t in zip(blas_samples, samples)),
+        })
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    draw(ax, speedups)
+    draw(ax, read(speedup_rows, "target_sparsity"))
     ax.axhline(1, color="#0b0b0b", linewidth=1.2, linestyle="-", zorder=0)
     ax.text(ax.get_xlim()[0], 1, " BLAS", va="bottom", ha="left", color="#0b0b0b", fontsize=10)
     ax.set_yscale("log")

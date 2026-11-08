@@ -24,6 +24,8 @@ SampleData read_sample(const std::string& directory) {
     data.M = metadata["config"]["M"].get<std::size_t>();
     data.K = metadata["config"]["K"].get<std::size_t>();
     data.N = metadata["config"]["N"].get<std::size_t>();
+    data.seed = metadata["config"]["seed"].get<int>();
+    data.target_zero_fraction = metadata["config"]["target_zero_fraction"].get<double>();
 
     // Read tolerances
     data.atol = metadata["reference"]["atol"].get<double>();

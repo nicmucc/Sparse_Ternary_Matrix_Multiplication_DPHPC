@@ -15,19 +15,9 @@ RESULTS_DIR ?= build/results
 PLOT_DIR    ?= out/plots
 SWEEP_ARGS  ?= --width 6 --samples 15 --min-ms 10
 
-# Sparsity sweep at SWEEP_M x SWEEP_K x SWEEP_N
-SWEEP_M    ?= 16
-SWEEP_K    ?= 1024
-SWEEP_N    ?= 1024
-SPARSITIES ?= 0.5 0.7 0.8 0.9 0.95 0.98 0.99
-
-# Size sweep with K = N = each value
-SIZES         ?= 256 512 1024 2048
-SIZE_SPARSITY ?= 0.95
-
-CONFIG        ?= configs/temporary_config.json
-DATA_DIR      ?= data/sample_001
+DATA_DIR      ?= data/benchmarks
 GENERATE_ARGS ?=
+OVERWRITE     ?= 0
 
 # --- Flags -------------------------------------------------------------------
 
@@ -79,10 +69,10 @@ BENCH_BIN    := $(BUILD_DIR)/benchmark
 BUILD_CONFIG := $(BUILD_DIR)/config.txt
 TESTS_PASSED := $(BUILD_DIR)/tests.passed
 
-SPARSITY_CSV  := $(RESULTS_DIR)/sparsity.csv
-SIZE_CSV      := $(RESULTS_DIR)/size.csv
-SPARSITY_ARGS := $(RESULTS_DIR)/sparsity.args
-SIZE_ARGS     := $(RESULTS_DIR)/size.args
+SWEEP_CSV      := $(RESULTS_DIR)/benchmarks.csv
+SWEEP_SETTINGS := $(RESULTS_DIR)/sweep.args
+DATA_MANIFEST  := $(DATA_DIR)/manifest.json
+DATA_FILES     := $(wildcard $(DATA_DIR)/*/*.bin $(DATA_DIR)/*/metadata.json)
 
 RUN_ENV := OMP_NUM_THREADS=$(THREADS) OPENBLAS_NUM_THREADS=$(THREADS)
 
@@ -103,25 +93,13 @@ define write_if_changed
 @if cmp -s "$(1)" "$(1).tmp"; then rm "$(1).tmp"; else mv "$(1).tmp" "$(1)"; fi
 endef
 
-# $(call run_sweep,csv,values,args with $$x): one run per value, one CSV header
-define run_sweep
-@rm -f "$(1).tmp"
-@for x in $(2); do \
-	echo "benchmark $(3)"; \
-	$(RUN_ENV) "$(BENCH_BIN)" $(3) $(SWEEP_ARGS) > "$(1).run" || exit 1; \
-	if [ -f "$(1).tmp" ]; then tail -n +2 "$(1).run" >> "$(1).tmp"; \
-	else mv "$(1).run" "$(1).tmp"; fi; \
-done; \
-rm -f "$(1).run"; mv "$(1).tmp" "$(1)"
-endef
-
-SPARSITY_LINES = "$(PROFILE)" "$(RUN_ENV)" "$(SWEEP_ARGS)" "$(SWEEP_M) $(SWEEP_K) $(SWEEP_N)" "$(SPARSITIES)"
-SIZE_LINES     = "$(PROFILE)" "$(RUN_ENV)" "$(SWEEP_ARGS)" "$(SWEEP_M)" "$(SIZES)" "$(SIZE_SPARSITY)"
+SWEEP_LINES = "$(PROFILE)" "$(RUN_ENV)" "$(SWEEP_ARGS)" "$(abspath $(DATA_DIR))"
+SWEEP_COMMAND = $(RUN_ENV) $(PYTHON) scripts/run_benchmarks.py "$(BENCH_BIN)" "$(DATA_DIR)" "$(SWEEP_CSV)" $(SWEEP_ARGS)
 
 # --- Build -------------------------------------------------------------------
 
 .DEFAULT_GOAL := build
-.PHONY: build test benchmark sweep sweep-sparsity sweep-size plot data clean help FORCE
+.PHONY: build test benchmark sweep plot data clean help FORCE
 
 build: $(TEST_BIN) $(BENCH_BIN)
 
@@ -151,38 +129,25 @@ benchmark: $(TESTS_PASSED) $(BENCH_BIN)
 
 # --- Sweeps and plots --------------------------------------------------------
 
-# A CSV is re-measured when missing, when the benchmark was rebuilt, or when
-# its sweep settings changed. `make sweep` always re-measures.
+# Re-measure when inputs, executable, runner, or settings change.
+# The phony sweep target always re-measures every manifest entry sequentially.
 
-$(SPARSITY_ARGS): FORCE
-	$(call write_if_changed,$@,$(SPARSITY_LINES))
+$(SWEEP_SETTINGS): FORCE
+	$(call write_if_changed,$@,$(SWEEP_LINES))
 
-$(SIZE_ARGS): FORCE
-	$(call write_if_changed,$@,$(SIZE_LINES))
+$(SWEEP_CSV): $(BENCH_BIN) $(TESTS_PASSED) $(SWEEP_SETTINGS) $(DATA_MANIFEST) $(DATA_FILES) scripts/run_benchmarks.py
+	$(SWEEP_COMMAND)
 
-$(SPARSITY_CSV): $(BENCH_BIN) $(TESTS_PASSED) $(SPARSITY_ARGS)
-	$(call run_sweep,$@,$(SPARSITIES),--m $(SWEEP_M) --k $(SWEEP_K) --n $(SWEEP_N) --sparsity $$x)
+sweep: $(BENCH_BIN) $(TESTS_PASSED) $(SWEEP_SETTINGS) $(DATA_MANIFEST)
+	$(SWEEP_COMMAND)
 
-$(SIZE_CSV): $(BENCH_BIN) $(TESTS_PASSED) $(SIZE_ARGS)
-	$(call run_sweep,$@,$(SIZES),--m $(SWEEP_M) --k $$x --n $$x --sparsity $(SIZE_SPARSITY))
-
-sweep:          SWEEP_CSVS = $(SPARSITY_CSV) $(SIZE_CSV)
-sweep-sparsity: SWEEP_CSVS = $(SPARSITY_CSV)
-sweep-size:     SWEEP_CSVS = $(SIZE_CSV)
-
-# Build in parallel, then measure with -j1 so sweeps never run concurrently.
-sweep sweep-sparsity sweep-size: $(BENCH_BIN) $(TESTS_PASSED)
-	@rm -f $(SWEEP_CSVS)
-	@$(MAKE) --no-print-directory -j1 $(SWEEP_CSVS)
-
-plot: $(BENCH_BIN) $(TESTS_PASSED)
-	@$(MAKE) --no-print-directory -j1 $(SPARSITY_CSV) $(SIZE_CSV)
+plot: $(SWEEP_CSV)
 	$(PYTHON) scripts/plot_benchmarks.py "$(RESULTS_DIR)" "$(PLOT_DIR)"
 
 # --- Misc --------------------------------------------------------------------
 
 data:
-	$(PYTHON) scripts/generate_data.py --config "$(CONFIG)" --out "$(DATA_DIR)" $(GENERATE_ARGS)
+	$(PYTHON) scripts/generate_data.py --benchmark-suite --out "$(DATA_DIR)" $(if $(filter 1,$(OVERWRITE)),--overwrite) $(GENERATE_ARGS)
 
 clean:
 	rm -rf "$(BUILD_DIR)"
@@ -191,12 +156,10 @@ help:
 	@printf '%s\n' \
 		'make                 Build tests and benchmark' \
 		'make test            Run correctness tests (TEST_DATA=dir adds dataset checks)' \
-		'make benchmark       One run, CSV to stdout (BENCHMARK_ARGS="--m 1 --k 64 --n 64")' \
-		'make sweep           Re-measure both sweeps into RESULTS_DIR' \
-		'make sweep-sparsity  Re-measure only the sparsity sweep' \
-		'make sweep-size      Re-measure only the size sweep' \
+		'make benchmark       One saved dataset, CSV to stdout (BENCHMARK_ARGS="--dataset dir")' \
+		'make sweep           Benchmark every saved dataset in DATA_DIR/manifest.json' \
 		'make plot            Plot into PLOT_DIR (runs sweeps if missing or stale)' \
-		'make data            Generate optional file-based reference data' \
+		'make data            Generate benchmark datasets (OVERWRITE=1 regenerates)' \
 		'make clean           Remove the build directory of the selected profile' \
 		'' \
 		'PROFILE=release|native|scalar|sanitizer|openmp   separate build per profile' \

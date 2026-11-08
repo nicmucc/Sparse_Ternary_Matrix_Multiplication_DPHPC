@@ -9,6 +9,8 @@
 
 struct SampleData {
     std::size_t M, K, N;
+    int seed;
+    double target_zero_fraction;
 
     vec_t X;
     tern_t W;

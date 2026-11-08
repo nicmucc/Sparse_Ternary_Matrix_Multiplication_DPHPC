@@ -11,8 +11,8 @@
 using namespace baseline_suite;
 
 int main(int argc, char** argv) try {
-    int M = 17, K = 257, N = 37, width = 6, samples = 15, input_count = 1, seed = 42, repeat_rows = 0;
-    double sparsity = 0.95, min_ms = 10;
+    int width = 6, samples = 15;
+    double min_ms = 10;
     std::string dataset;
 
     // Parse "--key value" options
@@ -21,54 +21,29 @@ int main(int argc, char** argv) try {
         if (i + 1 == argc) throw std::invalid_argument("Missing option value");
         const std::string value = argv[++i];
 
-        if (key == "--m") M = std::stoi(value);
-        else if (key == "--k") K = std::stoi(value);
-        else if (key == "--n") N = std::stoi(value);
-        else if (key == "--width") width = std::stoi(value);
+        if (key == "--width") width = std::stoi(value);
         else if (key == "--samples") samples = std::stoi(value);
-        else if (key == "--inputs") input_count = std::stoi(value);
-        else if (key == "--seed") seed = std::stoi(value);
-        else if (key == "--pattern-rows") repeat_rows = std::stoi(value);
-        else if (key == "--sparsity") sparsity = std::stod(value);
         else if (key == "--min-ms") min_ms = std::stod(value);
         else if (key == "--dataset") dataset = value;
         else throw std::invalid_argument("Unknown option: " + key);
     }
-    if (M <= 0 || K <= 0 || N <= 0 || width < 1 || width > 8 || samples < 3 || input_count < 1
-        || repeat_rows < 0 || !std::isfinite(sparsity) || sparsity < 0 || sparsity > 1
-        || !std::isfinite(min_ms) || min_ms <= 0)
+    if (dataset.empty())
+        throw std::invalid_argument("Specify a saved input with --dataset");
+    if (width < 1 || width > 8 || samples < 3 || !std::isfinite(min_ms) || min_ms <= 0)
         throw std::invalid_argument("Invalid benchmark configuration");
 
+    // Load the saved matrices and their generation settings before timing
+    auto data = read_sample(dataset);
+    if (data.M > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
+        data.K > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
+        data.N > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw std::invalid_argument("Dataset dimensions exceed supported range");
+    const int M = data.M, K = data.K, N = data.N;
+    const int seed = data.seed;
+    const double sparsity = data.target_zero_fraction;
+    const auto& W = data.W;
+    const std::vector<vec_t> inputs{std::move(data.X)};
     std::mt19937 rng(seed);
-    std::uniform_real_distribution<float> activation(-3, 3);
-    std::uniform_real_distribution<double> probability(0, 1);
-    matrix_size(M, K); matrix_size(K, N); matrix_size(M, N);
-
-    // Weights (and the first input) come from a dataset or are generated
-    tern_t W;
-    std::vector<vec_t> inputs;
-    if (!dataset.empty()) {
-        auto data = read_sample(dataset);
-        if (data.M > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
-            data.K > static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
-            data.N > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-            throw std::invalid_argument("Dataset dimensions exceed supported range");
-        M = data.M; K = data.K; N = data.N;
-        W = std::move(data.W);
-        inputs.push_back(std::move(data.X));
-    } else {
-        W.resize(static_cast<std::size_t>(K) * N);
-        for (int& w : W) w = probability(rng) < sparsity ? 0 : (rng() % 2 ? 1 : -1);
-        // Repeat the first `repeat_rows` rows to create pattern reuse
-        if (repeat_rows)
-            for (int row = repeat_rows; row < K; ++row)
-                std::copy_n(W.data() + (row % repeat_rows) * N, N, W.data() + row * N);
-    }
-    while (static_cast<int>(inputs.size()) < input_count) {
-        vec_t x(static_cast<std::size_t>(M) * K);
-        for (float& value : x) value = activation(rng);
-        inputs.push_back(std::move(x));
-    }
 
     Suite suite(inputs, W, M, K, N, width);
 
@@ -148,17 +123,16 @@ int main(int argc, char** argv) try {
     // CSV output, one row per kernel
     const char* omp = std::getenv("OMP_NUM_THREADS");
     const char* blas_threads = std::getenv("OPENBLAS_NUM_THREADS");
-    std::cout << "implementation,m,k,n,target_sparsity,sparsity,width,seed,pattern_rows,nonzero_patterns,mode,inputs,input_pool_bytes,backend,omp_threads,blas_threads,preprocess_us,weight_bytes,median_us,p10_us,p90_us,speedup_blas,iterations,samples,scope,sample_us\n";
+    std::cout << "implementation,m,k,n,target_sparsity,sparsity,width,seed,nonzero_patterns,mode,inputs,input_pool_bytes,backend,omp_threads,blas_threads,preprocess_us,weight_bytes,median_us,p10_us,p90_us,speedup_blas,iterations,samples,scope,sample_us\n";
     for (std::size_t i = 0; i < suite.kernels.size(); ++i) {
         const auto& kernel = suite.kernels[i];
         auto t = timings[i];
         std::sort(t.begin(), t.end());
 
         std::cout << std::setprecision(10) << kernel.name << ',' << M << ',' << K << ',' << N << ',';
-        if (dataset.empty()) std::cout << sparsity;
-        std::cout << ',' << 1.0 - static_cast<double>(nonzero) / W.size() << ',' << width << ',' << seed << ',' << repeat_rows
-                  << ',' << pattern_count << ',' << (input_count == 1 ? "warm" : "rotating") << ',' << input_count
-                  << ',' << static_cast<std::size_t>(input_count) * M * K * sizeof(float)
+        std::cout << sparsity << ',' << 1.0 - static_cast<double>(nonzero) / W.size()
+                  << ',' << width << ',' << seed << ',' << pattern_count << ",warm," << inputs.size()
+                  << ',' << inputs.size() * M * K * sizeof(float)
                   << ',' << kernel.backend
                   << ',' << (omp ? omp : "unset") << ',' << (blas_threads ? blas_threads : "unset")
                   << ',' << kernel.preprocess_us << ',' << kernel.weight_bytes << ',' << medians[i]

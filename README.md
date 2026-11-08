@@ -12,8 +12,9 @@ src/baselines/           Naive, BLAS, Eigen CSR/CSC, RSR/RSR++, SSR, TCSC
 src/utils/               Dataset reader and pattern utilities
 src/benchmark.cpp          Calibrated benchmark executable
 src/test_baselines.cpp     Self-contained correctness and API checks
+scripts/run_benchmarks.py  Runs the generated dataset manifest
 scripts/plot_benchmarks.py Plots for `make sweep` results
-scripts/generate_data.py   Optional file-based reference datasets
+scripts/generate_data.py   Reference samples and benchmark datasets
 configs/                   Dataset configurations
 build/                     Build profiles and sweep results
 out/plots/                 Generated plots
@@ -23,7 +24,7 @@ out/plots/                 Generated plots
 
 Requires a C++17 compiler, Make, pkg-config, Eigen, OpenBLAS, and nlohmann-json.
 On macOS: `brew install eigen openblas nlohmann-json pkg-config`.
-Plotting requires Matplotlib. The optional dataset generator requires NumPy
+Plotting requires Matplotlib. The dataset generator requires NumPy
 (`python3 -m pip install -r requirements.txt`).
 
 ```sh
@@ -56,11 +57,11 @@ where `gamma(n)=n*u/(1-n*u)` and `u=2^-24`. This allows accumulation rounding ne
 zero without choosing a fixed larger absolute tolerance. Bias contributes to the
 absolute sum in dataset tests. Exact dyadic cases also run with strict comparisons.
 
-Optional external reference data:
+Generate benchmark data, then optionally include one dataset in correctness tests:
 
 ```sh
 make data PYTHON=.venv/bin/python
-make test TEST_DATA=data/sample_001
+make test TEST_DATA=data/benchmarks/m16_k1024_n1024_s0.95_seed42
 ```
 
 The legacy generator includes bias and PReLU files. Tests compare its linear result;
@@ -69,10 +70,13 @@ PReLU is outside the current kernel benchmark.
 ## Benchmark
 
 ```sh
-make benchmark BENCHMARK_ARGS="--m 64 --k 512 --n 256"
-build/release/benchmark --m 64 --k 512 --n 256 --sparsity 0.95 --width 6 \
-  --samples 15 --min-ms 10 --inputs 1 --seed 42 --pattern-rows 0
+make benchmark BENCHMARK_ARGS="--dataset data/benchmarks/m16_k1024_n1024_s0.95_seed42"
+build/release/benchmark --dataset data/benchmarks/m16_k1024_n1024_s0.95_seed42 \
+  --width 6 --samples 15 --min-ms 10
 ```
+
+The benchmark requires a saved dataset; it never generates activations or weights.
+Dimensions, generation seed, and requested sparsity are read from its metadata.
 
 The C++ executable prints CSV to stdout and errors to stderr. It validates every
 implementation and input against FP64 before timing, checking output lengths
@@ -99,45 +103,47 @@ microbenchmark. Stored bytes count vector payloads, excluding allocator overhead
 inputs, output/scratch, and discarded conversion intermediates. TCSC's public
 format retains both basic and merged metadata, so both are counted.
 
-`--inputs 1` measures warm reuse. Larger pools rotate distinct prepared inputs;
-weights remain reused. This does not forcibly flush caches. The logical FP32 pool
-size is reported; row and Eigen adapters retain additional input copies. Select a
-pool larger than the target machine's cache to study changing-input workloads.
-
-`--pattern-rows 0` generates independent weight rows. A positive value repeats
-that many prototype rows, exposing pattern reuse at the same expected sparsity.
-CSV records requested `target_sparsity`, actual `sparsity`, and the total distinct
-nonzero ternary patterns across column blocks. Both RSR and SSR use
-`--width`, enabling explicit block-size sweeps.
-An optional `--dataset path` uses existing X/W files for the first input, with
-additional inputs generated from the seed. Dataset bias/activation are excluded;
-`target_sparsity` is empty for file-based datasets.
+Each run repeatedly reuses one saved input and its weights. This measures warm
+reuse without forcibly flushing caches. The CSV records requested
+`target_sparsity`, actual `sparsity`, and distinct nonzero ternary patterns across
+column blocks. Both RSR and SSR use `--width`. Dataset bias and activation are
+excluded from timing.
 
 ## Sweeps
 
 ```sh
-make plot             # runs missing or stale sweeps, then writes out/plots/*.pdf
-make sweep            # re-measures both sweeps (sweep-sparsity / sweep-size for one)
+make data             # once: generate the benchmark suite under data/benchmarks
+make sweep            # benchmark every entry in its manifest, sequentially
+make plot             # measure if missing or stale, then write out/plots/*.pdf
 ```
 
-There are two sweeps. The first varies sparsity (`SPARSITIES`) at a fixed
-`SWEEP_M x SWEEP_K x SWEEP_N` (default 16x1024x1024). The second varies `K = N`
-(`SIZES`, default 256 to 2048) at `SWEEP_M` and `SIZE_SPARSITY` (default 0.95).
-`SWEEP_ARGS` is passed to every run (default `--width 6 --samples 15 --min-ms 10`),
-and `THREADS` sets `OMP_NUM_THREADS` and `OPENBLAS_NUM_THREADS` (default 1).
-Results go to `build/results/{sparsity,size}.csv`. `make plot` re-measures a sweep
-only if its CSV is missing, the benchmark was rebuilt, or its settings changed.
-Sweeps always run one at a time, even under `make -j`. Override any setting on
-the command line:
+The generator defines the complete dataset list in
+`data/benchmarks/manifest.json`. By default it contains 30 datasets: the
+16x1024x1024 sparsity sweep from 50% to 99% zeros and the K=N size sweep from 256
+to 2048 at 95% zeros, each with seeds 17, 42, and 123. The shared 1024/95% case
+is measured once per seed. Generated data is gitignored.
+
+`make sweep` reads every manifest entry and writes one row per dataset and
+implementation to `build/results/benchmarks.csv`, including the dataset name and
+its seed. Shape and sparsity settings live in the generator rather than Make.
+`SWEEP_ARGS` controls measurement settings (default
+`--width 6 --samples 15 --min-ms 10`), and `THREADS` sets
+`OMP_NUM_THREADS` and `OPENBLAS_NUM_THREADS` (default 1).
+`make plot` re-measures if data files, the manifest, benchmark, runner, or settings
+changed. `make sweep` always re-measures.
 
 ```sh
-make sweep SPARSITIES="0.9 0.99" SIZES="512 1024 2048 4096" RESULTS_DIR=build/run2
+make sweep DATA_DIR=data/benchmarks RESULTS_DIR=build/run2
 make plot RESULTS_DIR=build/run2 PLOT_DIR=out/plots/run2
 ```
 
-`make plot` (Matplotlib) produces runtime vs sparsity, runtime vs size, and speedup
-over BLAS vs sparsity. Run timing experiments without competing builds or other
-benchmark processes.
+The plotter identifies the fixed-shape sparsity sweep and fixed-sparsity size
+sweep from the measured configurations. Curves show the median of dataset medians
+across seeds. Bands show one sample standard deviation of batch averages pooled
+across seeds, including both timing noise and variation between datasets.
+Speedups pair each implementation with BLAS on the same dataset before combining
+seeds. LaTeX renders text when installed. Run timing experiments without competing
+builds or other benchmark processes.
 
 ## Baseline provenance
 
