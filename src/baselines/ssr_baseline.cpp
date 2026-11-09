@@ -126,7 +126,7 @@ pair<pair<vector<int>, vector<int>>, pair<vector<int>, vector<int>>> ssr_preproc
     return make_pair(pos, neg);
 }
 template <typename T>
-void ssr_inference_rows(const vector<T>& v, const vector<int>& permutations_pos, const vector<int>& segments_pos, const vector<int>& permutations_neg, const vector<int>& segments_neg, int L, int M, int N, int K, vector<T>& result, int first_row) {
+void ssr_inference_rows(const T* v, const vector<int>& permutations_pos, const vector<int>& segments_pos, const vector<int>& permutations_neg, const vector<int>& segments_neg, int L, int M, int N, int K, vector<T>& result, int first_row) {
 
     N = N + (L - N % L) % L;
     int block_size = L;
@@ -194,7 +194,7 @@ void ssr_inference_rows(const vector<T>& v, const vector<int>& permutations_pos,
 
 }
 template <typename T>
-vector<T> ssr_inference(const vector<T>& v, const vector<int>& permutations_pos,
+vector<T> ssr_inference(const T* v, const vector<int>& permutations_pos,
     const vector<int>& segments_pos, const vector<int>& permutations_neg,
     const vector<int>& segments_neg, int L, int M, int N, int K) {
     N += (L - N % L) % L;
@@ -212,7 +212,7 @@ struct alignas(32) AvxFloat {
 };
 TERNARY_BASELINE_AVX2_TARGET
 vector<float> ssr_inference_float_vec_unroll16_v2(
-    const vector<float>& v,
+    const float* v,
     const vector<int>& permutations_pos,
     const vector<int>& segments_pos,
     const vector<int>& permutations_neg,
@@ -415,7 +415,7 @@ vector<float> ssr_inference_float_vec_unroll16_v2(
 
 TERNARY_BASELINE_AVX2_TARGET
 vector<float> ssr_inference_float_vec_L2(
-    const vector<float>& v,
+    const float* v,
     const vector<int>& permutations_pos,
     const vector<int>& segments_pos,
     const vector<int>& permutations_neg,
@@ -554,7 +554,7 @@ vector<float> ssr_inference_float_vec_L2(
 
 TERNARY_BASELINE_AVX2_TARGET
 vector<float> ssr_inference_float_vec_L3(
-    const vector<float>& v,
+    const float* v,
     const vector<int>& permutations_pos,
     const vector<int>& segments_pos,
     const vector<int>& permutations_neg,
@@ -784,7 +784,7 @@ vector<float> ssr_inference_float_vec_L3(
 
 TERNARY_BASELINE_AVX2_TARGET
 vector<float> ssr_inference_float_vec_L4(
-    const vector<float>& v,
+    const float* v,
     const vector<int>& permutations_pos,
     const vector<int>& segments_pos,
     const vector<int>& permutations_neg,
@@ -1192,7 +1192,7 @@ vector<float> ssr_inference_float_vec_L4(
 
 TERNARY_BASELINE_AVX2_TARGET
 vector<float> ssr_inference_float_vec_L5(
-    const vector<float>& v,
+    const float* v,
     const vector<int>& permutations_pos,
     const vector<int>& segments_pos,
     const vector<int>& permutations_neg,
@@ -1962,7 +1962,7 @@ vector<float> ssr_inference_float_vec_L5(
 
 TERNARY_BASELINE_AVX2_TARGET
 vector<float> ssr_inference_float_vec_L6(
-    const vector<float>& v,
+    const float* v,
     const vector<int>& permutations_pos,
     const vector<int>& segments_pos,
     const vector<int>& permutations_neg,
@@ -3478,17 +3478,25 @@ vector<float> ssr_inference_float_vec_L6(
 #endif
 
 
-void copy_output(const vec_t& padded, vec_t& Y, int M, int N, int L) {
+void copy_output(const vec_t& padded, float* Y, int M, int N, int L) {
     const int padded_N = N + (L - N % L) % L;
-    Y.resize(static_cast<std::size_t>(M) * N);
     for (int row = 0; row < M; ++row) {
         std::copy_n(padded.data() + static_cast<std::size_t>(row) * padded_N, N,
-                    Y.data() + static_cast<std::size_t>(row) * N);
+                    Y + static_cast<std::size_t>(row) * N);
     }
 }
 
 void validate(const vec_t& X, const Weights& W, const vec_t& Y, int M) {
     ternary_baseline_detail::validate_product(X, Y, M, W.K, W.N);
+    const int padded_N = W.N + (W.block_width - W.N % W.block_width) % W.block_width;
+    ternary_baseline_detail::checked_size(M, padded_N);
+}
+
+void validate(const float* X, const Weights& W, float* Y, int M) {
+    if (!X || !Y) {
+        throw std::invalid_argument("input and output pointers must not be null");
+    }
+    ternary_baseline_detail::checked_size(M, W.K);
     const int padded_N = W.N + (W.block_width - W.N % W.block_width) % W.block_width;
     ternary_baseline_detail::checked_size(M, padded_N);
 }
@@ -3518,6 +3526,12 @@ Weights preprocess(const tern_t& W, int K, int N, int block_width) {
 
 void multiply_basic(const vec_t& X, const Weights& W, vec_t& Y, int M) {
     validate(X, W, Y, M);
+    Y.resize(static_cast<std::size_t>(M) * W.N);
+    multiply_basic_raw(X.data(), W, Y.data(), M);
+}
+
+void multiply_basic_raw(const float* X, const Weights& W, float* Y, int M) {
+    validate(X, W, Y, M);
     const auto result = ssr_inference(
         X, W.permutations_pos, W.segments_pos, W.permutations_neg, W.segments_neg,
         W.block_width, M, W.N, W.K);
@@ -3525,6 +3539,12 @@ void multiply_basic(const vec_t& X, const Weights& W, vec_t& Y, int M) {
 }
 
 void multiply_unrolled(const vec_t& X, const Weights& W, vec_t& Y, int M) {
+    validate(X, W, Y, M);
+    Y.resize(static_cast<std::size_t>(M) * W.N);
+    multiply_unrolled_raw(X.data(), W, Y.data(), M);
+}
+
+void multiply_unrolled_raw(const float* X, const Weights& W, float* Y, int M) {
     validate(X, W, Y, M);
 #if TERNARY_BASELINE_HAS_AVX2
     if (avx2_available()) {
@@ -3536,14 +3556,20 @@ void multiply_unrolled(const vec_t& X, const Weights& W, vec_t& Y, int M) {
         return;
     }
 #endif
-    multiply_basic(X, W, Y, M);
+    multiply_basic_raw(X, W, Y, M);
 }
 
 void multiply_tree(const vec_t& X, const Weights& W, vec_t& Y, int M) {
     validate(X, W, Y, M);
+    Y.resize(static_cast<std::size_t>(M) * W.N);
+    multiply_tree_raw(X.data(), W, Y.data(), M);
+}
+
+void multiply_tree_raw(const float* X, const Weights& W, float* Y, int M) {
+    validate(X, W, Y, M);
 #if TERNARY_BASELINE_HAS_AVX2
     if (avx2_available() && W.block_width >= 2 && W.block_width <= 6) {
-        using Kernel = vec_t (*)(const vec_t&, const permutation_t&, const segment_t&,
+        using Kernel = vec_t (*)(const float*, const permutation_t&, const segment_t&,
                                  const permutation_t&, const segment_t&, int, int, int);
         static const Kernel kernels[] = {
             ssr_inference_float_vec_L2,
@@ -3559,7 +3585,7 @@ void multiply_tree(const vec_t& X, const Weights& W, vec_t& Y, int M) {
         return;
     }
 #endif
-    multiply_unrolled(X, W, Y, M);
+    multiply_unrolled_raw(X, W, Y, M);
 }
 
 bool avx2_available() { return ternary_baseline_detail::avx2_available(); }

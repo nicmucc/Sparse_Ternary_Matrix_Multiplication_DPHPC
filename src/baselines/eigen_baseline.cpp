@@ -36,6 +36,18 @@ void product(const DenseMatrix& X, const SparseMatrix& W, DenseMatrix& Y) {
     Y.noalias() = X * W; 
 }
 
+template <typename SparseMatrix>
+void product(const float* X, const SparseMatrix& W, float* Y,
+             int M, int K, int N) {
+    if (!X || !Y || M <= 0 || K <= 0 || N <= 0 ||
+        W.rows() != K || W.cols() != N) {
+        throw std::invalid_argument("Invalid mapped Eigen matrix dimensions");
+    }
+    const Eigen::Map<const DenseMatrix> input(X, M, K);
+    Eigen::Map<DenseMatrix> output(Y, M, N);
+    output.noalias() = input * W;
+}
+
 }
 
 DenseMatrix to_dense(const std::vector<std::vector<int>>& matrix) {
@@ -66,6 +78,16 @@ void multiply(const DenseMatrix& X, const CSRMatrix& W, DenseMatrix& Y) {
 
 void multiply(const DenseMatrix& X, const CSCMatrix& W, DenseMatrix& Y) {
     product(X, W, Y);
+}
+
+void multiply(const float* X, const CSRMatrix& W, float* Y,
+              int M, int K, int N) {
+    product(X, W, Y, M, K, N);
+}
+
+void multiply(const float* X, const CSCMatrix& W, float* Y,
+              int M, int K, int N) {
+    product(X, W, Y, M, K, N);
 }
 
 }

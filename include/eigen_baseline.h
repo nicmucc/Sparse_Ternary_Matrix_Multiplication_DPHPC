@@ -22,5 +22,9 @@ CSCMatrix preprocess_csc(const DenseMatrix& weights);
 // X.rows() x W.cols() before timing to avoid output allocation in the timed call.
 void multiply(const DenseMatrix& X, const CSRMatrix& W, DenseMatrix& Y);
 void multiply(const DenseMatrix& X, const CSCMatrix& W, DenseMatrix& Y);
+void multiply(const float* X, const CSRMatrix& W, float* Y,
+              int M, int K, int N);
+void multiply(const float* X, const CSCMatrix& W, float* Y,
+              int M, int K, int N);
 
 }

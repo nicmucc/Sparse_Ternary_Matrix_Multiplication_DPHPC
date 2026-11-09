@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#include <cstddef>
+
 /*
  * Vector-Matrix multiply
  */
@@ -24,5 +26,8 @@ void vectorMatrixMultiply(const vec_t& vec,
                           const tern_t& mat, 
                           vec_t& res
                           );
+
+void vectorMatrixMultiply(const float* vec, const int* mat, float* res,
+                          std::size_t K, std::size_t N);
 
 #endif

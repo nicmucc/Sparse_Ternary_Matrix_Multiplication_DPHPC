@@ -23,6 +23,9 @@ Weights preprocess(const tern_t& W, int K, int N, int block_width = 6);
 void multiply_basic(const vec_t& X, const Weights& W, vec_t& Y, int M);
 void multiply_unrolled(const vec_t& X, const Weights& W, vec_t& Y, int M);
 void multiply_tree(const vec_t& X, const Weights& W, vec_t& Y, int M);
+void multiply_basic_raw(const float* X, const Weights& W, float* Y, int M);
+void multiply_unrolled_raw(const float* X, const Weights& W, float* Y, int M);
+void multiply_tree_raw(const float* X, const Weights& W, float* Y, int M);
 
 // Both optimized variants fall back to basic SSR without AVX2. The tree kernels
 // specialize L=2..6; other widths use the AVX2 unrolled kernel.

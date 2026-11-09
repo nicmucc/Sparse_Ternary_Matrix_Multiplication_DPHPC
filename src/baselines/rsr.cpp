@@ -128,14 +128,16 @@ pair<vector<vector<int>>, vector<vector<int>>> preprocess(
     return make_pair(permutations, segs);
 }
 
-vec_t rsr_inference(const vec_t& v, const permutation_t& permutations, const segment_t& segments, const binary_matrix_t& binary_patterns, size_t K, int block_width) {
-    
+vec_t rsr_inference(const float* v, const permutation_t& permutations,
+                    const segment_t& segments,
+                    const binary_matrix_t& binary_patterns,
+                    size_t K, int block_width) {
     if (K == 0 || block_width <= 0 ||
         block_width >= numeric_limits<int>::digits) {
         throw invalid_argument("Invalid inference dimensions");
     }
 
-    if (v.size() != K || permutations.size() % K != 0) {
+    if (!v || permutations.size() % K != 0) {
         throw invalid_argument("Invalid input or permutation size");
     }
 
@@ -182,4 +184,15 @@ vec_t rsr_inference(const vec_t& v, const permutation_t& permutations, const seg
         }
     }
     return result;
+}
+
+vec_t rsr_inference(const vec_t& v, const permutation_t& permutations,
+                    const segment_t& segments,
+                    const binary_matrix_t& binary_patterns,
+                    size_t K, int block_width) {
+    if (v.size() != K) {
+        throw invalid_argument("Invalid input or permutation size");
+    }
+    return rsr_inference(v.data(), permutations, segments, binary_patterns,
+                         K, block_width);
 }

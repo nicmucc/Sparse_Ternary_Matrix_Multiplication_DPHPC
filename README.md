@@ -15,6 +15,8 @@ src/test_baselines.cpp     Self-contained correctness and API checks
 scripts/run_benchmarks.py  Runs the generated dataset manifest
 scripts/plot_benchmarks.py Plots for `make sweep` results
 scripts/generate_data.py   Reference samples and benchmark datasets
+scripts/benchmark_python.py Python/PyTorch benchmark entry point
+python/stmm_benchmark/      Shared Python backend and benchmark interfaces
 configs/                   Dataset configurations
 build/                     Build profiles and sweep results
 out/plots/                 Generated plots
@@ -66,6 +68,53 @@ make test TEST_DATA=data/benchmarks/m16_k1024_n1024_s0.95_seed42
 
 The legacy generator includes bias and PReLU files. Tests compare its linear result;
 PReLU is outside the current kernel benchmark.
+
+## Python benchmark interface
+
+The Python harness mirrors the C++ benchmark structure: it loads the same saved
+datasets, prepares registered backends outside timing, validates every backend
+against an FP64 reference, calibrates batches as warmup, shuffles backend order,
+and emits CSV. The initial built-in backend is dense PyTorch; Python algorithms
+and future C++ extension adapters implement the same `prepare(W)` and
+`forward_out(X, Y)` protocol.
+
+```sh
+make python-test
+make python-extension
+make python-benchmark PYTHON_BENCHMARK_ARGS="--dataset data/benchmarks/m16_k1024_n1024_s0.95_seed42"
+```
+
+Build the extension in the same Linux/WSL environment that provides Eigen and
+OpenBLAS. It uses C++20 because current PyTorch headers require it; the standalone
+C++ executables remain C++17. For a CPU-only PyTorch environment, install PyTorch
+from its CPU wheel index before invoking `make python-extension`.
+
+An external Python implementation can expose a factory and be loaded without
+editing the harness:
+
+```sh
+python scripts/benchmark_python.py --dataset DATASET \
+  --plugin my_algorithm:create_backends
+```
+
+Preparation time is reported separately. The `api_call_xw` timing includes the
+Python call and the implementation's public API behavior, matching the scope of
+the C++ harness. `speedup_blas` remains empty until a bound C++ BLAS backend is
+registered; `speedup_reference` names and compares against the active reference.
+
+After building the extension, register every C++ baseline in the Python run with:
+
+```sh
+make python-benchmark PYTHON_BENCHMARK_ARGS="\
+  --dataset data/benchmarks/m16_k1024_n1024_s0.95_seed42 \
+  --plugin stmm_benchmark.cpp_backends:create_backends"
+```
+
+The extension accepts CPU-contiguous `torch.float32` inputs and outputs and a
+CPU-contiguous `torch.int8` ternary weight matrix. Weight conversion and sparse
+format construction occur in each prepared operator's constructor. Execution
+uses the tensors' existing storage directly; it does not copy `X` or `Y` through
+`std::vector`.
 
 ## Benchmark
 

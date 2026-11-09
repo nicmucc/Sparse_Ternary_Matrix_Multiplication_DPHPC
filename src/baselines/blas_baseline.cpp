@@ -55,12 +55,21 @@ void multiply(const vec_t& X, const vec_t& W, vec_t& Y,
         throw std::invalid_argument("Output must not alias an input matrix");
     }
 
+    multiply(X.data(), W.data(), Y.data(), M, K, N);
+}
+
+void multiply(const float* X, const float* W, float* Y,
+              std::size_t M, std::size_t K, std::size_t N) {
+    if ((M && K && !X) || (K && N && !W) || (M && N && !Y)) {
+        throw std::invalid_argument("Matrix pointer must not be null");
+    }
+
     if (M == 0 || N == 0) {
         return;
     }
 
     if (K == 0) {
-        std::fill(Y.begin(), Y.end(), 0.0f);
+        std::fill_n(Y, checked_product(M, N), 0.0f);
         return;
     }
 
@@ -70,9 +79,9 @@ void multiply(const vec_t& X, const vec_t& W, vec_t& Y,
 
     cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                 blas_M, blas_N, blas_K,
-                1.0f, X.data(), blas_K,
-                W.data(), blas_N,
-                0.0f, Y.data(), blas_N);
+                1.0f, X, blas_K,
+                W, blas_N,
+                0.0f, Y, blas_N);
 }
 
 } // namespace blas_baseline

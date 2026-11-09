@@ -7,6 +7,8 @@
 namespace blas_baseline {
 
 vec_t int2float(const tern_t& matrix);
+void multiply(const float* X, const float* W, float* Y,
+              std::size_t M, std::size_t K, std::size_t N);
 void multiply(const vec_t& X, const vec_t& W, vec_t& Y,
               std::size_t M, std::size_t K, std::size_t N);
 

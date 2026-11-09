@@ -10,6 +10,7 @@ THREADS   ?= 1
 
 TEST_DATA      ?=
 BENCHMARK_ARGS ?=
+PYTHON_BENCHMARK_ARGS ?=
 
 RESULTS_DIR ?= build/results
 PLOT_DIR    ?= out/plots
@@ -98,7 +99,7 @@ SWEEP_COMMAND = $(RUN_ENV) $(PYTHON) scripts/run_benchmarks.py "$(BENCH_BIN)" "$
 # --- Build -------------------------------------------------------------------
 
 .DEFAULT_GOAL := build
-.PHONY: build test benchmark sweep plot data clean help FORCE
+.PHONY: build test benchmark python-extension python-test python-benchmark sweep plot data clean help FORCE
 
 build: $(TEST_BIN) $(BENCH_BIN)
 
@@ -130,6 +131,15 @@ $(TESTS_PASSED): $(TEST_BIN) $(BUILD_CHANGED)
 
 benchmark: $(TESTS_PASSED) $(BENCH_BIN)
 	$(RUN_ENV) "$(BENCH_BIN)" $(BENCHMARK_ARGS)
+
+python-extension:
+	$(PYTHON) setup.py build_ext --inplace
+
+python-test:
+	PYTHONPATH=python $(PYTHON) -m unittest discover -s tests/python
+
+python-benchmark:
+	$(RUN_ENV) $(PYTHON) scripts/benchmark_python.py --threads $(THREADS) $(PYTHON_BENCHMARK_ARGS)
 
 # --- Sweeps and plots --------------------------------------------------------
 
@@ -163,6 +173,9 @@ help:
 		'make                 Build tests and benchmark' \
 		'make test            Run correctness tests (TEST_DATA=dir adds dataset checks)' \
 		'make benchmark       One saved dataset, CSV to stdout (BENCHMARK_ARGS="--dataset dir")' \
+		'make python-extension  Build the PyTorch bindings for all C++ baselines' \
+		'make python-test     Run Python benchmark-interface tests' \
+		'make python-benchmark  One saved dataset through PyTorch (PYTHON_BENCHMARK_ARGS="--dataset dir")' \
 		'make sweep           Benchmark every saved dataset in DATA_DIR/manifest.json' \
 		'make plot            Plot into PLOT_DIR (runs sweeps if missing or stale)' \
 		'make data            Generate benchmark datasets (OVERWRITE=1 regenerates)' \

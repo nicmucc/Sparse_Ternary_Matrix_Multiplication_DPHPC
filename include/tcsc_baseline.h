@@ -25,6 +25,8 @@ Weights preprocess(const tern_t& W, int K, int N);
 // without AVX2. Indices are widened to 32 bits from upstream.
 void multiply_basic(const vec_t& X, const Weights& W, vec_t& Y, int M);
 void multiply_merged(const vec_t& X, const Weights& W, vec_t& Y, int M);
+void multiply_basic_raw(const float* X, const Weights& W, float* Y, int M);
+void multiply_merged_raw(const float* X, const Weights& W, float* Y, int M);
 bool avx2_available();
 
 } // namespace tcsc_baseline

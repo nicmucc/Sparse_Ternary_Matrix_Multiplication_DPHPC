@@ -4,3 +4,5 @@
 using namespace std;
 
 vec_t rsr_pp_inference(const vec_t& v, const permutation_t& permutations, const segment_t& segments, size_t K, int block_width);
+vec_t rsr_pp_inference(const float* v, const permutation_t& permutations,
+                       const segment_t& segments, size_t K, int block_width);

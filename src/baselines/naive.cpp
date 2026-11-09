@@ -1,5 +1,5 @@
 #include <stdexcept>
-#include "types.h"
+#include "naive.h"
 
 void vectorMatrixMultiply(const vec_t& vec, const tern_t& mat, vec_t& res) {
     
@@ -18,14 +18,17 @@ void vectorMatrixMultiply(const vec_t& vec, const tern_t& mat, vec_t& res) {
         throw std::invalid_argument("vector length must match the matrix row count");
     }
 
-    if (mat.empty()) {
-        return;
-    }
+    vectorMatrixMultiply(vec.data(), mat.data(), res.data(), K, N);
+}
 
-    for (size_t i = 0; i < N; ++i) {
-        for (size_t j = 0; j < K; ++j) {
-            res[i] += vec[j] * mat[j * N + i];
+void vectorMatrixMultiply(const float* vec, const int* mat, float* res,
+                          std::size_t K, std::size_t N) {
+    if (!vec || !mat || !res || K == 0 || N == 0) {
+        throw std::invalid_argument("Invalid vector-matrix input");
+    }
+    for (std::size_t col = 0; col < N; ++col) {
+        for (std::size_t row = 0; row < K; ++row) {
+            res[col] += vec[row] * mat[row * N + col];
         }
     }
-    
 }

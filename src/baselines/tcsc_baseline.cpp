@@ -289,10 +289,10 @@ void GEMM_CPU_FP32_rowMajor_TCSC_Merged_GroupMin_1xG8_AVX2_OpenMP(const float* X
 
 
 #if TERNARY_BASELINE_HAS_AVX2
-void multiply_tail(const vec_t& X, const Weights& W, vec_t& Y, int M, int first) {
+void multiply_tail(const float* X, const Weights& W, float* Y, int M, int first) {
     for (int col = first; col < W.N; ++col) {
         for (int row = 0; row < M; ++row) {
-            const float* input = X.data() + static_cast<std::size_t>(row) * W.K;
+            const float* input = X + static_cast<std::size_t>(row) * W.K;
             float sum = 0.0f;
             for (int p = W.col_start_pos[col]; p < W.col_start_pos[col + 1]; ++p) {
                 sum += input[W.row_index_pos[p]];
@@ -325,23 +325,41 @@ Weights preprocess(const tern_t& W, int K, int N) {
 void multiply_basic(const vec_t& X, const Weights& W, vec_t& Y, int M) {
     ternary_baseline_detail::validate_product(X, Y, M, W.K, W.N);
     Y.resize(static_cast<std::size_t>(M) * W.N);
+    multiply_basic_raw(X.data(), W, Y.data(), M);
+}
+
+void multiply_basic_raw(const float* X, const Weights& W, float* Y, int M) {
+    if (!X || !Y) {
+        throw std::invalid_argument("input and output pointers must not be null");
+    }
+    ternary_baseline_detail::checked_size(M, W.K);
+    ternary_baseline_detail::checked_size(M, W.N);
     GEMM_CPU_FP32_rowMajor_TCSC_Naive_oneFor_OpenMP(
-        X.data(), W.row_index_neg.data(), W.col_start_neg.data(),
-        W.row_index_pos.data(), W.col_start_pos.data(), Y.data(), M, W.N, W.K);
+        X, W.row_index_neg.data(), W.col_start_neg.data(),
+        W.row_index_pos.data(), W.col_start_pos.data(), Y, M, W.N, W.K);
 }
 
 void multiply_merged(const vec_t& X, const Weights& W, vec_t& Y, int M) {
     ternary_baseline_detail::validate_product(X, Y, M, W.K, W.N);
+    Y.resize(static_cast<std::size_t>(M) * W.N);
+    multiply_merged_raw(X.data(), W, Y.data(), M);
+}
+
+void multiply_merged_raw(const float* X, const Weights& W, float* Y, int M) {
+    if (!X || !Y) {
+        throw std::invalid_argument("input and output pointers must not be null");
+    }
+    ternary_baseline_detail::checked_size(M, W.K);
+    ternary_baseline_detail::checked_size(M, W.N);
 #if TERNARY_BASELINE_HAS_AVX2
     if (avx2_available()) {
-        Y.resize(static_cast<std::size_t>(M) * W.N);
         GEMM_CPU_FP32_rowMajor_TCSC_Merged_GroupMin_1xG8_AVX2_OpenMP(
-            X.data(), W.metadata.data(), W.row_index.data(), Y.data(), M, W.N, W.K);
+            X, W.metadata.data(), W.row_index.data(), Y, M, W.N, W.K);
         multiply_tail(X, W, Y, M, W.N - W.N % 8);
         return;
     }
 #endif
-    multiply_basic(X, W, Y, M);
+    multiply_basic_raw(X, W, Y, M);
 }
 
 bool avx2_available() { return ternary_baseline_detail::avx2_available(); }
