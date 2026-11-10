@@ -145,6 +145,46 @@ Speedups pair each implementation with BLAS on the same dataset before combining
 seeds. LaTeX renders text when installed. Run timing experiments without competing
 builds or other benchmark processes.
 
+## Roofline
+
+```sh
+make data                           # once, if datasets are missing
+make roofline PYTHON=.venv/bin/python
+make roofline PYTHON=.venv/bin/python ROOFLINE_DATA=data/benchmarks/m16_k512_n512_s0.95_seed42
+make plot-roofline PYTHON=.venv/bin/python
+make clean-roofline                  # discard accumulated roofline results
+```
+
+`make roofline` validates and measures all registered kernels on one saved dataset,
+then appends to `build/results/roofline/<PROFILE>/kernels.csv` and writes
+`out/plots/roofline/<PROFILE>/roofline.png`. Defaults are 16×1024×1024, 95% zeros,
+seed 42, one thread. `PROFILE=native` selects the native build and separate results.
+`ROOFLINE_ARGS="--samples 5 --min-ms 2 --width 6"` adjusts measurement settings.
+Colour identifies the kernel; marker identifies shape, sparsity, thread count,
+block width and build profile. Repeated runs/seeds are shown as individual points.
+No log files are generated. `make clean` still only removes the selected build;
+use `make clean-roofline` to reset the accumulated measurements.
+
+The recovered hardware reference defaults to the laptop Intel Core Ultra 7 155H
+P-core: theoretical FP32 FMA ceiling and whole-system memory upper bound, **not
+measured single-core limits**. Use `ROOFLINE_ARGS="--mem-bw VALUE --peak-gflops VALUE"`
+with ceilings measured on the same machine and thread budget. The historical Xeon
+reference is available with `--machine xeon --profile core` (or `socket`). Use a
+separate `ROOFLINE_DIR` for each machine; the script rejects mixing machine labels.
+These labels are user-selected references, not automatic hardware detection.
+
+The benchmark CSV now also exports `model_flops` and `model_bytes`: source-level
+FP operations (including processed padding) and one read of X, one write of Y,
+plus the weight representation used by that kernel. This differs from
+`weight_bytes`, which counts all retained metadata, including unused TCSC formats.
+These are analytical estimates, not hardware counters: cache reuse, rereads,
+scratch traffic and API copies are not modelled. The measured region remains
+`api_call_xw`. Compute ceilings count FMA as two FLOPs, while ternary kernels
+mostly execute additions. Zero-FLOP points cannot appear on logarithmic axes.
+
+Plotter and operation models recovered from local commit `1cc98e4`, adapted to
+the shared suite, saved datasets, current timing harness and build profiles.
+
 ## Baseline provenance
 
 SSR and TCSC adapt selected FP32 CPU code from
@@ -171,5 +211,6 @@ To add an implementation, compile its source under `src/baselines/` and append a
 `Kernel` registration in `include/baseline_suite.h`: name, input-index callback,
 output view (pointer and element count), preprocessing estimate, weight bytes,
 and backend label. The shared tests and benchmark visit every registration.
+Add its analytical FLOP/byte model to `Suite::model_work` for roofline output.
 Keep inputs and weights alive and unchanged while the noncopyable suite exists.
 Use owned state captured by callbacks when additional preparation is needed.

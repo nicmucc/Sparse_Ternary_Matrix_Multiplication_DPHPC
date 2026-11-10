@@ -120,6 +120,70 @@ public:
     Suite(Suite&&) = delete;
     Suite& operator=(Suite&&) = delete;
 
+    // Source-level FP work and a one-pass representation footprint model.
+    // These are analytical counts, not hardware counters or measured DRAM bytes.
+    std::pair<double, double> model_work(const std::string& name) const {
+        const auto nnz = std::count_if(weights.begin(), weights.end(), [](int w) { return w != 0; });
+        double flops = 0;
+        double weights = 0;
+        const double io = 4.0 * (double(M) * K + double(M) * N);
+        if (name == "Naive" || name == "BLAS") {
+            flops = 2.0 * M * K * N;
+            weights = 4.0 * K * N;
+        } else if (name == "Eigen CSR" || name == "Eigen CSC") {
+            flops = 2.0 * M * nnz;
+            weights = 8.0 * nnz + 4.0 * ((name == "Eigen CSR" ? K : N) + 1);
+        } else if (name == "RSR" || name == "RSR++") {
+            const std::size_t bins = std::size_t{1} << width;
+            const std::size_t blocks = pos_p.size() / K;
+            double sums = 0;
+            for (std::size_t b = 0; b < blocks; ++b)
+                sums += 2.0 * K - pos_s[b * bins] - neg_s[b * bins];
+            const double reduce = name == "RSR"
+                ? 4.0 * blocks * bins * width
+                : 4.0 * blocks * (bins - 1);
+            flops = M * (sums + reduce + N);
+            weights = 4.0 * (pos_p.size() + neg_p.size()
+                             + pos_s.size() + neg_s.size());
+            if (name == "RSR") weights += 4.0 * patterns.size();
+        } else if (name.compare(0, 3, "SSR") == 0) {
+            const int L = width;
+            const int bins = 1 << L;
+            const std::size_t blocks = ssr.segments_pos.size() / bins;
+            double sums = 0;
+            for (std::size_t b = 0; b < blocks; ++b) {
+                const auto base = b * bins;
+                sums += ssr.segments_pos[base + bins - 1] - ssr.segments_pos[base];
+                sums += ssr.segments_neg[base + bins - 1] - ssr.segments_neg[base];
+            }
+            const double basic_reduce = 4.0 * (bins - 1 - L) + L;
+            const int tree_rows = name == "SSR tree" && ssr_baseline::avx2_available()
+                                  && L >= 2 && L <= 6 ? M - M % 8 : 0;
+            flops = M * sums + blocks * ((M - tree_rows) * basic_reduce
+                                        + tree_rows * double(L) * bins);
+            weights = 4.0 * (ssr.permutations_pos.size() + ssr.permutations_neg.size()
+                             + ssr.segments_pos.size() + ssr.segments_neg.size());
+        } else if (name == "TCSC basic" || name == "TCSC merged") {
+            flops = double(M) * nnz;
+            weights = 4.0 * (tcsc.row_index_pos.size() + tcsc.row_index_neg.size()
+                             + tcsc.col_start_pos.size() + tcsc.col_start_neg.size());
+            if (name == "TCSC merged" && tcsc_baseline::avx2_available()) {
+                // Two scalar remainder accumulations per column in every full group.
+                flops += 2.0 * M * (N - N % 8);
+                weights = 4.0 * (tcsc.metadata.size() + tcsc.row_index.size());
+                if (N % 8) {
+                    const int first = N - N % 8;
+                    weights += 4.0 * (2 * (N % 8 + 1)
+                        + tcsc.col_start_pos[N] - tcsc.col_start_pos[first]
+                        + tcsc.col_start_neg[N] - tcsc.col_start_neg[first]);
+                }
+            }
+        } else {
+            throw std::invalid_argument("No roofline model for kernel: " + name);
+        }
+        return std::make_pair(flops, io + weights);
+    }
+
     Suite(const std::vector<vec_t>& X, const tern_t& W, int m, int k, int n, int l)
         : inputs(X), weights(W), M(m), K(k), N(n), width(l) {
         // Validate dimensions, including padding used by RSR and SSR

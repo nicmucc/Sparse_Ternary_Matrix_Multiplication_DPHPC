@@ -16,6 +16,11 @@ PLOT_DIR    ?= out/plots
 SWEEP_ARGS  ?= --width 6 --samples 15 --min-ms 10
 
 DATA_DIR      ?= data/benchmarks
+ROOFLINE_DATA ?= $(DATA_DIR)/m16_k1024_n1024_s0.95_seed42
+ROOFLINE_DIR  ?= $(RESULTS_DIR)/roofline/$(PROFILE)
+ROOFLINE_PLOT ?= $(PLOT_DIR)/roofline/$(PROFILE)/roofline.png
+ROOFLINE_ARGS ?=
+
 GENERATE_ARGS ?=
 OVERWRITE     ?= 0
 
@@ -98,7 +103,7 @@ SWEEP_COMMAND = $(RUN_ENV) $(PYTHON) scripts/run_benchmarks.py "$(BENCH_BIN)" "$
 # --- Build -------------------------------------------------------------------
 
 .DEFAULT_GOAL := build
-.PHONY: build test benchmark sweep plot data clean help FORCE
+.PHONY: build test benchmark sweep plot roofline plot-roofline clean-roofline data clean help FORCE
 
 build: $(TEST_BIN) $(BENCH_BIN)
 
@@ -150,6 +155,18 @@ sweep: $(SWEEP_CSV)
 plot: $(SWEEP_CSV)
 	$(PYTHON) scripts/plot_benchmarks.py "$(RESULTS_DIR)" "$(PLOT_DIR)"
 
+# Append one validated dataset run; replot without running benchmarks separately.
+ROOFLINE_COMMAND = $(PYTHON) roofline/roofline.py --points "$(ROOFLINE_DIR)/kernels.csv" --output "$(ROOFLINE_PLOT)" $(ROOFLINE_ARGS)
+
+roofline: $(TESTS_PASSED) $(BENCH_BIN)
+	$(ROOFLINE_COMMAND) --measure --benchmark "$(BENCH_BIN)" --dataset "$(ROOFLINE_DATA)" --threads $(THREADS) --build-profile $(PROFILE)
+
+plot-roofline:
+	$(ROOFLINE_COMMAND)
+
+clean-roofline:
+	$(ROOFLINE_COMMAND) --clean
+
 # --- Misc --------------------------------------------------------------------
 
 data:
@@ -165,6 +182,9 @@ help:
 		'make benchmark       One saved dataset, CSV to stdout (BENCHMARK_ARGS="--dataset dir")' \
 		'make sweep           Benchmark every saved dataset in DATA_DIR/manifest.json' \
 		'make plot            Plot into PLOT_DIR (runs sweeps if missing or stale)' \
+		'make roofline        Append all kernels for ROOFLINE_DATA and plot' \
+		'make plot-roofline   Replot accumulated kernels.csv without measuring' \
+		'make clean-roofline  Remove the selected roofline CSV and plot' \
 		'make data            Generate benchmark datasets (OVERWRITE=1 regenerates)' \
 		'make clean           Remove the build directory of the selected profile' \
 		'' \

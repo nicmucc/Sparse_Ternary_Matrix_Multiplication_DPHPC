@@ -123,7 +123,7 @@ int main(int argc, char** argv) try {
     // CSV output, one row per kernel
     const char* omp = std::getenv("OMP_NUM_THREADS");
     const char* blas_threads = std::getenv("OPENBLAS_NUM_THREADS");
-    std::cout << "implementation,m,k,n,target_sparsity,sparsity,width,seed,nonzero_patterns,mode,inputs,input_pool_bytes,backend,omp_threads,blas_threads,preprocess_us,weight_bytes,median_us,p10_us,p90_us,speedup_blas,iterations,samples,scope,sample_us\n";
+    std::cout << "implementation,m,k,n,target_sparsity,sparsity,width,seed,nonzero_patterns,mode,inputs,input_pool_bytes,backend,omp_threads,blas_threads,preprocess_us,weight_bytes,median_us,p10_us,p90_us,speedup_blas,iterations,samples,scope,sample_us,model_flops,model_bytes\n";
     for (std::size_t i = 0; i < suite.kernels.size(); ++i) {
         const auto& kernel = suite.kernels[i];
         auto t = timings[i];
@@ -141,7 +141,8 @@ int main(int argc, char** argv) try {
                   << ',' << medians[blas] / medians[i] << ',' << iterations[i] << ',' << samples << ",api_call_xw,";
         for (std::size_t sample = 0; sample < timings[i].size(); ++sample)
             std::cout << (sample ? ";" : "") << timings[i][sample];
-        std::cout << '\n';
+        const auto work = suite.model_work(kernel.name);
+        std::cout << ',' << work.first << ',' << work.second << '\n';
     }
 
     (void)checksum;

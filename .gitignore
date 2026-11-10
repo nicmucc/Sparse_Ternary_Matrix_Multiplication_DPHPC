@@ -13,3 +13,6 @@ __pycache__/
 
 # macOS files
 .DS_Store
+
+# Generated roofline figures
+/out/plots/roofline/

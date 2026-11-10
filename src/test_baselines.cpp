@@ -351,10 +351,38 @@ void run_harness_checks() {
     must_reject([&] { Suite invalid(inputs, weights, 1, 2, 1, 6); });
 }
 
+// Hand-counted 1x1 case: one positive weight, width 1, no SIMD groups.
+// RSR sums both decompositions, including the zero-pattern bin: 2 sums.
+void run_roofline_checks() {
+    const std::vector<vec_t> inputs{{2.0f}};
+    const tern_t weights{1};
+    baseline_suite::Suite suite(inputs, weights, 1, 1, 1, 1);
+    const std::vector<std::pair<std::string, double>> expected{
+        {"Naive", 2}, {"BLAS", 2}, {"Eigen CSR", 2}, {"Eigen CSC", 2},
+        {"RSR", 11}, {"RSR++", 7}, {"SSR basic", 2}, {"SSR unrolled", 2},
+        {"SSR tree", 2}, {"TCSC basic", 1}, {"TCSC merged", 1}};
+    for (const auto& item : expected) {
+        const auto work = suite.model_work(item.first);
+        if (work.first != item.second || work.second <= 0)
+            throw runtime_error("Wrong roofline model for " + item.first);
+    }
+    // X + W + Y = three 4-byte elements; CSR adds one index and two pointers.
+    if (suite.model_work("BLAS").second != 12 ||
+        suite.model_work("Eigen CSR").second != 24)
+        throw runtime_error("Wrong roofline representation footprint");
+    const tern_t zeros{0};
+    baseline_suite::Suite zero(inputs, zeros, 1, 1, 1, 1);
+    if (zero.model_work("TCSC basic").first != 0 ||
+        zero.model_work("Eigen CSC").first != 0 ||
+        zero.model_work("Naive").first != 2)
+        throw runtime_error("Wrong zero-weight roofline model");
+}
+
 } // namespace
 
 int main(int argc, char* argv[]) try {
     run_harness_checks();
+    run_roofline_checks();
     run_rsr_api_checks();
     run_eigen_api_checks();
     run_generated_checks();
