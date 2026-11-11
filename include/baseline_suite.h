@@ -15,7 +15,6 @@
 #include "eigen_baseline.h"
 #include "naive.h"
 #include "rsr.h"
-#include "rsrpp.h"
 #include "ssr_baseline.h"
 #include "tcsc_baseline.h"
 #include "utils.h"
@@ -200,6 +199,22 @@ public:
                 }
             }, data, rsr_setup + (plus ? 0 : pattern_setup),
                 rsr_bytes + (plus ? 0 : patterns.size() * sizeof(int)), "portable"});
+        }
+
+        using rsr_core_baseline::Variant;
+        for (auto [variant, name] : {std::pair{Variant::binary_v42, "RSR binary split v4.2"},
+                                     std::pair{Variant::ternary_v31, "RSR ternary v3.1"},
+                                     std::pair{Variant::ternary_v33, "RSR ternary v3.3"}}) {
+            if (variant != Variant::binary_v42 && K > std::numeric_limits<uint16_t>::max()) continue;
+            start = Clock::now();
+            auto w = rsr_core_baseline::preprocess(W, K, N, width, variant);
+            const double setup = microseconds(Clock::now() - start);
+            const auto bytes = w.storage_bytes;
+            vec_t scratch;
+            scratch.reserve(padded_N * ((variant == Variant::binary_v42) + (padded_N != std::size_t(N))));
+            kernels.push_back({name, [this, w=std::move(w), scratch=std::move(scratch)](std::size_t i) mutable {
+                rsr_core_baseline::multiply(inputs[i], w, output, M, scratch);
+            }, data, setup, bytes, rsr_core_baseline::backend(variant, width)});
         }
 
         // SSR variants share preprocessed weights

@@ -160,6 +160,15 @@ and batch tails, padded-output cropping, runtime AVX2 dispatch, 32-bit TCSC indi
 unaligned SIMD accesses, column-group tails, and opt-in OpenMP.
 See [RSR++](https://arxiv.org/html/2411.06360v3) for the original algorithm.
 
+The original RSR and RSR++ use positive and negative binary planes.
+The three optimized GEMV kernels in `src/baselines/rsr.cpp` are adapted from
+[UIC-InDeXLab/RSR-core](https://github.com/UIC-InDeXLab/RSR-core/tree/99bcccded70416839f1ef1fc6d58726c507d1fb9/kernels)
+under the [MIT license](licenses/rsr-core.LICENSE).
+V4.2 runs once per binary plane. V3.1 and v3.3 group signed patterns directly,
+using scatter lists and masks respectively. Both require K <= 65535.
+V3.3 selects SIMD based on build flags and block width (use `PROFILE=native`
+for host ISA support).
+
 ## Team
 
 Nicola Mucciaccio, Matteo Meciani, Riccardo Polo, Alexandre Raybaut, Ahmed Tlili.

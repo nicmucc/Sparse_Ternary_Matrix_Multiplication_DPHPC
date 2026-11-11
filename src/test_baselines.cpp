@@ -312,6 +312,7 @@ void run_harness_checks() {
     Suite suite(inputs, weights, 1, 1, 1, 6);
     const std::set<std::string> required{
         "Naive", "RSR", "RSR++", "SSR basic", "SSR unrolled", "SSR tree",
+        "RSR binary split v4.2", "RSR ternary v3.1", "RSR ternary v3.3",
         "TCSC basic", "TCSC merged", "BLAS", "Eigen CSR", "Eigen CSC"};
     std::set<std::string> registered;
     for (auto& kernel : suite.kernels) {
