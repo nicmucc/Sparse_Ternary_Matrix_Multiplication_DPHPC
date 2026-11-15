@@ -2,153 +2,180 @@
 
 # --- Settings (override on the command line) --------------------------------
 
-# release | native | scalar | sanitizer | openmp
+# release | sanitizer
 PROFILE   ?= release
 BUILD_DIR ?= build/$(PROFILE)
 PYTHON    ?= python3
 THREADS   ?= 1
 
-TEST_DATA      ?=
-BENCHMARK_ARGS ?=
-
-RESULTS_DIR ?= build/results
-PLOT_DIR    ?= out/plots
-SWEEP_ARGS  ?= --width 6 --samples 15 --min-ms 10
+TEST_ARGS  ?=
+BENCH_ARGS ?=
 
 DATA_DIR      ?= data/benchmarks
 GENERATE_ARGS ?=
 OVERWRITE     ?= 0
 
 # --- Flags -------------------------------------------------------------------
+# One set of flags for EVERY kernel (ours and the papers'), as in the papers: host ISA
+# (AVX2 / AVX-512 on x86) and fast-math (the TCSC paper used MSVC /Ox /fp:fast).
 
-OPT_FLAGS := -O3
-AVX2      := 1
-OPENMP    := 0
+ARCH      := $(shell uname -m)
+NATIVE    := $(if $(filter arm64 aarch64,$(ARCH)),-mcpu=native,-march=native)
+CXX_ID    := $(shell $(CXX) --version 2>/dev/null | head -1)
 
 ifeq ($(PROFILE),release)
-else ifeq ($(PROFILE),native)
-  OPT_FLAGS += $(if $(filter arm64 aarch64,$(shell uname -m)),-mcpu=native,-march=native)
-else ifeq ($(PROFILE),scalar)
-  AVX2 := 0
+  OPT_FLAGS := -O3 -ffast-math -DNDEBUG $(NATIVE)
 else ifeq ($(PROFILE),sanitizer)
-  OPT_FLAGS := -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer
-else ifeq ($(PROFILE),openmp)
-  OPENMP := 1
+  OPT_FLAGS := -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer $(NATIVE)
 else
-  $(error PROFILE must be release, native, scalar, sanitizer, or openmp)
+  $(error PROFILE must be release or sanitizer)
 endif
 
-ifeq ($(OPENMP),1)
-  OPT_FLAGS += -fopenmp
+# OpenMP everywhere (the papers' optimized kernels and SPR v5+ are multi-threaded).
+# Apple clang has no -fopenmp driver flag: use Homebrew's libomp (brew install libomp).
+ifneq ($(findstring Apple clang,$(CXX_ID)),)
+  LIBOMP    ?= $(shell brew --prefix libomp 2>/dev/null)
+  OMP_FLAGS ?= -Xpreprocessor -fopenmp -I$(LIBOMP)/include
+  OMP_LIBS  ?= -L$(LIBOMP)/lib -lomp -Wl,-rpath,$(LIBOMP)/lib
 endif
+OMP_FLAGS ?= -fopenmp
+OMP_LIBS  ?= -fopenmp
 
-# `:=` so pkg-config runs once, not on every use
-DEP_CPPFLAGS ?= $(shell pkg-config --cflags-only-I eigen3 nlohmann_json openblas)
-BLAS_LIBS    ?= $(shell pkg-config --libs openblas)
-DEP_CPPFLAGS := $(DEP_CPPFLAGS)
-BLAS_LIBS    := $(BLAS_LIBS)
+# Dense baselines: Accelerate on macOS, OpenBLAS elsewhere (if found); Eigen if found.
+ifeq ($(shell uname -s),Darwin)
+  BLAS_FLAGS ?= -DSPR_HAVE_BLAS
+  BLAS_LIBS  ?= -framework Accelerate
+else ifneq ($(shell pkg-config --exists openblas 2>/dev/null && echo yes),)
+  BLAS_FLAGS ?= -DSPR_HAVE_BLAS $(shell pkg-config --cflags openblas)
+  BLAS_LIBS  ?= $(shell pkg-config --libs openblas)
+endif
+ifneq ($(shell pkg-config --exists eigen3 2>/dev/null && echo yes),)
+  EIGEN_FLAGS ?= -DSPR_HAVE_EIGEN $(shell pkg-config --cflags eigen3)
+endif
 
 CXXFLAGS ?= $(OPT_FLAGS) -std=c++17 -Wall -Wextra
-CPPFLAGS += -Iinclude $(DEP_CPPFLAGS)
-LDLIBS   += $(BLAS_LIBS)
+CFLAGS   ?= $(OPT_FLAGS) -std=c11
+CPPFLAGS += -Iinclude
 
-ifeq ($(AVX2),0)
-  CPPFLAGS += -DTERNARY_BASELINE_DISABLE_AVX2
+# Machine ceilings (peaks): host ISA, no auto-vectorization, no fast-math, so the scalar loop
+# stays scalar and the SIMD loops use intrinsics.
+ifneq ($(findstring clang,$(CXX_ID)),)
+  NOVEC := -fno-vectorize -fno-slp-vectorize
+else
+  NOVEC := -fno-tree-vectorize -fno-tree-slp-vectorize
+endif
+PEAKS_FLAGS := -O2 -std=c++17 $(NATIVE) $(NOVEC)
+
+# --- Third-party sources, compiled UNMODIFIED (see third_party/README.md) ----
+
+TP       := third_party
+TCSC_DIR := $(TP)/SSR-ternaryLLM-repo/ternaryLLM_CPU/src
+SSR_DIR  := $(TP)/SSR-ternaryLLM-repo/SSR/SSR
+RSR_DIR  := $(SSR_DIR)/original_rsr
+RSRC_DIR := $(TP)/RSR-core-repo/kernels
+
+UPSTREAM_CXX := $(TCSC_DIR)/GEMM_CPU_FP32.cpp $(SSR_DIR)/ssr.cpp $(SSR_DIR)/ssr_vec.cpp \
+                $(RSR_DIR)/rsr.cpp $(RSR_DIR)/utils.cpp $(RSR_DIR)/naive.cpp
+UPSTREAM_C   := $(RSRC_DIR)/bit_1_58/cpu/rsr_ternary_prep_nonsquare.c \
+                $(RSRC_DIR)/bit_1_58/cpu/rsr_ternary_v3_1.c $(RSRC_DIR)/bit_1_58/cpu/rsr_ternary_v3_3.c \
+                $(RSRC_DIR)/bit_1/cpu/rsr_prep_nonsquare.c $(RSRC_DIR)/bit_1/cpu/rsr_v4_2.c
+
+# SSR / TCSC are written with AVX2 / AVX-512 intrinsics.
+#  - x86: cpu/orig/x86_compat wraps the real <immintrin.h>: aligned index loads become unaligned
+#    (the authors' MSVC build did that implicitly), and without AVX-512 it lets GEMM_CPU_FP32.cpp
+#    compile; its AVX-512 kernels then report themselves unsupported (SPR_AVX512_EMULATED).
+#  - Apple Silicon: cpu/orig/shim maps them to portable vectors (development only; timings meaningless).
+ifneq ($(filter arm64 aarch64,$(ARCH)),)
+  AVX_COMPAT := -Icpu/orig/shim
+else ifeq ($(shell $(CXX) $(NATIVE) -dM -E -x c++ /dev/null 2>/dev/null | grep -c __AVX512F__),0)
+  AVX_COMPAT := -Icpu/orig/x86_compat -DSPR_AVX512_EMULATED
+else
+  AVX_COMPAT := -Icpu/orig/x86_compat
 endif
 
 # --- Files -------------------------------------------------------------------
 
-OBJ_DIR    := $(BUILD_DIR)/obj
-SOURCES    := $(wildcard src/baselines/*.cpp src/utils/*.cpp)
-OBJECTS    := $(SOURCES:%.cpp=$(OBJ_DIR)/%.o)
-TEST_MAIN  := $(OBJ_DIR)/src/test_baselines.o
-BENCH_MAIN := $(OBJ_DIR)/src/benchmark.o
+OBJ_DIR      := $(BUILD_DIR)/obj
+KERNEL_SRCS  := cpu/core.cpp cpu/libs.cpp $(wildcard cpu/orig/*.cpp) $(wildcard cpu/spr/*.cpp)
+SOURCES      := $(KERNEL_SRCS) $(UPSTREAM_CXX) $(UPSTREAM_C)
+OBJECTS      := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(SOURCES))) \
+                $(patsubst %.c,$(OBJ_DIR)/%.o,$(filter %.c,$(SOURCES)))
+TEST_MAIN    := $(OBJ_DIR)/tests/test_correctness.o
+BENCH_MAIN   := $(OBJ_DIR)/bench/bench_cpu.o
 
-TEST_BIN     := $(BUILD_DIR)/test_baselines
-BENCH_BIN    := $(BUILD_DIR)/benchmark
+TEST_BIN     := $(BUILD_DIR)/test_correctness
+BENCH_BIN    := $(BUILD_DIR)/bench_cpu
+PEAKS_BIN    := $(BUILD_DIR)/peaks
 BUILD_CONFIG := $(BUILD_DIR)/config.txt
-TESTS_PASSED := $(BUILD_DIR)/tests.passed
 
-SWEEP_CSV      := $(RESULTS_DIR)/benchmarks.csv
-SWEEP_SETTINGS := $(RESULTS_DIR)/sweep.args
-DATA_MANIFEST  := $(DATA_DIR)/manifest.json
-DATA_FILES     := $(wildcard $(DATA_DIR)/*/*.bin $(DATA_DIR)/*/metadata.json)
+RUN_ENV := OMP_NUM_THREADS=$(THREADS) OPENBLAS_NUM_THREADS=$(THREADS) VECLIB_MAXIMUM_THREADS=$(THREADS)
 
-RUN_ENV := OMP_NUM_THREADS=$(THREADS) OPENBLAS_NUM_THREADS=$(THREADS)
+# Per-file flags: each wrapper / upstream file only sees the headers of the repo it comes from
+# (the repos reuse names such as utils.h).
+$(OBJ_DIR)/$(TCSC_DIR)/%.o $(OBJ_DIR)/$(SSR_DIR)/%.o:  EXTRA := -w $(AVX_COMPAT)
+$(OBJ_DIR)/$(RSRC_DIR)/%.o:                             EXTRA := -w
+$(OBJ_DIR)/cpu/orig/tcsc.o:  EXTRA := -w -I$(TCSC_DIR) $(AVX_COMPAT)
+$(OBJ_DIR)/cpu/orig/ssr.o:   EXTRA := -w -I$(SSR_DIR) $(AVX_COMPAT)
+$(OBJ_DIR)/cpu/orig/rsr.o:   EXTRA := -w -I$(RSR_DIR)
+$(OBJ_DIR)/cpu/libs.o:       EXTRA := $(BLAS_FLAGS) $(EIGEN_FLAGS)
 
-# Force affected targets when configuration changes, even within one timestamp tick.
-BUILD_STATE := $(CXX) | $(CPPFLAGS) | $(CXXFLAGS) | $(LDFLAGS) | $(LDLIBS) | $(SOURCES) | $(shell $(CXX) --version | head -1)
+# Force a rebuild when configuration changes, even within one timestamp tick.
+BUILD_STATE := $(CXX) | $(CC) | $(CPPFLAGS) | $(CXXFLAGS) | $(CFLAGS) | $(LDFLAGS) | $(OMP_FLAGS) | $(OMP_LIBS) \
+               | $(BLAS_FLAGS) | $(BLAS_LIBS) | $(EIGEN_FLAGS) | $(AVX_COMPAT) | $(SOURCES) | $(CXX_ID)
 BUILD_CHANGED :=
 ifneq ($(BUILD_STATE),$(shell cat "$(BUILD_CONFIG)" 2>/dev/null))
   BUILD_CHANGED := FORCE
 endif
 
-# --- Helpers -----------------------------------------------------------------
-
-# $(call write_if_changed,file,lines): only touch `file` when its content changes
-define write_if_changed
-@mkdir -p "$(dir $(1))"
-@printf '%s\n' $(2) > "$(1).tmp"
-@if cmp -s "$(1)" "$(1).tmp"; then rm "$(1).tmp"; else mv "$(1).tmp" "$(1)"; fi
-endef
-
-SWEEP_LINES = "$(PROFILE)" "$(RUN_ENV)" "$(SWEEP_ARGS)" "$(abspath $(DATA_DIR))"
-SWEEP_COMMAND = $(RUN_ENV) $(PYTHON) scripts/run_benchmarks.py "$(BENCH_BIN)" "$(DATA_DIR)" "$(SWEEP_CSV)" $(SWEEP_ARGS)
-
 # --- Build -------------------------------------------------------------------
 
 .DEFAULT_GOAL := build
-.PHONY: build test benchmark sweep plot data clean help FORCE
+.PHONY: build test bench compare spr-bench data clean help FORCE
 
-build: $(TEST_BIN) $(BENCH_BIN)
+build: $(TEST_BIN) $(BENCH_BIN) $(PEAKS_BIN)
 
 $(BUILD_CONFIG): $(BUILD_CHANGED)
-	@rm -rf "$(OBJ_DIR)" "$(TEST_BIN)" "$(BENCH_BIN)" "$(TESTS_PASSED)"
+	@rm -rf "$(OBJ_DIR)" "$(TEST_BIN)" "$(BENCH_BIN)" "$(PEAKS_BIN)"
 	@mkdir -p "$(@D)"
 	@printf '%s' '$(BUILD_STATE)' > "$@"
 
 $(OBJ_DIR)/%.o: %.cpp $(BUILD_CONFIG) $(BUILD_CHANGED)
 	@mkdir -p "$(@D)"
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c "$<" -o "$@"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(OMP_FLAGS) $(EXTRA) -MMD -MP -c "$<" -o "$@"
+
+$(OBJ_DIR)/%.o: %.c $(BUILD_CONFIG) $(BUILD_CHANGED)
+	@mkdir -p "$(@D)"
+	$(CC) $(CFLAGS) $(OMP_FLAGS) $(EXTRA) -MMD -MP -c "$<" -o "$@"
 
 $(TEST_BIN): $(OBJECTS) $(TEST_MAIN) $(BUILD_CHANGED)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(filter %.o,$^) $(LDLIBS) -o "$@"
+	$(CXX) $(CXXFLAGS) $(OMP_FLAGS) $(LDFLAGS) $(filter %.o,$^) $(BLAS_LIBS) $(OMP_LIBS) -o "$@"
 
 $(BENCH_BIN): $(OBJECTS) $(BENCH_MAIN) $(BUILD_CHANGED)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(filter %.o,$^) $(LDLIBS) -o "$@"
+	$(CXX) $(CXXFLAGS) $(OMP_FLAGS) $(LDFLAGS) $(filter %.o,$^) $(BLAS_LIBS) $(OMP_LIBS) -o "$@"
+
+$(PEAKS_BIN): bench/peaks.cpp $(BUILD_CONFIG) $(BUILD_CHANGED)
+	@mkdir -p "$(@D)"
+	$(CXX) $(PEAKS_FLAGS) $(OMP_FLAGS) "$<" $(OMP_LIBS) -o "$@"
 
 -include $(OBJECTS:.o=.d) $(TEST_MAIN:.o=.d) $(BENCH_MAIN:.o=.d)
 
 # --- Test and benchmark ------------------------------------------------------
 
+# TEST_ARGS: kernel-name filters, e.g. TEST_ARGS="spr. tcsc."
 test: $(TEST_BIN)
-	$(RUN_ENV) "$(TEST_BIN)" $(TEST_DATA)
+	"$(TEST_BIN)" $(TEST_ARGS)
 
-$(TESTS_PASSED): $(TEST_BIN) $(BUILD_CHANGED)
-	$(RUN_ENV) "$(TEST_BIN)"
-	@touch "$@"
+# The raw benchmark driver, e.g. BENCH_ARGS="--M 64 --K 2048 --N 8192 --s 0.5 --kernels spr.v8.b32"
+bench: $(BENCH_BIN)
+	$(RUN_ENV) "$(BENCH_BIN)" $(BENCH_ARGS)
 
-benchmark: $(TESTS_PASSED) $(BENCH_BIN)
-	$(RUN_ENV) "$(BENCH_BIN)" $(BENCHMARK_ARGS)
+# SPR vs the best kernel of every method (each at its best k); settings in bench/run.sh
+compare: build
+	SPR_SKIP_BUILD=1 BUILD_DIR="$(BUILD_DIR)" PYTHON="$(PYTHON)" THREADS="$(THREADS)" bench/run.sh
 
-# --- Sweeps and plots --------------------------------------------------------
-
-# Re-measure when inputs, executable, runner, or settings change.
-# Explicit sweeps force the shared CSV target, so sweep and plot cannot race.
-ifneq ($(filter sweep,$(MAKECMDGOALS)),)
-$(SWEEP_CSV): FORCE
-endif
-
-$(SWEEP_SETTINGS): FORCE
-	$(call write_if_changed,$@,$(SWEEP_LINES))
-
-$(SWEEP_CSV): $(BENCH_BIN) $(TESTS_PASSED) $(SWEEP_SETTINGS) $(DATA_MANIFEST) $(DATA_FILES) scripts/run_benchmarks.py $(BUILD_CHANGED)
-	$(SWEEP_COMMAND)
-
-sweep: $(SWEEP_CSV)
-
-plot: $(SWEEP_CSV)
-	$(PYTHON) scripts/plot_benchmarks.py "$(RESULTS_DIR)" "$(PLOT_DIR)"
+# SPR versions only: runtime + roofline report; settings in bench/spr_bench.sh
+spr-bench: build
+	SPR_SKIP_BUILD=1 BUILD_DIR="$(BUILD_DIR)" PYTHON="$(PYTHON)" THREADS="$(THREADS)" bench/spr_bench.sh
 
 # --- Misc --------------------------------------------------------------------
 
@@ -160,13 +187,13 @@ clean:
 
 help:
 	@printf '%s\n' \
-		'make                 Build tests and benchmark' \
-		'make test            Run correctness tests (TEST_DATA=dir adds dataset checks)' \
-		'make benchmark       One saved dataset, CSV to stdout (BENCHMARK_ARGS="--dataset dir")' \
-		'make sweep           Benchmark every saved dataset in DATA_DIR/manifest.json' \
-		'make plot            Plot into PLOT_DIR (runs sweeps if missing or stale)' \
-		'make data            Generate benchmark datasets (OVERWRITE=1 regenerates)' \
+		'make                 Build test_correctness, bench_cpu and peaks into build/<profile>/' \
+		'make test            Correctness of every kernel vs an FP64 reference (TEST_ARGS="spr. tcsc." filters)' \
+		'make bench           Run bench_cpu with BENCH_ARGS (see bench/bench_cpu.cpp)' \
+		'make compare         SPR vs the best kernel of every method, each at its best k (bench/run.sh)' \
+		'make spr-bench       SPR versions only: runtime + roofline report (bench/spr_bench.sh)' \
+		'make data            Generate saved datasets (OVERWRITE=1 regenerates)' \
 		'make clean           Remove the build directory of the selected profile' \
 		'' \
-		'PROFILE=release|native|scalar|sanitizer|openmp   separate build per profile' \
-		'THREADS=n                                        threads for test/benchmark runs'
+		'PROFILE=release|sanitizer   separate build per profile' \
+		'THREADS=n                   threads for bench / compare / spr-bench'

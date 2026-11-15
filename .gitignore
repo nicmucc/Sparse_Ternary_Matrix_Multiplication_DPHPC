@@ -6,6 +6,9 @@
 /data/*
 !/data/.gitkeep
 
+# matplotlib cache of scripts/spr/spr_threads.py
+/.cache/
+
 # venv and pycache
 /.venv/
 __pycache__/
