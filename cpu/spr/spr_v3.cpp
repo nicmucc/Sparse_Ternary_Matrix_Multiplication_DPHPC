@@ -238,7 +238,7 @@ public:
                     SPR_UNROLL_FULL
                     for (int u = 0; u < U; ++u) {
                         uint16_t row_idx = *(p_rows + u);
-                        const float __restrict *x_blocked_col = io.X + (size_t) m + io.M * (size_t) row_idx;
+                        const float* __restrict x_blocked_col = io.X + (size_t) m + io.M * (size_t) row_idx;
                         for (int ib = 0; ib < n; ++ib) t[u][ib] += x_blocked_col[ib];
                     }
                     p_rows += U;
@@ -249,7 +249,7 @@ public:
                     // cleanup
                     for (; j < len; ++j) {
                         uint16_t row_idx = *(p_rows++);
-                        const float __restrict *x_blocked_col = io.X + (size_t) m + io.M * (size_t) row_idx;
+                        const float* __restrict x_blocked_col = io.X + (size_t) m + io.M * (size_t) row_idx;
                         for (int ib = 0; ib < n; ++ib) t[0][ib] += x_blocked_col[ib];
                     }
 

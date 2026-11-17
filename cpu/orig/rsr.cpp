@@ -9,6 +9,9 @@
 // The matrix versions take X as vector<vector<float>> BY VALUE (so every call copies X;
 // that copy is part of their API and is timed, exactly as in the authors' benchmark) and
 // return vector<vector<float>> (M x N_pad).
+// The upstream template headers use pow() without including <cmath>.
+#include <cmath>
+
 #include "rsr.h"
 #include "rsrpp.h"
 #include "spr/kernel.hpp"
