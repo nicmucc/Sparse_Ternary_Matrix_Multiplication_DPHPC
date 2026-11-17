@@ -28,12 +28,37 @@
 // Unsupported shapes are skipped silently.
 #include <cstdio>
 #include <fstream>
+#include <filesystem>
+
 #include <memory>
 #include <sstream>
 
 #include "spr/harness.hpp"
 
+namespace spr {
+std::unique_ptr<Kernel> make_fixed_v8(int b, int kc, int g);
+}
 using namespace spr;
+
+// On the GCC cluster build, observe the team inside the untimed verification
+// region. Normal timed calls pass straight through to the OpenMP runtime.
+#ifdef SPR_OBSERVE_GOMP
+using OmpBody = void (*)(void*);
+extern "C" void __real_GOMP_parallel(OmpBody, void*, unsigned, unsigned);
+static thread_local int* observed_team = nullptr;
+extern "C" void __wrap_GOMP_parallel(OmpBody body, void* data, unsigned threads, unsigned flags) {
+    if (!observed_team) {
+        __real_GOMP_parallel(body, data, threads, flags);
+        return;
+    }
+    struct Call { OmpBody body; void* data; int* team; } call{body, data, observed_team};
+    __real_GOMP_parallel([](void* ptr) {
+        auto& c = *static_cast<Call*>(ptr);
+        if (omp_get_thread_num() == 0) *c.team = omp_get_num_threads();
+        c.body(c.data);
+    }, &call, threads, flags);
+}
+#endif
 
 namespace {
 
@@ -58,14 +83,66 @@ struct Entry {
     std::unique_ptr<Kernel> kern;
     std::unique_ptr<Bound> bound;
     Params p;
-    double prep_ms = 0, err = 0;
+    double prep_ms = 0, verify_ms = 0, err = 0;
+    int team = 0;
     bool ok = false;
     std::vector<double> times;
 };
 
+// v8's published adds_per_row excludes the first partial-sum add for each
+// distinct nonzero pattern. Its chunked loop performs that add even for the
+// first piece. Count these patterns outside timing for the final peak plot.
+static size_t first_piece_adds(const Problem& p, int k) {
+    size_t count = 0;
+    std::vector<uint32_t> keys(p.K);
+    for (int col = 0; col < p.N; col += k) {
+        for (int row = 0; row < p.K; ++row) {
+            uint32_t key = 0;
+            for (int j = col; j < std::min(p.N, col + k); ++j)
+                key = 3 * key + (p.W[(size_t)row * p.N + j] + 3) % 3;
+            keys[row] = key;
+        }
+        std::sort(keys.begin(), keys.end());
+        count += std::unique(keys.begin(), keys.end()) - keys.begin() - (keys.front() == 0);
+    }
+    return count;
+}
+
+// Private to one campaign. Keep the matrix and full FP64-derived reference together
+// so bounded candidate batches and different thread counts compare identical data.
+Problem campaign_problem(const std::string& dir, int m, int k, int n, double s, uint64_t seed) {
+    namespace fs = std::filesystem;
+    std::ostringstream zero_fraction;
+    zero_fraction << std::hexfloat << s;
+    const auto path = fs::path(dir) / (std::to_string(m) + "_" + std::to_string(k) + "_" +
+        std::to_string(n) + "_" + zero_fraction.str() + "_" + std::to_string(seed) + ".bin");
+    if (fs::exists(path)) {
+        Problem p{m,k,n,std::vector<float>((size_t)m*k),std::vector<int8_t>((size_t)k*n),
+                  std::vector<float>((size_t)m*n),m};
+        std::ifstream in(path, std::ios::binary);
+        auto read = [&](auto& v) { in.read(reinterpret_cast<char*>(v.data()), v.size()*sizeof(v[0])); };
+        read(p.X); read(p.W); read(p.Yref);
+        if (!in) throw std::runtime_error("incomplete campaign matrix");
+        return p;
+    }
+    Problem p = make_problem(m,k,n,s,seed);
+    auto tmp = path.string() + ".tmp";
+    std::ofstream out(tmp, std::ios::binary);
+    auto write = [&](const auto& v) { out.write(reinterpret_cast<const char*>(v.data()), v.size()*sizeof(v[0])); };
+    write(p.X); write(p.W); write(p.Yref);
+    out.close();
+    if (!out) throw std::runtime_error("cannot save campaign matrix");
+    fs::rename(tmp, path);
+    return p;
+}
 }  // namespace
 
 int main(int argc, char** argv) {
+    if (argc == 2 && std::string(argv[1]) == "--list") {
+        for (const auto& n : kernel_names()) std::puts(n.c_str());
+        return 0;
+    }
+    std::string case_dir;
     int M = 256, K = 1024, N = 4096, threads = 1, rounds = 21, warmup = 3, prep_rounds = 1;
     std::string kernels, s_list = "0.5", k_list = "4", tag = "run", out = "bench_cpu.csv", verify = "";
     std::string sparsity_pattern = "iid", datasets, samples_path;
@@ -78,6 +155,7 @@ int main(int argc, char** argv) {
         else if (a == "--K") K = std::stoi(v);
         else if (a == "--N") N = std::stoi(v);
         else if (a == "--s") s_list = v;
+        else if (a == "--case-dir") case_dir = v;
         else if (a == "--sparsity-pattern") sparsity_pattern = v;
         else if (a == "--dataset") datasets = v;
         else if (a == "--k") k_list = v;
@@ -96,6 +174,10 @@ int main(int argc, char** argv) {
         else { std::fprintf(stderr, "unknown option %s\n", a.c_str()); return 2; }
     }
 
+    if (!case_dir.empty() && (!datasets.empty() || sparsity_pattern != "iid" || ref_rows != -1)) {
+        std::fprintf(stderr, "--case-dir requires generated iid inputs and --ref-rows -1\n");
+        return 2;
+    }
     if (threads < 1 || rounds < 1 || prep_rounds < 1) {
         std::fprintf(stderr, "threads, rounds and prep-rounds must be positive\n");
         return 2;
@@ -106,6 +188,14 @@ int main(int argc, char** argv) {
     for (auto& x : split(k_list)) ks_default.push_back(std::stoi(x));
     std::vector<std::pair<std::string, std::vector<int>>> configs;
     auto pats = split(kernels);
+    for (const auto& pattern : pats) {
+        int b, kc, g, end = 0;
+        auto exact = pattern.substr(0, pattern.find('@'));
+        if (std::sscanf(exact.c_str(), "=spr.v8.b%d.kc%d.g%d%n", &b,&kc,&g,&end) == 3 &&
+            end == (int)exact.size()) {
+            registry()[exact.substr(1)] = [=] { return make_fixed_v8(b,kc,g); };
+        }
+    }
     for (auto& n : kernel_names()) {
         if (pats.empty()) { configs.push_back({n, ks_default}); continue; }
         for (auto& p : pats) {
@@ -137,7 +227,7 @@ int main(int argc, char** argv) {
     std::ofstream csv(out, std::ios::app);
     if (!csv) { std::fprintf(stderr, "cannot write %s\n", out.c_str()); return 1; }
     if (new_file)
-        csv << "tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row\n";
+        csv << "tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row" << (case_dir.empty() ? "" : ",effective_threads,verify_ms") << '\n';
 
     // Optional raw samples; preserve the original summary CSV schema.
     std::ofstream samples;
@@ -152,7 +242,8 @@ int main(int argc, char** argv) {
     // one case per sparsity (random matrices), or one case per saved dataset
     for (auto& c : split(datasets.empty() ? s_list : datasets)) {
         double s = 0;
-        Problem P = datasets.empty() ? make_problem(M, K, N, s = std::stod(c), seed, any_check ? ref_rows : 0, sparsity_pattern)
+        Problem P = !case_dir.empty() ? campaign_problem(case_dir, M, K, N, s = std::stod(c), seed)
+                  : datasets.empty() ? make_problem(M, K, N, s = std::stod(c), seed, any_check ? ref_rows : 0, sparsity_pattern)
                                      : load_dataset(c, any_check ? ref_rows : 0, &s);
         M = P.M; K = P.K; N = P.N;
 
@@ -185,7 +276,18 @@ int main(int argc, char** argv) {
                     break;
                 }
                 e.bound = std::make_unique<Bound>(e.kern.get(), P);
+                double verify_start = now_ms();
+#ifdef SPR_OBSERVE_GOMP
+                if (!case_dir.empty() && name.rfind("spr.v8.", 0) == 0) {
+                    e.team = 1;
+                    observed_team = &e.team;
+                }
+#endif
                 e.err = check(name) ? e.bound->verify(P) : -1;
+#ifdef SPR_OBSERVE_GOMP
+                observed_team = nullptr;
+#endif
+                e.verify_ms = now_ms() - verify_start;
                 e.ok = e.err <= tolerance(K);
                 if (!e.ok) std::fprintf(stderr, "WRONG RESULT %s %s err=%.3g (not timed)\n", name.c_str(), e.p.str().c_str(), e.err);
                 E.push_back(std::move(e));
@@ -211,6 +313,7 @@ int main(int argc, char** argv) {
                 e.times.push_back(now_ms() - t0);
             }
 
+        std::map<int, size_t> first_pieces;
         // ---- report
         for (auto& e : E) {
             if (samples.is_open())
@@ -225,10 +328,19 @@ int main(int argc, char** argv) {
                 mn = e.times.front();
             }
             const size_t b = e.kern->bytes();
+            double adds = e.kern->adds_per_row();
+            int tile, kc, group;
+            if (!case_dir.empty() && samples.is_open() &&
+                std::sscanf(e.kern->name().c_str(), "spr.v8.b%d.kc%d.g%d", &tile,&kc,&group) == 3 && kc < K) {
+                if (!first_pieces.count(e.p.k)) first_pieces[e.p.k] = first_piece_adds(P, e.p.k);
+                adds += first_pieces.at(e.p.k);
+            }
             csv << tag << ',' << clean(machine_name()) << ',' << clean(compiler_name()) << ',' << threads << ','
                 << M << ',' << K << ',' << N << ',' << s << ',' << e.kern->name() << ',' << (e.kern->uses_k() ? e.p.str() : std::string("-")) << ','
                 << med << ',' << mn << ',' << e.times.size() << ',' << e.prep_ms << ',' << b << ','
-                << 8.0 * b / ((double)K * N) << ',' << e.err << ',' << e.ok << ',' << e.kern->adds_per_row() << '\n';
+                << 8.0 * b / ((double)K * N) << ',' << e.err << ',' << e.ok << ',' << adds;
+            if (!case_dir.empty()) csv << ',' << e.team << ',' << e.verify_ms;
+            csv << '\n';
             std::printf("s=%.2f %-70s %-5s %10.3f ms  prep %9.1f ms %s\n", s, e.kern->name().c_str(),
                         e.kern->uses_k() ? e.p.str().c_str() : "", med, e.prep_ms, e.ok ? "" : "WRONG");
         }

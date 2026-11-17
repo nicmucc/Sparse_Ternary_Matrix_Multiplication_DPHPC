@@ -174,6 +174,10 @@ int main(int argc, char** argv) {
     double flops = 0;   // per thread
     const double t_simd = best_time(T, 7, [&](int tid) { double f = simd_adds(iters); if (tid == 0) flops = f; });
     const double simd_gflops = T * flops / t_simd / 1e9;
+    if (argc == 4 && std::string(argv[3]) == "--add-only") {
+        std::printf("{\"threads\":%d,\"isa\":\"%s\",\"peak_simd_gflops\":%.6f}\n", T, ISA, simd_gflops);
+        return 0;
+    }
     const double t_scal = best_time(T, 7, [&](int tid) { double f = scalar_adds(iters); if (tid == 0) flops = f; });
     const double scalar_gflops = T * flops / t_scal / 1e9;
 

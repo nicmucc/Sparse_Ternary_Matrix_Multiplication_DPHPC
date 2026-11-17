@@ -101,7 +101,17 @@ SOURCES      := $(KERNEL_SRCS) $(UPSTREAM_CXX) $(UPSTREAM_C)
 OBJECTS      := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(SOURCES))) \
                 $(patsubst %.c,$(OBJ_DIR)/%.o,$(filter %.c,$(SOURCES)))
 TEST_MAIN    := $(OBJ_DIR)/tests/test_correctness.o
+# The benchmark adapter compiles Ahmed's original v8 source plus the fixed-tile factory.
+BENCH_OBJECTS := $(filter-out $(OBJ_DIR)/cpu/spr/spr_v8.o,$(OBJECTS)) $(OBJ_DIR)/bench/v8_adapter.o
 BENCH_MAIN   := $(OBJ_DIR)/bench/bench_cpu.o
+ifeq ($(shell uname -s),Linux)
+ifeq ($(findstring clang,$(CXX_ID)),)
+  BENCH_TEAM_LINK := -Wl,--wrap=GOMP_parallel
+  $(BENCH_MAIN): EXTRA := -DSPR_OBSERVE_GOMP
+endif
+endif
+# Preserve NaN checks in the original verifier under the release fast-math flags.
+$(BENCH_MAIN): EXTRA += -fno-finite-math-only
 
 TEST_BIN     := $(BUILD_DIR)/test_correctness
 BENCH_BIN    := $(BUILD_DIR)/bench_cpu
@@ -130,7 +140,7 @@ endif
 # --- Build -------------------------------------------------------------------
 
 .DEFAULT_GOAL := build
-.PHONY: build test bench compare spr-bench data clean help FORCE
+.PHONY: build test bench compare spr-bench plots data clean help FORCE
 
 build: $(TEST_BIN) $(BENCH_BIN) $(PEAKS_BIN)
 
@@ -150,14 +160,14 @@ $(OBJ_DIR)/%.o: %.c $(BUILD_CONFIG) $(BUILD_CHANGED)
 $(TEST_BIN): $(OBJECTS) $(TEST_MAIN) $(BUILD_CHANGED)
 	$(CXX) $(CXXFLAGS) $(OMP_FLAGS) $(LDFLAGS) $(filter %.o,$^) $(BLAS_LIBS) $(OMP_LIBS) -o "$@"
 
-$(BENCH_BIN): $(OBJECTS) $(BENCH_MAIN) $(BUILD_CHANGED)
-	$(CXX) $(CXXFLAGS) $(OMP_FLAGS) $(LDFLAGS) $(filter %.o,$^) $(BLAS_LIBS) $(OMP_LIBS) -o "$@"
+$(BENCH_BIN): $(BENCH_OBJECTS) $(BENCH_MAIN) $(BUILD_CHANGED)
+	$(CXX) $(CXXFLAGS) $(OMP_FLAGS) $(LDFLAGS) $(BENCH_TEAM_LINK) $(filter %.o,$^) $(BLAS_LIBS) $(OMP_LIBS) -o "$@"
 
 $(PEAKS_BIN): bench/peaks.cpp $(BUILD_CONFIG) $(BUILD_CHANGED)
 	@mkdir -p "$(@D)"
 	$(CXX) $(PEAKS_FLAGS) $(OMP_FLAGS) "$<" $(OMP_LIBS) -o "$@"
 
--include $(OBJECTS:.o=.d) $(TEST_MAIN:.o=.d) $(BENCH_MAIN:.o=.d)
+-include $(OBJ_DIR)/bench/v8_adapter.d $(OBJECTS:.o=.d) $(TEST_MAIN:.o=.d) $(BENCH_MAIN:.o=.d)
 
 # --- Test and benchmark ------------------------------------------------------
 
@@ -179,6 +189,11 @@ spr-bench: build
 
 # --- Misc --------------------------------------------------------------------
 
+# Offline plotting: no dependency on build, CPU ISA, or cluster libraries.
+plots:
+	@test -n "$(RESULTS)" || { echo 'Set RESULTS to a pilot or full campaign directory'; exit 2; }
+	$(PYTHON) bench/campaign_plots.py "$(RESULTS)" $(if $(PLOT_DIR),--out "$(PLOT_DIR)")
+
 data:
 	$(PYTHON) scripts/generate_data.py --benchmark-suite --out "$(DATA_DIR)" $(if $(filter 1,$(OVERWRITE)),--overwrite) $(GENERATE_ARGS)
 
@@ -192,6 +207,7 @@ help:
 		'make bench           Run bench_cpu with BENCH_ARGS (see bench/bench_cpu.cpp)' \
 		'make compare         SPR vs the best kernel of every method, each at its best k (bench/run.sh)' \
 		'make spr-bench       SPR versions only: runtime + roofline report (bench/spr_bench.sh)' \
+		'make plots           Offline campaign plots (RESULTS=campaign directory, optional PLOT_DIR)' \
 		'make data            Generate saved datasets (OVERWRITE=1 regenerates)' \
 		'make clean           Remove the build directory of the selected profile' \
 		'' \

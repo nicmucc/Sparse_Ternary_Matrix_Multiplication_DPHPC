@@ -25,6 +25,9 @@ bench/run.sh               SPR vs the best kernel of every method (make compare)
 bench/spr_bench.sh         SPR versions only: runtime + roofline (make spr-bench)
 bench/peaks.cpp            machine ceilings: fp32 add peak (SIMD / scalar), L1 / L2 / DRAM bandwidth
 bench/summarize.py, tune.py, roofline.py, spr_threads.py   reports, tuning cache, thread sweep
+bench/papers_cpu.sh        smoke, pilot or full D-INFK campaign
+bench/campaign.py, campaign_plots.py   bounded tuning, held-out evaluation and plots
+bench/v8_adapter.cpp       instantiate fixed tiles from the unmodified SPR v8 source
 scripts/generate_data.py   saved datasets (make data), readable by bench_cpu --dataset
 ```
 
@@ -93,12 +96,12 @@ make bench BENCH_ARGS="--M 64 --K 2048 --N 8192 --s 0.5,0.9 --k 2,3,4 --threads 
   Layout conversion (TCSC and SPR use column-major X / Y) and the copies in and out of the
   `std::vector` APIs of SSR / RSR happen outside timing.
 - **`make compare`** (`bench/run.sh`):
-  - verifies every candidate and tunes each baseline and the v8 family per build/machine/threads/shape/sparsity;
+  - tunes every other method once per (machine, threads, shape, sparsity): each of its kernels at every k;
   - caches each method's fastest (kernel, k) in `build/results/tuning/`;
-  - remeasures the selected configurations together, independently of tuning;
+  - times SPR against those configurations;
   - writes `build/results/<date>_<mode>/summary.md`.
 
-  `TUNE=1` redoes the tuning, and `METHODS=opt|scalar` restricts the final baseline comparison to the optimized or scalar level.
+  `TUNE=1` redoes the tuning, and `METHODS=opt|scalar` restricts it to the optimized or the scalar level.
 - **`make spr-bench`** (`bench/spr_bench.sh`):
   - measures the machine ceilings once per thread count (`peaks`);
   - times the SPR versions at every k;
@@ -109,30 +112,92 @@ make bench BENCH_ARGS="--M 64 --K 2048 --N 8192 --s 0.5,0.9 --k 2,3,4 --threads 
 Tiled SPR versions (v4+) size their tiles from the cache sizes detected at runtime. Override them
 to model another machine: `SPR_L1_BYTES`, `SPR_L2_BYTES`, `SPR_LLC_BYTES`, `SPR_LINE_BYTES`.
 
-### Reproducible final SPR v8 campaign
+### SPR v8 on the D-INFK student cluster
 
-`bash bench/papers_cpu.sh` runs a short check through the existing comparison and SPR roofline
-runners. `CAMPAIGN=full bash bench/papers_cpu.sh` runs the versioned full grid. Override `THREADS`
-(space-separated), `MS`, `SHAPES`, `ROOF_SHAPES`, `S` (space-separated), `KS` (comma-separated),
-`SEEDS`, `REPEATS`, or `PHASE=compare|roofline|all` to split the work into manageable jobs.
-`TARGET=dinfk` requires a Slurm compute allocation on the Xeon Gold 6240 node class and AVX-512.
-Run `bench/check_dinfk.sh` inside that allocation first; it checks CPU, affinity, compiler and dependencies.
-Submit `sbatch` from the repository root; spool copies use `SLURM_SUBMIT_DIR`.
-No scheduler account is hard-coded. The colleague uses the same script with the default `TARGET=local`.
+The pilot runs M=256, K=2048, N=8192, 50% zeros. Full mode covers M={64,256},
+K x N={1024 x 4096,2048 x 8192}, and {50%,90%} zeros. Both use the Xeon Gold 6240
+with native AVX-512, OpenBLAS OpenMP, and 1, 2 and 4 threads on four physical
+cores. The cluster campaign is separate from the original make compare utility. Each campaign creates a fresh results directory and tunes on seed 42.
+The pilot exercises the full procedure on its single workload.
 
-The comparison defaults to `spr.v8.` and tunes its five registered variants and k, alongside all
-registered general-ternary FP32 baselines (excluding the broken original scalar SSR). Every output
-row is checked before timing. Tuning uses `TUNE_SEED=42`; the full campaign measures seeds 43–45
-in separate runs, with 7 tuning rounds, 21 final rounds, 3 warmups and 3 preparation samples.
-`BASE_KS` defaults to `KS`; the selected parameters are in each run's `selected.csv`, and optima at
-the search boundary are flagged in `tuning-boundaries.txt`. These are optima within the tested grid.
-`TUNE=1 make compare` forces retuning; otherwise the build/hardware/affinity/grid fingerprint
-controls reuse. For a completely fresh campaign, select a new `RESULTS` directory.
+SPR screens the Cartesian product of k={2,4,6,8}, B={8,16,32,64},
+Kc={64,256,K}, G={1,4,16} at 1 and 4 threads. One warm-up and three rounds
+per candidate. Around the fastest three it tests neighboring k (including
+1 and 10 at the edges), and half/double Kc and G within bounds. The best three
+from both stages get seven confirmation rounds. At two threads we compare the
+union of the two finalist lists; if the best is over 10% slower than the
+one-thread winner, or the slowest finalist is over 25% slower than the fastest,
+we also screen the coarse grid. Tuning runs in batches of up
+to four prepared kernels per process. Each workload/seed has one generated
+matrix pair and full FP64-derived reference shared across batches on disk.
 
-The campaign resumes completed cases only within the same fingerprint. CSVs, individual timing
-samples, configuration and existing plots stay under `build/results/`. `scaling.csv` freezes the
-v8 variant and k selected by one-thread tuning before comparing roofline-run timings across threads;
-the main comparison instead retunes for each thread count. No changes to the kernel API are needed.
+We tune published SSR AVX2, optimized TCSC OpenMP GEMM (native AVX2/512),
+both RSR-core ternary kernels (k=1..8), and scalar RSR++ (one thread only).
+OpenBLAS SGEMM is the dense FP32 comparison. RSR-core applies its GEMV once
+per batch row. After selection every winner and the one-thread SPR configuration
+run together on seeds 43/44 with two warm-ups and seven interleaved timed rounds.
+Every candidate is verified over all rows. Preparation and layout conversion
+are outside inference timing. With GCC on Linux, the benchmark observes the actual OpenMP team during verification.
+The separately compiled adapter instantiates the original v8 template with fixed tiles.
+Measured SIMD FP32 add peak uses the same requested thread budget as inference.
+
+**One-time environment setup.** Create the Python environment:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+export PYTHON="$PWD/.venv/bin/python"
+```
+
+On the Ubuntu student cluster, OpenBLAS OpenMP and Eigen can be installed without root.
+Skip this block if `build/cluster-deps/env-openmp.sh` is already available:
+
+```sh
+mkdir -p build/cluster-deps/packages-openmp build/cluster-deps/root
+(
+  set -e
+  cd build/cluster-deps/packages-openmp
+  apt-get download libopenblas0-openmp libopenblas-openmp-dev libeigen3-dev
+  for package in ./*.deb; do dpkg-deb -x "$package" ../root; done
+)
+cat > build/cluster-deps/env-openmp.sh <<'EOF'
+export SPR_DEPS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/root" && pwd)"
+export PKG_CONFIG_PATH="$SPR_DEPS_ROOT/usr/lib/x86_64-linux-gnu/openblas-openmp/pkgconfig:$SPR_DEPS_ROOT/usr/share/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+export PKG_CONFIG_SYSROOT_DIR="$SPR_DEPS_ROOT"
+export LD_LIBRARY_PATH="$SPR_DEPS_ROOT/usr/lib/x86_64-linux-gnu/openblas-openmp${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+EOF
+```
+
+**Submission.** From the updated repository root on the login node:
+
+~~~sh
+sbatch bench/papers_cpu.sh pilot
+# Follow the job (replace JOBID with the returned ID):
+tail -f slurm-JOBID.out
+# After the pilot finishes successfully:
+sbatch bench/papers_cpu.sh full
+~~~
+
+The script loads build/cluster-deps/env-openmp.sh when present, checks the
+allocation, builds on the compute node, and uses .venv/bin/python (override
+with PYTHON). Slurm directives select the same node class and request four CPU
+slots, 36 GiB and 24 hours. The GPU only selects the node class.
+The job log prints the exact results directory and elapsed time per phase.
+Use the pilot cost to budget the full run; matrix sizes and sparsity affect
+the cost of individual workloads. Wait for the final Completed line.
+
+The results directory contains context.json, build-config.txt, libraries.txt,
+correctness.log, tuning.csv, selected.csv, evaluation.csv (individual rounds
+in samples_ms), phase_times.csv, peaks.json, and plots/. The full-run figures
+show absolute runtimes at each batch size, scaling with a fixed configuration,
+speedup against each optimized baseline, percentage of measured add peak, and tuning sensitivity.
+Regenerate from copied results with `make plots RESULTS=path/to/run`.
+The original scripts for standalone comparisons and rooflines remain available.
+
+~~~sh
+# Small local integration check (Linux, OpenMP, OpenBLAS, four available CPUs)
+bash bench/papers_cpu.sh smoke
+~~~
 
 ### Saved datasets
 

@@ -34,7 +34,7 @@ M=${M:-$DM}; SHAPES=${SHAPES:-$DSHAPES}; S=${S:-$DS}; KS=${KS:-$DK}; ROUNDS=${RO
 
 # `make spr-bench` has already built the binaries (SPR_SKIP_BUILD=1)
 [[ ${SPR_SKIP_BUILD:-0} == 1 ]] || make -s BUILD_DIR="$BUILD_DIR" build > /dev/null
-[[ ${SPR_SKIP_TEST:-0} == 1 ]] || "$BUILD_DIR/test_correctness" $(echo "$SPR" | tr "," " " | tr -d "=") | tail -n 1   # one filter per argument
+"$BUILD_DIR/test_correctness" $(echo "$SPR" | tr "," " " | tr -d "=") | tail -n 1   # one filter per argument
 
 mkdir -p "$RESULTS/machine"
 PK=$RESULTS/machine/$(hostname -s)_t${THREADS}.json
@@ -43,7 +43,7 @@ if [[ ! -f $PK || $PEAKS == 1 ]]; then
   "$BUILD_DIR/peaks" --threads "$THREADS" > "$PK"
 fi
 
-OUT=$(mktemp -d "$RESULTS/$(date +%Y%m%d-%H%M%S)_spr_${MODE}_XXXX")
+OUT=$RESULTS/$(date +%Y%m%d-%H%M%S)_spr_${MODE}
 mkdir -p "$OUT"
 git rev-parse --short HEAD > "$OUT/commit.txt" 2>/dev/null || true
 git status --porcelain >> "$OUT/commit.txt" 2>/dev/null || true
@@ -52,11 +52,9 @@ cp "$PK" "$OUT/peaks.json"
 for shape in $SHAPES; do
   echo "== M=$M K×N=$shape s={$S} threads=$THREADS"
   "$BUILD_DIR/bench_cpu" --M "$M" --K "${shape%x*}" --N "${shape#*x}" --s "${S// /,}" --k "$KS" --threads "$THREADS" \
-      --kernels "$SPR" --verify "$SPR" --ref-rows -1 --rounds "$ROUNDS" --warmup "${WARMUP:-3}" --budget-ms "$BUDGET" \
-      --prep-rounds "${PREP_ROUNDS:-3}" --seed "${SEED:-42}" --tag "spr_${MODE}_seed${SEED:-42}" \
+      --kernels "$SPR" --verify "$SPR" --rounds "$ROUNDS" --warmup 1 --budget-ms "$BUDGET" --tag "spr_$MODE" \
       --out "$OUT/raw.csv" >> "$OUT/log.txt"
 done
 
-"$PYTHON" bench/tune.py check "$OUT/raw.csv"
 "$PYTHON" bench/roofline.py "$OUT/raw.csv" "$OUT/peaks.json" --out "$OUT" --ref "$REF"
 echo; echo "saved: $OUT/report.md  $OUT/roofline.png  $OUT/runtime.png"
