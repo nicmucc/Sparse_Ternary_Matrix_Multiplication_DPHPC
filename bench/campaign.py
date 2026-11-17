@@ -1,7 +1,7 @@
 """Fresh SPR v8 tuning and held-out CPU comparison. Run via papers_cpu.sh."""
 import argparse
 import csv
-import ctypes
+import sys
 import socket
 import itertools
 import json
@@ -206,7 +206,10 @@ def record_machine(mode, out):
     if job:
         if "Gold 6240" not in cpu or "avx512f" not in cpu or "SPR_AVX512_EMULATED" in (out/"build-config.txt").read_text():
             raise RuntimeError("Expected the Xeon Gold 6240 with a native AVX-512 build")
-        if ctypes.CDLL("libopenblas.so.0").openblas_get_parallel() != 2:
+        # libgomp may bind the loading thread to its first core. Probe OpenBLAS
+        # in a child so all benchmark processes inherit the full job affinity.
+        probe = "import ctypes; print(ctypes.CDLL('libopenblas.so.0').openblas_get_parallel())"
+        if subprocess.check_output([sys.executable, "-c", probe], text=True).strip() != "2":
             raise RuntimeError("Expected OpenBLAS with the OpenMP backend")
     metadata = dict(cpu=cpu, hostname=socket.gethostname(), settings=mode, cpus=cpus, job=job)
     (out/"context.json").write_text(json.dumps(metadata, indent=2))
