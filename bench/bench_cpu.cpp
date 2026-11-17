@@ -16,6 +16,7 @@
 //                       written with ok=0 and not timed; unchecked configs have max_err = -1.
 //   --budget-ms B       cap the timed runs per config at ~B ms (never fewer than 3 rounds), so slow
 //                       configurations do not dominate the wall time. 0 = always --rounds.
+//   --samples FILE    also append individual timing rounds to FILE (optional).
 //   --prep-rounds R     report median preparation time over R freshly constructed kernels.
 //                       R > 1 also performs one untimed preparation to warm the runtime.
 //   --sparsity-pattern  iid (default), or column_clustered: floor(s*N) leading
@@ -67,7 +68,7 @@ struct Entry {
 int main(int argc, char** argv) {
     int M = 256, K = 1024, N = 4096, threads = 1, rounds = 21, warmup = 3, prep_rounds = 1;
     std::string kernels, s_list = "0.5", k_list = "4", tag = "run", out = "bench_cpu.csv", verify = "";
-    std::string sparsity_pattern = "iid", datasets;
+    std::string sparsity_pattern = "iid", datasets, samples_path;
     int ref_rows = 16;
     double budget_ms = 0;
     uint64_t seed = 42;
@@ -87,6 +88,7 @@ int main(int argc, char** argv) {
         else if (a == "--prep-rounds") prep_rounds = std::stoi(v);
         else if (a == "--tag") tag = v;
         else if (a == "--out") out = v;
+        else if (a == "--samples") samples_path = v;
         else if (a == "--seed") seed = std::stoull(v);
         else if (a == "--verify") verify = v;
         else if (a == "--ref-rows") ref_rows = std::stoi(v);
@@ -136,6 +138,16 @@ int main(int argc, char** argv) {
     if (!csv) { std::fprintf(stderr, "cannot write %s\n", out.c_str()); return 1; }
     if (new_file)
         csv << "tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row\n";
+
+    // Optional raw samples; preserve the original summary CSV schema.
+    std::ofstream samples;
+    if (!samples_path.empty()) {
+        std::ifstream prior(samples_path);
+        const bool header = prior.peek() == std::ifstream::traits_type::eof();
+        samples.open(samples_path, std::ios::app);
+        if (!samples) { std::fprintf(stderr, "cannot write timing samples\n"); return 1; }
+        if (header) samples << "tag,threads,M,K,N,sparsity,kernel,param,seed,round,ms\n";
+    }
 
     // one case per sparsity (random matrices), or one case per saved dataset
     for (auto& c : split(datasets.empty() ? s_list : datasets)) {
@@ -201,6 +213,11 @@ int main(int argc, char** argv) {
 
         // ---- report
         for (auto& e : E) {
+            if (samples.is_open())
+                for (size_t r = 0; r < e.times.size(); ++r)
+                    samples << tag << ',' << threads << ',' << M << ',' << K << ',' << N << ',' << s << ','
+                            << e.kern->name() << ',' << (e.kern->uses_k() ? e.p.str() : "-") << ','
+                            << (datasets.empty() ? std::to_string(seed) : "dataset") << ',' << r << ',' << e.times[r] << '\n';
             double med = -1, mn = -1;
             if (!e.times.empty()) {
                 std::sort(e.times.begin(), e.times.end());

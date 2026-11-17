@@ -93,12 +93,12 @@ make bench BENCH_ARGS="--M 64 --K 2048 --N 8192 --s 0.5,0.9 --k 2,3,4 --threads 
   Layout conversion (TCSC and SPR use column-major X / Y) and the copies in and out of the
   `std::vector` APIs of SSR / RSR happen outside timing.
 - **`make compare`** (`bench/run.sh`):
-  - tunes every other method once per (machine, threads, shape, sparsity): each of its kernels at every k;
+  - verifies every candidate and tunes each baseline and the v8 family per build/machine/threads/shape/sparsity;
   - caches each method's fastest (kernel, k) in `build/results/tuning/`;
-  - times SPR against those configurations;
+  - remeasures the selected configurations together, independently of tuning;
   - writes `build/results/<date>_<mode>/summary.md`.
 
-  `TUNE=1` redoes the tuning, and `METHODS=opt|scalar` restricts it to the optimized or the scalar level.
+  `TUNE=1` redoes the tuning, and `METHODS=opt|scalar` restricts the final baseline comparison to the optimized or scalar level.
 - **`make spr-bench`** (`bench/spr_bench.sh`):
   - measures the machine ceilings once per thread count (`peaks`);
   - times the SPR versions at every k;
@@ -108,6 +108,31 @@ make bench BENCH_ARGS="--M 64 --K 2048 --N 8192 --s 0.5,0.9 --k 2,3,4 --threads 
 
 Tiled SPR versions (v4+) size their tiles from the cache sizes detected at runtime. Override them
 to model another machine: `SPR_L1_BYTES`, `SPR_L2_BYTES`, `SPR_LLC_BYTES`, `SPR_LINE_BYTES`.
+
+### Reproducible final SPR v8 campaign
+
+`bash bench/papers_cpu.sh` runs a short check through the existing comparison and SPR roofline
+runners. `CAMPAIGN=full bash bench/papers_cpu.sh` runs the versioned full grid. Override `THREADS`
+(space-separated), `MS`, `SHAPES`, `ROOF_SHAPES`, `S` (space-separated), `KS` (comma-separated),
+`SEEDS`, `REPEATS`, or `PHASE=compare|roofline|all` to split the work into manageable jobs.
+`TARGET=dinfk` requires a Slurm compute allocation on the Xeon Gold 6240 node class and AVX-512.
+Run `bench/check_dinfk.sh` inside that allocation first; it checks CPU, affinity, compiler and dependencies.
+Submit `sbatch` from the repository root; spool copies use `SLURM_SUBMIT_DIR`.
+No scheduler account is hard-coded. The colleague uses the same script with the default `TARGET=local`.
+
+The comparison defaults to `spr.v8.` and tunes its five registered variants and k, alongside all
+registered general-ternary FP32 baselines (excluding the broken original scalar SSR). Every output
+row is checked before timing. Tuning uses `TUNE_SEED=42`; the full campaign measures seeds 43–45
+in separate runs, with 7 tuning rounds, 21 final rounds, 3 warmups and 3 preparation samples.
+`BASE_KS` defaults to `KS`; the selected parameters are in each run's `selected.csv`, and optima at
+the search boundary are flagged in `tuning-boundaries.txt`. These are optima within the tested grid.
+`TUNE=1 make compare` forces retuning; otherwise the build/hardware/affinity/grid fingerprint
+controls reuse. For a completely fresh campaign, select a new `RESULTS` directory.
+
+The campaign resumes completed cases only within the same fingerprint. CSVs, individual timing
+samples, configuration and existing plots stay under `build/results/`. `scaling.csv` freezes the
+v8 variant and k selected by one-thread tuning before comparing roofline-run timings across threads;
+the main comparison instead retunes for each thread count. No changes to the kernel API are needed.
 
 ### Saved datasets
 
