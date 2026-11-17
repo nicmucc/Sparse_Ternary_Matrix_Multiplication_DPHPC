@@ -15,7 +15,7 @@ import tempfile
 import time
 from collections import defaultdict
 
-THREADS = (1, 4, 2)  # Two threads uses finalists from both endpoints.
+THREADS = (1, 2, 4)
 SHAPES = ((1024, 4096), (2048, 8192))
 SPR = re.compile(r"spr\.v8\.b(\d+)\.kc(\d+)\.g(\d+)")
 METHODS = ("SPR v8", "SSR", "TCSC", "RSR-core", "RSR++", "OpenBLAS")
@@ -166,26 +166,15 @@ def run_case(case, names, smoke):
     grid = [spr(*p) for p in itertools.product((2,4) if smoke else (2,4,6,8),
             (8,16) if smoke else (8,16,32,64), (64,K) if smoke else (64,256,K),
             (1,4) if smoke else (1,4,16))]
-    selected, finalists = {}, {}
+    selected = {}
     for t in THREADS:
-        if t == 2:
-            pool = sorted(set(finalists[1] + finalists[4]))
-        else:
-            coarse = case.measure("coarse", grid, t, 42, 3, 1)
-            pool = [config(r) for r in coarse[:3]]
-            new = sorted(set(refinement(coarse[:3], case.dims)) - set(grid))
-            if new:
-                extra = case.measure("neighbors", new, t, 42, 3, 1)
-                pool = [config(r) for r in sorted(coarse + extra, key=lambda r: r["median_ms"])[:3]]
-        ranked = case.measure("finalists", pool, t, 42, 7, 1)
-        finalists[t] = [config(r) for r in ranked[:3]]
-        if t == 2:
-            middle = ranked[0]["median_ms"]
-            # Broaden if the best midpoint regresses or finalists disagree substantially.
-            spread = ranked[-1]["median_ms"] / middle
-            if middle > 1.1 * selected[1]["SPR v8"]["median_ms"] or spread > 1.25:
-                coarse = case.measure("midpoint_grid", grid, t, 42, 3, 1)
-                ranked = case.measure("midpoint_finalists", pool+[config(r) for r in coarse[:3]], t, 42, 7, 1)
+        coarse = case.measure("coarse", grid, t, 42, 3, 1)
+        neighbors = sorted(set(refinement(coarse[:3], case.dims)) - set(grid))
+        candidates = coarse
+        if neighbors:
+            candidates = coarse + case.measure("neighbors", neighbors, t, 42, 3, 1)
+        best = sorted(candidates, key=lambda r: r["median_ms"])[:3]
+        ranked = case.measure("finalists", [config(r) for r in best], t, 42, 7, 1)
         baselines = case.measure("baselines", baseline_grid(names,t,smoke), t, 42, 3, 1)
         selected[t] = {"SPR v8": ranked[0]}
         for row in baselines:
@@ -196,7 +185,7 @@ def run_case(case, names, smoke):
         append(case.out / "selected.csv", list(selected[t].values()))
     fixed = config(selected[1]["SPR v8"])
     for seed in (43,44):
-        for t in (1,2,4):
+        for t in THREADS:
             winners = {config(r) for r in selected[t].values()}
             rows = case.measure("evaluation", sorted(winners | {fixed}), t, seed, 7, 2, final=True)
             for row in rows:

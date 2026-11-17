@@ -121,13 +121,10 @@ cores. The cluster campaign is separate from the original make compare utility. 
 The pilot exercises the full procedure on its single workload.
 
 SPR screens the Cartesian product of k={2,4,6,8}, B={8,16,32,64},
-Kc={64,256,K}, G={1,4,16} at 1 and 4 threads. One warm-up and three rounds
+Kc={64,256,K}, G={1,4,16} independently at 1, 2 and 4 threads (144 combinations each). One warm-up and three rounds
 per candidate. Around the fastest three it tests neighboring k (including
 1 and 10 at the edges), and half/double Kc and G within bounds. The best three
-from both stages get seven confirmation rounds. At two threads we compare the
-union of the two finalist lists; if the best is over 10% slower than the
-one-thread winner, or the slowest finalist is over 25% slower than the fastest,
-we also screen the coarse grid. Tuning runs in batches of up
+from both stages get seven confirmation rounds. Tuning runs in batches of up
 to four prepared kernels per process. Each workload/seed has one generated
 matrix pair and full FP64-derived reference shared across batches on disk.
 
