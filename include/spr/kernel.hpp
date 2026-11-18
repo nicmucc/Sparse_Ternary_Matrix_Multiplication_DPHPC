@@ -67,10 +67,10 @@ struct Kernel {
 };
 
 // ---------------------------------------------------------------------------
-// Registry: each .cpp registers its kernels with
+// Registry: each .cpp or .cu registers its kernels with
 //     SPR_REGISTER_KERNEL("name", Class);                 // default-constructible class
 //     SPR_REGISTER_FACTORY("name", [] { return ...; });   // any factory (table-driven wrappers)
-// The sources are linked as an OBJECT library so the registrars are never dropped.
+// Kernel objects are linked directly into each executable so the registrars are never dropped.
 // ---------------------------------------------------------------------------
 using Factory = std::function<std::unique_ptr<Kernel>()>;
 std::map<std::string, Factory>& registry();

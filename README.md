@@ -1,6 +1,6 @@
 # Sparse Ternary Matrix Multiplication
 
-CPU computation of `Y = XW`, with FP32 activations and weights in `{-1, 0, +1}`.
+CPU and CUDA computation of `Y = XW`, with FP32 activations and weights in `{-1, 0, +1}`.
 Sparse pattern reduction (SPR) groups input rows with matching patterns in small column
 blocks, computes each group sum once, and reuses it across the matching outputs.
 
@@ -16,16 +16,21 @@ include/spr/harness.hpp    problems, saved datasets, verification, layout conver
 include/spr/cache.hpp      cache sizes detected at runtime (tiled SPR versions)
 cpu/core.cpp               registry, FP64 reference, machine info
 cpu/spr/                   our SPR kernels: spr.naive, spr.v0 ... spr.v9
+gpu/spr/                   CUDA SPR kernels: v0, v1 and v2
 cpu/orig/                  thin wrappers around the papers' kernels (see cpu/orig/README.md)
 cpu/libs.cpp               dense baselines: naive loop, BLAS, Eigen dense, Eigen sparse
 third_party/               the papers' code, unmodified (see third_party/README.md)
 tests/test_correctness.cpp every registered kernel vs an FP64 reference
-bench/bench_cpu.cpp        interleaved benchmark driver -> CSV
+tests/test_gpu_correctness.cpp  CUDA edge cases, rebinding and repeated inference
+bench/bench.cpp            shared CPU/GPU interleaved benchmark driver -> CSV
+bench/GPU_COMPARE.md       dedicated CUDA v1/v2 comparison and profiling workflow
 bench/peaks.cpp            machine compute and bandwidth ceilings
 bench/papers_cpu.sh        smoke, pilot or full D-INFK campaign
 bench/campaign.py, campaign_plots.py   bounded tuning, held-out evaluation and plots
 bench/v8_adapter.cpp       instantiate fixed tiles from the unmodified SPR v8 source
 scripts/generate_data.py   saved datasets (make data), readable by bench_cpu --dataset
+results/                  recorded measurements, plots and historical source snapshots
+build/<profile>/          generated executables and objects (ignored by Git)
 ```
 
 ## Kernels
@@ -33,6 +38,7 @@ scripts/generate_data.py   saved datasets (make data), readable by bench_cpu --d
 | Prefix | What | Source |
 |---|---|---|
 | `spr.*` | our SPR versions (naive and v0 ... v9: compiled tree, flat format, tiling, OpenMP) | `cpu/spr/` |
+| `spr.v0.cuda`, `spr.v1.cuda`, `spr.v2.cuda` | CUDA SPR: initial implementation, compact metadata, coalesced input/scratch | `gpu/spr/` |
 | `tcsc.*` | the FP32 CPU kernels of the TCSC paper (88: naive ladder, merged, GroupMin/GroupMid in col- and row-major, AVX2 and AVX-512, GEMV) | `third_party/SSR-ternaryLLM-repo/ternaryLLM_CPU` |
 | `ssr.*` | SSR scalar (and a patched copy of it), AVX2 `vec_L2..L8`, `unroll8/16_v2` | `third_party/SSR-ternaryLLM-repo/SSR` |
 | `rsr.*` | RSR / RSR++ in the fp32 version the SSR paper benchmarked | `third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr` |
@@ -56,7 +62,7 @@ make test TEST_ARGS="spr. tcsc."           # only kernels whose name contains on
 make PROFILE=sanitizer test                # ASan + UBSan
 ```
 
-Every kernel is built with the same flags: `-O3 -ffast-math -march=native` (`-mcpu=native` on ARM).
+Every CPU kernel is built with the same flags: `-O3 -ffast-math -march=native` (`-mcpu=native` on ARM).
 Each profile builds in its own `build/<profile>/`; the compiler, flags and source list are
 recorded in `config.txt`, and a change rebuilds that profile.
 
@@ -74,6 +80,33 @@ recorded in `config.txt`, and a change rebuilds that profile.
 calls into dirty outputs and, for the parallel versions, 1 ... 14 threads. Unsupported shapes are
 skipped. One upstream kernel, `ssr.ssr_inference`, is wrong in the authors' code. It is reported as
 XFAIL and does not fail the test. `ssr.ssr_inference_patched` is the fixed copy.
+
+### CUDA build and test
+
+Requires an NVIDIA GPU, CUDA toolkit and an OpenMP-capable host compiler on Linux.
+CPU and GPU implementations are linked into separate executables using the same registry
+and kernel API. `cpu/core.cpp` supplies the shared registry and reference utilities.
+
+```sh
+make build-gpu                          # build/release/gpu/{test_correctness,test_gpu_correctness,bench_gpu}
+make test-gpu                           # both suites, all three CUDA kernels
+make test-gpu TEST_ARGS="spr.v2.cuda"     # only v2, in both suites
+make bench-gpu BENCH_ARGS="--M 128 --K 1024 --N 1024 --s 0.5 --k 8 --kernels .cuda"
+```
+
+Override `NVCC`, `CXX`, `NVCCFLAGS` or `CUDA_ARCH` as needed; CUDA defaults to
+`-O3 -lineinfo -std=c++17 -arch=native`. The GPU edge suite covers empty dimensions,
+all-zero blocks, ragged shapes, k=1/3/8/16, the 16-bit K boundary, two input bindings,
+and three runs per binding. It supplements the shared correctness suite.
+
+CUDA sources are `spr_v0.cu`, `spr_v1.cu`, and `spr_v2.cu`, registered as
+`spr.v0.cuda`, `spr.v1.cuda`, and `spr.v2.cuda`. Filter with `.cuda` to select
+all CUDA versions.
+The dedicated [v1/v2 comparison](bench/GPU_COMPARE.md) additionally measures CUDA-event
+and end-to-end timings, including v2's CPU transpose in `bind()`.
+
+`Makefile` is the current build entry point. The tracked `build-fixed/` directory
+and source copies under `results/` are historical artifacts, not active build inputs.
 
 ## Benchmark
 
