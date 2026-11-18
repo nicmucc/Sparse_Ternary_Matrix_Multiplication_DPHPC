@@ -1,0 +1,17 @@
+{
+  "1": {
+    "threads": 1,
+    "isa": "avx512",
+    "peak_simd_gflops": 49.718909
+  },
+  "2": {
+    "threads": 2,
+    "isa": "avx512",
+    "peak_simd_gflops": 98.442068
+  },
+  "4": {
+    "threads": 4,
+    "isa": "avx512",
+    "peak_simd_gflops": 187.182577
+  }
+}

@@ -1,0 +1,4 @@
+0a17b1da513891d40e7d858f8e6c6aeae3eaecac3ece3eadb7fadee73c638235  build/papers-studgpu-node13/bench_cpu
+29e111d36c60c4b36149d8bef78bb001bfefab80364263502a80779532519da0  build/papers-studgpu-node13/peaks
+fbd2591885bbb3ee5e58aecde9eaae63d08f681dba9bc778c5ca3e50a760c650  bench/campaign.py
+e5a149e3057ee0c8bba6d8b488070ec49456be510a25802435d662ce5d7a8cb2  bench/campaign_plots.py

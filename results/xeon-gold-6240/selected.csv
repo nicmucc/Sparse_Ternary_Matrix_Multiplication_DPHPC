@@ -1,0 +1,129 @@
+M,K,N,sparsity,threads,seed,phase,method,kernel,k,B,Kc,G,median_ms,prep_ms,verify_ms,max_err,adds_per_row,team,rounds,warmup
+64,1024,4096,0.5,1,42,finalists,SPR v8,spr.v8.b16.kc512.g16,2,16,512,16,7.08587,196.4,8.31567,1.14441e-05,,1,7,1
+64,1024,4096,0.5,1,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,3.15972,31.3022,4.3822,4.19617e-05,,,3,1
+64,1024,4096,0.5,1,42,baselines,OpenBLAS,lib.dense_blas,,,,,5.02581,7.31277,6.66358,2.67029e-05,,,3,1
+64,1024,4096,0.5,1,42,baselines,SSR,ssr.ssr_inference_float_vec_L,6,,,,22.0217,222.398,22.7335,1.90735e-05,,,3,1
+64,1024,4096,0.5,1,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,60.6247,39.8963,61.4246,1.14441e-05,,,3,1
+64,1024,4096,0.5,1,42,baselines,RSR++,rsr.rsr_pp_inference,6,,,,121.165,235.969,121.403,1.52588e-05,,,3,1
+64,1024,4096,0.5,2,42,finalists,SPR v8,spr.v8.b16.kc512.g16,2,16,512,16,5.05774,196.054,13.6803,1.14441e-05,,2,7,1
+64,1024,4096,0.5,2,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,1.61272,39.1023,3.02847,4.19617e-05,,,3,1
+64,1024,4096,0.5,2,42,baselines,OpenBLAS,lib.dense_blas,,,,,4.58737,7.34735,4.35085,2.67029e-05,,,3,1
+64,1024,4096,0.5,2,42,baselines,SSR,ssr.ssr_inference_float_vec_L,4,,,,12.1151,277.729,18.9891,1.52588e-05,,,3,1
+64,1024,4096,0.5,2,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,30.7421,44.9441,76.8809,1.14441e-05,,,3,1
+64,1024,4096,0.5,4,42,finalists,SPR v8,spr.v8.b16.kc256.g4,2,16,256,4,3.18036,206.477,8.51747,1.14441e-05,,4,7,1
+64,1024,4096,0.5,4,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,1.15466,33.6824,2.55303,4.19617e-05,,,3,1
+64,1024,4096,0.5,4,42,baselines,OpenBLAS,lib.dense_blas,,,,,2.50876,7.48454,4.00912,2.67029e-05,,,3,1
+64,1024,4096,0.5,4,42,baselines,SSR,ssr.ssr_inference_float_vec_L,4,,,,6.26563,279.358,10.0528,1.52588e-05,,,3,1
+64,1024,4096,0.5,4,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_1,3,,,,20.1251,40.829,59.3084,1.14441e-05,,,3,1
+64,1024,4096,0.9,1,42,finalists,SPR v8,spr.v8.b16.kc512.g16,2,16,512,16,2.76794,56.3403,4.00928,4.76837e-06,,1,7,1
+64,1024,4096,0.9,1,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,0.898893,16.9595,2.15537,9.53674e-06,,,3,1
+64,1024,4096,0.9,1,42,baselines,OpenBLAS,lib.dense_blas,,,,,4.80305,7.24534,6.52189,5.72205e-06,,,3,1
+64,1024,4096,0.9,1,42,baselines,SSR,ssr.ssr_inference_float_vec_L,4,,,,7.68564,227.442,10.3085,7.62939e-06,,,3,1
+64,1024,4096,0.9,1,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,7,,,,45.7582,47.3828,46.2234,7.62939e-06,,,3,1
+64,1024,4096,0.9,1,42,baselines,RSR++,rsr.rsr_pp_inference,7,,,,128.456,183.132,128.753,5.72205e-06,,,3,1
+64,1024,4096,0.9,2,42,finalists,SPR v8,spr.v8.b16.kc512.g1,2,16,512,1,2.79167,56.3459,6.76297,4.76837e-06,,2,7,1
+64,1024,4096,0.9,2,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,0.63478,15.9375,1.97435,9.53674e-06,,,3,1
+64,1024,4096,0.9,2,42,baselines,OpenBLAS,lib.dense_blas,,,,,3.46394,5.93464,4.91473,5.72205e-06,,,3,1
+64,1024,4096,0.9,2,42,baselines,SSR,ssr.ssr_inference_float_vec_L,3,,,,5.56853,291.058,7.66529,6.31809e-06,,,3,1
+64,1024,4096,0.9,2,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,7,,,,33.9457,47.6826,67.5278,7.62939e-06,,,3,1
+64,1024,4096,0.9,4,42,finalists,SPR v8,spr.v8.b16.kc1024.g4,2,16,1024,4,2.4464,52.0886,4.47195,5.72205e-06,,4,7,1
+64,1024,4096,0.9,4,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,0.350333,21.5979,2.02096,9.53674e-06,,,3,1
+64,1024,4096,0.9,4,42,baselines,OpenBLAS,lib.dense_blas,,,,,2.44676,7.46995,6.15763,5.72205e-06,,,3,1
+64,1024,4096,0.9,4,42,baselines,SSR,ssr.ssr_inference_float_vec_L,4,,,,2.83437,244.186,5.80262,7.62939e-06,,,3,1
+64,1024,4096,0.9,4,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,16.7892,67.1987,20.0445,1.14441e-05,,,3,1
+64,2048,8192,0.5,1,42,finalists,SPR v8,spr.v8.b16.kc512.g16,2,16,512,16,28.256,930.135,30.4958,1.52588e-05,,1,7,1
+64,2048,8192,0.5,1,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,12.8052,163.301,15.916,9.15527e-05,,,3,1
+64,2048,8192,0.5,1,42,baselines,OpenBLAS,lib.dense_blas,,,,,25.4424,29.3798,27.3031,3.43323e-05,,,3,1
+64,2048,8192,0.5,1,42,baselines,SSR,ssr.ssr_inference_float_vec_L,6,,,,104.106,976.096,105.33,3.43323e-05,,,3,1
+64,2048,8192,0.5,1,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,191.703,184.288,193.699,1.90735e-05,,,3,1
+64,2048,8192,0.5,1,42,baselines,RSR++,rsr.rsr_pp_inference,7,,,,435.943,969.278,436.555,2.47955e-05,,,3,1
+64,2048,8192,0.5,2,42,finalists,SPR v8,spr.v8.b16.kc256.g16,2,16,256,16,21.3537,954.147,37.4142,1.52588e-05,,2,7,1
+64,2048,8192,0.5,2,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,6.53874,203.526,10.144,9.15527e-05,,,3,1
+64,2048,8192,0.5,2,42,baselines,OpenBLAS,lib.dense_blas,,,,,13.1284,30.3638,32.7364,3.43323e-05,,,3,1
+64,2048,8192,0.5,2,42,baselines,SSR,ssr.ssr_inference_float_vec_L,6,,,,52.9156,987.256,116.819,3.43323e-05,,,3,1
+64,2048,8192,0.5,2,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,96.3923,180.666,164.306,1.90735e-05,,,3,1
+64,2048,8192,0.5,4,42,finalists,SPR v8,spr.v8.b16.kc512.g16,2,16,512,16,9.95677,932.311,28.7473,1.52588e-05,,4,7,1
+64,2048,8192,0.5,4,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,3.42069,216.001,7.3723,9.15527e-05,,,3,1
+64,2048,8192,0.5,4,42,baselines,OpenBLAS,lib.dense_blas,,,,,8.59418,29.5261,24.156,3.43323e-05,,,3,1
+64,2048,8192,0.5,4,42,baselines,SSR,ssr.ssr_inference_float_vec_L,7,,,,28.1944,963.048,38.6086,5.34058e-05,,,3,1
+64,2048,8192,0.5,4,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,50.8501,182.985,115.755,1.90735e-05,,,3,1
+64,2048,8192,0.9,1,42,finalists,SPR v8,spr.v8.b16.kc1024.g4,2,16,1024,4,8.86409,266.07,11.941,8.58307e-06,,1,7,1
+64,2048,8192,0.9,1,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,3.35038,102.297,6.45636,1.90735e-05,,,3,1
+64,2048,8192,0.9,1,42,baselines,OpenBLAS,lib.dense_blas,,,,,25.5792,30.9586,27.3409,7.62939e-06,,,3,1
+64,2048,8192,0.9,1,42,baselines,SSR,ssr.ssr_inference_float_vec_L,5,,,,36.462,906.349,37.5192,1.14441e-05,,,3,1
+64,2048,8192,0.9,1,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,158.206,352.74,159.354,1.33514e-05,,,3,1
+64,2048,8192,0.9,1,42,baselines,RSR++,rsr.rsr_pp_inference,7,,,,454.064,812.674,453.297,1.14441e-05,,,3,1
+64,2048,8192,0.9,2,42,finalists,SPR v8,spr.v8.b16.kc1024.g16,2,16,1024,16,6.18494,278.399,19.1106,8.58307e-06,,2,7,1
+64,2048,8192,0.9,2,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,1.68572,108.99,5.11739,1.90735e-05,,,3,1
+64,2048,8192,0.9,2,42,baselines,OpenBLAS,lib.dense_blas,,,,,15.5467,29.4627,32.8157,7.62939e-06,,,3,1
+64,2048,8192,0.9,2,42,baselines,SSR,ssr.ssr_inference_float_vec_L,5,,,,18.544,973.135,20.249,1.14441e-05,,,3,1
+64,2048,8192,0.9,2,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,79.4872,347.244,148.232,1.33514e-05,,,3,1
+64,2048,8192,0.9,4,42,finalists,SPR v8,spr.v8.b16.kc1024.g4,2,16,1024,4,3.28857,274.468,11.5861,8.58307e-06,,4,7,1
+64,2048,8192,0.9,4,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,0.900265,107.369,4.61319,1.90735e-05,,,3,1
+64,2048,8192,0.9,4,42,baselines,SSR,ssr.ssr_inference_float_vec_L,5,,,,9.73447,962.41,15.8293,1.14441e-05,,,3,1
+64,2048,8192,0.9,4,42,baselines,OpenBLAS,lib.dense_blas,,,,,10.1441,30.581,24.2394,7.62939e-06,,,3,1
+64,2048,8192,0.9,4,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,41.8905,264.603,50.0577,1.33514e-05,,,3,1
+256,1024,4096,0.5,1,42,finalists,SPR v8,spr.v8.b16.kc256.g32,2,16,256,32,32.7488,213.911,38.3184,1.14441e-05,,1,7,1
+256,1024,4096,0.5,1,42,baselines,OpenBLAS,lib.dense_blas,,,,,13.7634,6.70472,16.6167,2.67029e-05,,,3,1
+256,1024,4096,0.5,1,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,26.3945,37.1511,31.8424,4.19617e-05,,,3,1
+256,1024,4096,0.5,1,42,baselines,SSR,ssr.ssr_inference_float_vec_L,6,,,,88.2477,222.827,91.1397,2.28882e-05,,,3,1
+256,1024,4096,0.5,1,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,242.917,42.6251,245.814,1.52588e-05,,,3,1
+256,1024,4096,0.5,1,42,baselines,RSR++,rsr.rsr_pp_inference,6,,,,483.117,235.999,485.673,1.52588e-05,,,3,1
+256,1024,4096,0.5,2,42,finalists,SPR v8,spr.v8.b16.kc256.g32,2,16,256,32,22.6751,214.749,28.6954,1.14441e-05,,2,7,1
+256,1024,4096,0.5,2,42,baselines,OpenBLAS,lib.dense_blas,,,,,7.3912,8.20157,19.5635,2.67029e-05,,,3,1
+256,1024,4096,0.5,2,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,11.9524,38.8146,17.9869,4.19617e-05,,,3,1
+256,1024,4096,0.5,2,42,baselines,SSR,ssr.ssr_inference_float_vec_L,6,,,,46.4737,231.814,112.677,2.28882e-05,,,3,1
+256,1024,4096,0.5,2,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,123.93,43.5849,178.458,1.52588e-05,,,3,1
+256,1024,4096,0.5,4,42,finalists,SPR v8,spr.v8.b16.kc256.g32,2,16,256,32,11.2608,216.914,35.3114,1.14441e-05,,4,7,1
+256,1024,4096,0.5,4,42,baselines,OpenBLAS,lib.dense_blas,,,,,4.31346,7.1088,14.6006,2.67029e-05,,,3,1
+256,1024,4096,0.5,4,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,6.24935,42.306,12.71,4.19617e-05,,,3,1
+256,1024,4096,0.5,4,42,baselines,SSR,ssr.ssr_inference_float_vec_L,5,,,,25.0892,254.688,27.4052,1.90735e-05,,,3,1
+256,1024,4096,0.5,4,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,64.6696,40.3558,118.925,1.52588e-05,,,3,1
+256,1024,4096,0.9,1,42,finalists,SPR v8,spr.v8.b16.kc512.g16,2,16,512,16,13.5007,56.5756,19.4224,5.72205e-06,,1,7,1
+256,1024,4096,0.9,1,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_32xG1_AVX512_OpenMP,,,,,5.24861,17.8882,11.4626,9.53674e-06,,,3,1
+256,1024,4096,0.9,1,42,baselines,OpenBLAS,lib.dense_blas,,,,,13.534,6.85359,16.5766,5.72205e-06,,,3,1
+256,1024,4096,0.9,1,42,baselines,SSR,ssr.ssr_inference_float_vec_L,3,,,,30.7574,277.923,33.6536,7.62939e-06,,,3,1
+256,1024,4096,0.9,1,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,182.509,126.227,184.831,1.14441e-05,,,3,1
+256,1024,4096,0.9,1,42,baselines,RSR++,rsr.rsr_pp_inference,7,,,,512.878,184.495,514.596,7.62939e-06,,,3,1
+256,1024,4096,0.9,2,42,finalists,SPR v8,spr.v8.b16.kc256.g16,1,16,256,16,8.76513,65.5296,27.3655,3.8147e-06,,2,7,1
+256,1024,4096,0.9,2,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_32xG1_AVX512_OpenMP,,,,,2.62002,15.4531,9.12843,9.53674e-06,,,3,1
+256,1024,4096,0.9,2,42,baselines,OpenBLAS,lib.dense_blas,,,,,9.21876,6.96677,20.054,5.72205e-06,,,3,1
+256,1024,4096,0.9,2,42,baselines,SSR,ssr.ssr_inference_float_vec_L,3,,,,15.7536,292.173,18.9533,7.62939e-06,,,3,1
+256,1024,4096,0.9,2,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,91.4639,123.58,159.607,1.14441e-05,,,3,1
+256,1024,4096,0.9,4,42,finalists,SPR v8,spr.v8.b16.kc256.g16,1,16,256,16,4.31883,64.6944,17.1074,3.8147e-06,,4,7,1
+256,1024,4096,0.9,4,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX512_OpenMP,,,,,1.41083,17.9886,8.59329,1.14441e-05,,,3,1
+256,1024,4096,0.9,4,42,baselines,OpenBLAS,lib.dense_blas,,,,,5.10303,6.93783,15.7457,5.72205e-06,,,3,1
+256,1024,4096,0.9,4,42,baselines,SSR,ssr.ssr_inference_float_vec_L,4,,,,8.38696,245.239,14.8644,7.62939e-06,,,3,1
+256,1024,4096,0.9,4,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,47.465,68.1373,50.6387,1.14441e-05,,,3,1
+256,2048,8192,0.5,1,42,finalists,SPR v8,spr.v8.b16.kc256.g32,2,16,256,32,135.388,947.84,149.194,1.52588e-05,,1,7,1
+256,2048,8192,0.5,1,42,baselines,OpenBLAS,lib.dense_blas,,,,,56.26,30.5594,61.3782,3.8147e-05,,,3,1
+256,2048,8192,0.5,1,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG32_AVX512_OpenMP,,,,,133.055,187.014,147.766,0.000106812,,,3,1
+256,2048,8192,0.5,1,42,baselines,SSR,ssr.ssr_inference_float_vec_L,6,,,,413.518,975.743,420.553,3.8147e-05,,,3,1
+256,2048,8192,0.5,1,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,767.184,182.15,771.098,2.28882e-05,,,3,1
+256,2048,8192,0.5,1,42,baselines,RSR++,rsr.rsr_pp_inference,7,,,,1731.17,974.054,1736.32,3.29018e-05,,,3,1
+256,2048,8192,0.5,2,42,finalists,SPR v8,spr.v8.b16.kc256.g16,2,16,256,16,89.4386,1004.34,144.481,1.52588e-05,,2,7,1
+256,2048,8192,0.5,2,42,baselines,OpenBLAS,lib.dense_blas,,,,,28.8073,29.6196,72.7315,3.8147e-05,,,3,1
+256,2048,8192,0.5,2,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG32_AVX512_OpenMP,,,,,67.2402,204.784,82.8162,0.000106812,,,3,1
+256,2048,8192,0.5,2,42,baselines,SSR,ssr.ssr_inference_float_vec_L,8,,,,224.437,894.166,381.933,6.10352e-05,,,3,1
+256,2048,8192,0.5,2,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,386.001,182.311,457.36,2.28882e-05,,,3,1
+256,2048,8192,0.5,4,42,finalists,SPR v8,spr.v8.b16.kc256.g32,2,16,256,32,35.1308,959.737,76.8356,1.52588e-05,,4,7,1
+256,2048,8192,0.5,4,42,baselines,OpenBLAS,lib.dense_blas,,,,,17.0491,29.9807,50.7193,3.8147e-05,,,3,1
+256,2048,8192,0.5,4,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG32_AVX512_OpenMP,,,,,34.5654,186.279,61.9386,0.000106812,,,3,1
+256,2048,8192,0.5,4,42,baselines,SSR,ssr.ssr_inference_float_vec_L,6,,,,110.685,979.363,208.664,3.8147e-05,,,3,1
+256,2048,8192,0.5,4,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,3,,,,204.167,184.171,272.89,2.28882e-05,,,3,1
+256,2048,8192,0.9,1,42,finalists,SPR v8,spr.v8.b16.kc256.g32,2,16,256,32,58.7344,313.86,69.2556,5.72205e-06,,1,7,1
+256,2048,8192,0.9,1,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG32_AVX512_OpenMP,,,,,37.8955,117.537,49.9876,2.28882e-05,,,3,1
+256,2048,8192,0.9,1,42,baselines,OpenBLAS,lib.dense_blas,,,,,56.1701,29.6518,61.6871,9.53674e-06,,,3,1
+256,2048,8192,0.9,1,42,baselines,SSR,ssr.ssr_inference_float_vec_L,5,,,,143.998,911.635,150.464,1.33514e-05,,,3,1
+256,2048,8192,0.9,1,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,632.784,349.303,640.898,1.52588e-05,,,3,1
+256,2048,8192,0.9,1,42,baselines,RSR++,rsr.rsr_pp_inference,7,,,,1800.64,812.568,1806.88,1.23978e-05,,,3,1
+256,2048,8192,0.9,2,42,finalists,SPR v8,spr.v8.b16.kc512.g16,2,16,512,16,34.4393,290.545,52.8501,7.62939e-06,,2,7,1
+256,2048,8192,0.9,2,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG32_AVX512_OpenMP,,,,,17.4707,113.154,31.6917,2.28882e-05,,,3,1
+256,2048,8192,0.9,2,42,baselines,OpenBLAS,lib.dense_blas,,,,,28.8437,29.7409,72.6067,9.53674e-06,,,3,1
+256,2048,8192,0.9,2,42,baselines,SSR,ssr.ssr_inference_float_vec_L,6,,,,73.3201,846.137,160.693,1.52588e-05,,,3,1
+256,2048,8192,0.9,2,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,318.762,352.905,391.271,1.52588e-05,,,3,1
+256,2048,8192,0.9,4,42,finalists,SPR v8,spr.v8.b16.kc512.g16,2,16,512,16,18.3379,289.521,44.5096,7.62939e-06,,4,7,1
+256,2048,8192,0.9,4,42,baselines,TCSC,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_32xG1_AVX512_OpenMP,,,,,9.79908,92.8355,35.4028,1.90735e-05,,,3,1
+256,2048,8192,0.9,4,42,baselines,OpenBLAS,lib.dense_blas,,,,,16.651,30.0675,51.0873,9.53674e-06,,,3,1
+256,2048,8192,0.9,4,42,baselines,SSR,ssr.ssr_inference_float_vec_L,4,,,,38.8857,1093.12,47.5105,1.52588e-05,,,3,1
+256,2048,8192,0.9,4,42,baselines,RSR-core,rsrcore.rsr_ternary_gemv_v3_3,8,,,,168.887,259.658,174.044,1.52588e-05,,,3,1

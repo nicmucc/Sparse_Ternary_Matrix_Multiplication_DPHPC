@@ -1,4 +1,4 @@
-// Measures the roofline ceilings of THIS machine (for bench/roofline.py):
+// Measures the roofline ceilings of THIS machine (FP32 addition throughput and read bandwidth):
 //   - peak fp32 ADD throughput, SIMD (NEON / AVX2 / AVX-512) and scalar           [GFLOP/s]
 //   - read bandwidth from L1, L2 and DRAM                                          [GB/s]
 // with T threads (each thread runs the same loop; the numbers are the totals).

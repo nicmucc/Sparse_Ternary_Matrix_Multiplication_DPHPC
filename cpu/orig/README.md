@@ -228,8 +228,6 @@ There is **no optimized RSR++**: RSR-core's ternary kernels scatter each group s
 
 ## Which kernels to compare SPR against
 
-`make compare` (`bench/run.sh`) does this automatically: it sweeps every kernel of every method below over k
-once per (machine, threads, shape, sparsity) and keeps each method's fastest (kernel, k).
 
 | SPR level | Same engineering level as | Strongest published at that level |
 |---|---|---|

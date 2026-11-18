@@ -21,10 +21,7 @@ cpu/libs.cpp               dense baselines: naive loop, BLAS, Eigen dense, Eigen
 third_party/               the papers' code, unmodified (see third_party/README.md)
 tests/test_correctness.cpp every registered kernel vs an FP64 reference
 bench/bench_cpu.cpp        interleaved benchmark driver -> CSV
-bench/run.sh               SPR vs the best kernel of every method (make compare)
-bench/spr_bench.sh         SPR versions only: runtime + roofline (make spr-bench)
-bench/peaks.cpp            machine ceilings: fp32 add peak (SIMD / scalar), L1 / L2 / DRAM bandwidth
-bench/summarize.py, tune.py, roofline.py, spr_threads.py   reports, tuning cache, thread sweep
+bench/peaks.cpp            machine compute and bandwidth ceilings
 bench/papers_cpu.sh        smoke, pilot or full D-INFK campaign
 bench/campaign.py, campaign_plots.py   bounded tuning, held-out evaluation and plots
 bench/v8_adapter.cpp       instantiate fixed tiles from the unmodified SPR v8 source
@@ -80,44 +77,30 @@ XFAIL and does not fail the test. `ssr.ssr_inference_patched` is the fixed copy.
 
 ## Benchmark
 
-```sh
-make compare                     # SPR vs the best kernel of every method, quick grid
-MODE=paper THREADS=8 make compare
-make spr-bench                   # SPR versions only: runtime + roofline report
-make bench BENCH_ARGS="--M 64 --K 2048 --N 8192 --s 0.5,0.9 --k 2,3,4 --threads 1 --kernels spr.v8.b32,tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_"
-```
+[Published Xeon results and plots](results/xeon-gold-6240/README.md) include
+the full tuning sweep, held-out evaluation, selected kernels and machine metadata
+from Slurm job 4329. The six original figures are embedded there.
 
-- **`bench_cpu`**:
-  - builds every (kernel, k) configuration;
-  - verifies it against the FP64 reference (wrong results get `ok=0` and are never timed);
-  - times all configurations interleaved (round-robin with a rotating start);
-  - appends one CSV row per configuration: median / min ms, preprocessing ms, format bytes, bits per weight, max error, additions per row.
+~~~sh
+make plots PYTHON=.venv/bin/python RESULTS=results/xeon-gold-6240 PLOT_DIR=build/plots/xeon-gold-6240
+~~~
 
-  Layout conversion (TCSC and SPR use column-major X / Y) and the copies in and out of the
-  `std::vector` APIs of SSR / RSR happen outside timing.
-- **`make compare`** (`bench/run.sh`):
-  - tunes every other method once per (machine, threads, shape, sparsity): each of its kernels at every k;
-  - caches each method's fastest (kernel, k) in `build/results/tuning/`;
-  - times SPR against those configurations;
-  - writes `build/results/<date>_<mode>/summary.md`.
+Use the cluster campaign below for a fresh pilot or full run. For individual
+kernel measurements, use the existing driver directly.
 
-  `TUNE=1` redoes the tuning, and `METHODS=opt|scalar` restricts it to the optimized or the scalar level.
-- **`make spr-bench`** (`bench/spr_bench.sh`):
-  - measures the machine ceilings once per thread count (`peaks`);
-  - times the SPR versions at every k;
-  - writes `report.md`, `roofline.png` and `runtime.png`.
+~~~sh
+make bench BENCH_ARGS="--M 64 --K 2048 --N 8192 --s 0.5 --k 2,4 --threads 4 --kernels spr.v8.b32"
+~~~
 
-  Settings: `SPR`, `REF`, `MODE=quick|full`, `M`, `SHAPES`, `S`, `KS`, `THREADS`, `PEAKS=1`.
-
-Tiled SPR versions (v4+) size their tiles from the cache sizes detected at runtime. Override them
-to model another machine: `SPR_L1_BYTES`, `SPR_L2_BYTES`, `SPR_LLC_BYTES`, `SPR_LINE_BYTES`.
+Layout conversion and preparation are outside the inference timer. The campaign
+verifies every timed candidate against the FP64 reference.
 
 ### SPR v8 on the D-INFK student cluster
 
 The pilot runs M=256, K=2048, N=8192, 50% zeros. Full mode covers M={64,256},
 K x N={1024 x 4096,2048 x 8192}, and {50%,90%} zeros. Both use the Xeon Gold 6240
 with native AVX-512, OpenBLAS OpenMP, and 1, 2 and 4 threads on four physical
-cores. The cluster campaign is separate from the original make compare utility. Each campaign creates a fresh results directory and tunes on seed 42.
+cores. Each campaign creates a fresh results directory and tunes on seed 42.
 The pilot exercises the full procedure on its single workload.
 
 SPR screens the Cartesian product of k={2,4,6,8}, B={8,16,32,64},
@@ -189,7 +172,7 @@ in samples_ms), phase_times.csv, peaks.json, and plots/. The full-run figures
 show absolute runtimes at each batch size, scaling with a fixed configuration,
 speedup against each optimized baseline, percentage of measured add peak, and tuning sensitivity.
 Regenerate from copied results with `make plots RESULTS=path/to/run`.
-The original scripts for standalone comparisons and rooflines remain available.
+
 
 ~~~sh
 # Small local integration check (Linux, OpenMP, OpenBLAS, four available CPUs)
@@ -249,3 +232,5 @@ The vendored files are byte-identical to those commits; local changes are only w
 
 Nicola Mucciaccio, Matteo Meciani, Riccardo Polo, Alexandre Raybaut, Ahmed Tlili.
 Supervisor: Tanja Srindran.
+
+Published [results and plots](results/xeon-gold-6240/README.md) include speedup curves versus thread count for each workload, alongside the original campaign figures. Reproduction instructions are included.

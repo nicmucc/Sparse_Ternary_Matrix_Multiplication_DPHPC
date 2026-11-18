@@ -1,0 +1,3 @@
+
+# Preserve published measurement files and provenance checksums byte-for-byte.
+results/xeon-gold-6240/** -text

@@ -140,7 +140,7 @@ endif
 # --- Build -------------------------------------------------------------------
 
 .DEFAULT_GOAL := build
-.PHONY: build test bench compare spr-bench plots data clean help FORCE
+.PHONY: build test bench plots data clean help FORCE
 
 build: $(TEST_BIN) $(BENCH_BIN) $(PEAKS_BIN)
 
@@ -179,14 +179,6 @@ test: $(TEST_BIN)
 bench: $(BENCH_BIN)
 	$(RUN_ENV) "$(BENCH_BIN)" $(BENCH_ARGS)
 
-# SPR vs the best kernel of every method (each at its best k); settings in bench/run.sh
-compare: build
-	SPR_SKIP_BUILD=1 BUILD_DIR="$(BUILD_DIR)" PYTHON="$(PYTHON)" THREADS="$(THREADS)" bench/run.sh
-
-# SPR versions only: runtime + roofline report; settings in bench/spr_bench.sh
-spr-bench: build
-	SPR_SKIP_BUILD=1 BUILD_DIR="$(BUILD_DIR)" PYTHON="$(PYTHON)" THREADS="$(THREADS)" bench/spr_bench.sh
-
 # --- Misc --------------------------------------------------------------------
 
 # Offline plotting: no dependency on build, CPU ISA, or cluster libraries.
@@ -205,11 +197,9 @@ help:
 		'make                 Build test_correctness, bench_cpu and peaks into build/<profile>/' \
 		'make test            Correctness of every kernel vs an FP64 reference (TEST_ARGS="spr. tcsc." filters)' \
 		'make bench           Run bench_cpu with BENCH_ARGS (see bench/bench_cpu.cpp)' \
-		'make compare         SPR vs the best kernel of every method, each at its best k (bench/run.sh)' \
-		'make spr-bench       SPR versions only: runtime + roofline report (bench/spr_bench.sh)' \
 		'make plots           Offline campaign plots (RESULTS=campaign directory, optional PLOT_DIR)' \
 		'make data            Generate saved datasets (OVERWRITE=1 regenerates)' \
 		'make clean           Remove the build directory of the selected profile' \
 		'' \
 		'PROFILE=release|sanitizer   separate build per profile' \
-		'THREADS=n                   threads for bench / compare / spr-bench'
+		'THREADS=n                   threads for make bench'

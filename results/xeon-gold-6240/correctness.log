@@ -1,0 +1,7 @@
+PASS spr.v8.b16                                                      361 passed    0 failed
+PASS spr.v8.b32                                                      361 passed    0 failed
+PASS spr.v8.b32.kc256.g8                                             361 passed    0 failed
+PASS spr.v8.b32.kc512.g4                                             361 passed    0 failed
+PASS spr.v8.b32.l2                                                   361 passed    0 failed
+
+1805 cases passed, 0 failed (0 kernels with failures, 0 known-broken upstream kernels)

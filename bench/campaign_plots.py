@@ -136,6 +136,43 @@ def plot(run, out):
     save(fig,"speedup","SPR speedup against each optimized method at four threads",
          "Same-workload, same-seed baseline time / SPR time. Above 1× favors SPR.")
 
+    # Same-thread tuned comparisons, distinct from fixed-configuration scaling.
+    for batch in sorted({w[0] for w in workloads}):
+        cases = [w for w in workloads if w[0] == batch]
+        cols = min(2, len(cases))
+        rows = math.ceil(len(cases)/cols)
+        fig, axes = plt.subplots(rows, cols, figsize=(6.3*cols, 3.7*rows+1.3),
+                                 squeeze=False, sharey=True)
+        maximum = 1.0
+        for ax, w in zip(axes.flat, cases):
+            ax.axhline(1, color="#666666", linestyle="--", linewidth=1)
+            for method in rivals:
+                values = np.array([
+                    [float(selected[w,t,method][seed]["median_ms"]) /
+                     float(selected[w,t,"SPR v8"][seed]["median_ms"])
+                     for seed in (43,44)] for t in threads])
+                color = colors[METHODS.index(method)]
+                ax.plot(threads, np.median(values, axis=1), marker="o",
+                        linewidth=2, color=color, label=method)
+                ax.fill_between(threads, values.min(axis=1), values.max(axis=1),
+                                color=color, alpha=.12)
+                maximum = max(maximum, values.max())
+            ax.set(xticks=threads, xlabel="OpenMP threads (both methods)",
+                   ylabel="Baseline time / SPR time (x)",
+                   title=f"{w[1]} x {w[2]} | {w[3]:.0%} zeros")
+            ax.grid(axis="y", alpha=.22)
+            ax.spines[["top", "right"]].set_visible(False)
+        for ax in axes.flat:
+            ax.set_ylim(0, maximum*1.12)
+        for ax in list(axes.flat)[len(cases):]:
+            ax.set_visible(False)
+        axes[0,0].legend(ncol=2, fontsize=9, loc="upper left")
+        save(fig, f"speedup_lines_M{batch}",
+             f"SPR speedup against optimized baselines / M = {batch}",
+             "Above 1x favors SPR; below 1x favors the baseline. Each method tuned at each thread count. "
+             "Lines: median paired seed ratios; bands: range over two seeds (not confidence intervals). "
+             "RSR++ is serial-only and remains in the runtime plots.")
+
     coarse = [r for r in read(run/"tuning.csv") if r["phase"]=="coarse" and r["threads"]=="4"]
     cols = min(2,len(workloads))
     fig, axes = plt.subplots(math.ceil(len(workloads)/cols),cols,figsize=(6*cols,3.1*math.ceil(len(workloads)/cols)+1),
@@ -155,6 +192,84 @@ def plot(run, out):
                xlabel="Pattern width k",ylabel="Batch tile B",title=label(w))
     save(fig,"tiling","SPR tile search at four threads",
          "Each cell: fastest coarse-grid median (ms) across Kc and G for that B and k. Color scale per panel.")
+
+
+    # Individual vector panels for presentations; no composite-image cropping.
+    panels = out/"slide_panels"
+    panels.mkdir(exist_ok=True)
+    def panel_save(fig, name):
+        fig.tight_layout(pad=.7)
+        fig.savefig(panels/f"{name}.pdf", bbox_inches="tight")
+        fig.savefig(panels/f"{name}.png", dpi=180, bbox_inches="tight")
+        plt.close(fig)
+
+    with plt.rc_context({"font.size":13, "axes.titlesize":14, "axes.labelsize":13,
+                         "xtick.labelsize":12, "ytick.labelsize":12, "legend.fontsize":11}):
+        for w in workloads:
+            tag = f"M{w[0]}_K{w[1]}_N{w[2]}_s{int(w[3]*100)}"
+            fig, ax = plt.subplots(figsize=(5.0,3.6))
+            ax.axhline(1, color="#555", ls="--", lw=1.2)
+            maximum = 1
+            for method in rivals:
+                v = np.array([[float(selected[w,t,method][seed]["median_ms"])/
+                               float(selected[w,t,"SPR v8"][seed]["median_ms"])
+                               for seed in (43,44)] for t in threads])
+                color = colors[METHODS.index(method)]
+                ax.plot(threads, np.median(v,axis=1), marker="o", lw=2.4, color=color, label=method)
+                ax.fill_between(threads,v.min(axis=1),v.max(axis=1),color=color,alpha=.13)
+                maximum = max(maximum,v.max())
+            ax.set(xticks=threads,xlabel="Threads",ylabel="Baseline time / SPR time",ylim=(0,maximum*1.3),
+                   title=f"{w[1]} x {w[2]} | {w[3]:.0%} zeros")
+            ax.legend(ncol=2,loc="upper left",frameon=False)
+            ax.grid(axis="y",alpha=.22)
+            ax.spines[["top","right"]].set_visible(False)
+            panel_save(fig,"speedup_"+tag)
+
+            data = [r for r in coarse if workload(r)==w]
+            bs, ks = [sorted({int(r[key]) for r in data}) for key in ("B","k")]
+            arr = np.array([[min(float(r["median_ms"]) for r in data if int(r["B"])==b and int(r["k"])==k)
+                             for k in ks] for b in bs])
+            fig, ax = plt.subplots(figsize=(5.0,3.6))
+            im=ax.imshow(arr,aspect="auto",cmap="YlGnBu")
+            for i,j in np.ndindex(arr.shape):
+                ax.text(j,i,f"{arr[i,j]:.3g}",ha="center",va="center",
+                        color="white" if im.norm(arr[i,j])>.6 else "black")
+            ax.set(xticks=range(len(ks)),xticklabels=ks,yticks=range(len(bs)),yticklabels=bs,
+                   xlabel="Pattern width k",ylabel="Batch tile B",title=f"{w[1]} x {w[2]} | {w[3]:.0%} zeros")
+            panel_save(fig,"tiling_"+tag)
+
+            fig, ax = plt.subplots(figsize=(5.0,3.6))
+            names = [m for m in METHODS if m!="RSR++"]
+            for i,m in enumerate(names):
+                v=[float(selected[w,4,m][seed]["median_ms"]) for seed in (43,44)]
+                ax.barh(i,median(v),color=colors[METHODS.index(m)])
+                ax.text(max(v),i,f" {median(v):.3g}",va="center",fontsize=12)
+            ax.set(yticks=range(len(names)),yticklabels=names,xlabel="Kernel time (ms)",
+                   title=f"{w[1]} x {w[2]} | {w[3]:.0%} zeros | 4 threads")
+            ax.invert_yaxis(); ax.set_xlim(0,ax.get_xlim()[1]*1.2)
+            panel_save(fig,"runtime_"+tag)
+
+        for batch in sorted({w[0] for w in workloads}):
+            cases=[w for w in workloads if w[0]==batch]
+            fig, ax=plt.subplots(figsize=(5.0,3.6))
+            ax.plot(threads,threads,"--",color="#888",label="Ideal")
+            for w in cases:
+                v=np.array([[float(fixed[w,1][seed]["median_ms"])/float(fixed[w,t][seed]["median_ms"])
+                             for seed in (43,44)] for t in threads])
+                ax.plot(threads,np.median(v,axis=1),marker="o",label=f"{w[1]}x{w[2]}, {w[3]:.0%} zeros")
+                ax.fill_between(threads,v.min(axis=1),v.max(axis=1),alpha=.1)
+            ax.set(xticks=threads,xlabel="Threads",ylabel="One-thread time / time",ylim=(0,5.5),title=f"M = {batch}")
+            ax.legend(ncol=2,fontsize=9,loc="upper left",frameon=False); ax.grid(alpha=.2)
+            panel_save(fig,f"scaling_M{batch}")
+            fig, ax=plt.subplots(figsize=(5.0,3.6))
+            for w in cases:
+                v=[median(100*float(r["adds_per_row"])*w[0]/(float(r["median_ms"])*1e6)/
+                          peaks[str(t)]["peak_simd_gflops"] for r in selected[w,t,"SPR v8"].values()) for t in threads]
+                ax.plot(threads,v,marker="o",label=f"{w[1]}x{w[2]}, {w[3]:.0%} zeros")
+            ax.set(xticks=threads,xlabel="Threads",ylabel="Measured SIMD add peak (%)",title=f"M = {batch}")
+            ax.set_ylim(0,ax.get_ylim()[1]*1.4)
+            ax.legend(ncol=2,fontsize=9,loc="upper left",frameon=False); ax.grid(alpha=.2)
+            panel_save(fig,f"peak_M{batch}")
 
 
 if __name__ == "__main__":
