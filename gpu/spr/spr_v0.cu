@@ -119,9 +119,9 @@ __global__ void spr_v0_kernel(
 }
 
 
-class SPRCudaV0 final : public Kernel {
+class SPRV0CUDA final : public Kernel {
 public:
-    std::string name() const override { return "spr.cuda.v0"; }
+    std::string name() const override { return "spr.v0.cuda"; }
     bool uses_k() const override { return true; }
     bool supports(int, int, int, const Params &p) const override {
         return p.k >= 1 && p.k <= 16;
@@ -361,7 +361,7 @@ public:
     }
 
     // Destructor
-    ~SPRCudaV0() override {
+    ~SPRV0CUDA() override {
         free_buffers();
         free_weights();
     }
@@ -413,7 +413,7 @@ private:
     }
 };
 
-SPR_REGISTER_KERNEL("spr.cuda.v0", SPRCudaV0);
+SPR_REGISTER_KERNEL("spr.v0.cuda", SPRV0CUDA);
 
 } // namespace
 } // namespace spr
