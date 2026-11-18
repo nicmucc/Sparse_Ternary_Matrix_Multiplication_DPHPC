@@ -1,0 +1,26 @@
+[
+  {
+    "version": "v2",
+    "suite": "test_correctness",
+    "status": "PASS",
+    "log": "correctness_v2_test_correctness.log"
+  },
+  {
+    "version": "v2",
+    "suite": "test_gpu_correctness",
+    "status": "PASS",
+    "log": "correctness_v2_test_gpu_correctness.log"
+  },
+  {
+    "version": "v3",
+    "suite": "test_correctness",
+    "status": "PASS",
+    "log": "correctness_v3_test_correctness.log"
+  },
+  {
+    "version": "v3",
+    "suite": "test_gpu_correctness",
+    "status": "PASS",
+    "log": "correctness_v3_test_gpu_correctness.log"
+  }
+]

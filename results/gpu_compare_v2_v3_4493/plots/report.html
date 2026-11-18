@@ -1,0 +1,11 @@
+<!doctype html><meta charset='utf-8'><title>V3 versus v2: job 4493</title>
+<style>body{font:16px system-ui;max-width:1150px;margin:30px auto;padding:0 20px;color:#172033}img{width:100%}table{border-collapse:collapse}td,th{padding:6px 10px;border:1px solid #ddd}</style>
+<h1>V3 versus v2: RTX 5060 Ti smoke run</h1>
+<p>K=N=257 · 50% zeros · five samples · all recorded correctness/sanitizer checks passed.</p>
+<p>V3 accelerates small-batch GPU kernels, but the larger-batch and end-to-end results are mixed. See <a href='interpretation.md'>full interpretation</a> and <a href='comparison_us.csv'>numerical comparison</a>.</p>
+<h2>Matched-k speedup: above 1 favors v3</h2><img src='01_speedups.png' alt='Matched-k speedup: above 1 favors v3'>
+<p><a href='01_speedups.pdf'>PDF</a> · <a href='01_speedups.png'>PNG</a></p>
+<h2>Absolute latency and sample variation</h2><img src='02_latency_variability.png' alt='Absolute latency and sample variation'>
+<p><a href='02_latency_variability.pdf'>PDF</a> · <a href='02_latency_variability.png'>PNG</a></p>
+<h2>Fastest tested k for each version</h2><img src='03_best_tested_k.png' alt='Fastest tested k for each version'>
+<p><a href='03_best_tested_k.pdf'>PDF</a> · <a href='03_best_tested_k.png'>PNG</a></p>

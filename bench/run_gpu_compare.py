@@ -22,6 +22,31 @@ def command(argv, **kwargs):
     return subprocess.run([str(a) for a in argv], text=True, **kwargs)
 
 
+def checked_command(argv, log, output, metadata):
+    """Persist the command and its log, and stop the campaign on failure."""
+    metadata["commands"].append([str(a) for a in argv])
+    (output / "environment.json").write_text(json.dumps(metadata, indent=2))
+    result = command(argv, capture_output=True, cwd=ROOT)
+    log.write_text(result.stdout + result.stderr)
+    if result.returncode:
+        raise RuntimeError(f"Command failed (exit {result.returncode}); inspect {log}")
+
+
+def check_correctness(output, build, versions, args, metadata):
+    """Run both full-output reference suites before any benchmark samples."""
+    tests = [build / "test_correctness", build / "test_gpu_correctness"]
+    checked_command(["make", "-j2", f"GPU_BUILD_DIR={build}", f"CUDA_ARCH={args.arch}",
+                     *tests], output / "compile_correctness.log", output, metadata)
+    status = []
+    for version in versions:
+        for binary in tests:
+            log = output / f"correctness_{version}_{binary.name}.log"
+            checked_command([binary, f"spr.{version}.cuda"], log, output, metadata)
+            status.append({"version": version, "suite": binary.name, "status": "PASS", "log": log.name})
+            print(f"Correctness {version} {binary.name}: PASS", flush=True)
+    (output / "correctness.json").write_text(json.dumps(status, indent=2))
+
+
 def instrument(source):
     """Add event markers to a build-only copy, leaving the original source intact."""
     lines = source.splitlines(keepends=True)
@@ -47,7 +72,8 @@ def quartiles(values):
     return q[0], statistics.median(values), q[2]
 
 
-def summarize(rows, output):
+def summarize(rows, output, versions=("v1", "v2")):
+    baseline, candidate = versions
     groups = {}
     for row in rows:
         key = tuple(row[k] for k in ("version", "M", "K", "N", "k", "zero_fraction", "metric"))
@@ -59,31 +85,32 @@ def summarize(rows, output):
         for key, values in sorted(stats.items()):
             writer.writerow([*key, *values])
     speedups = []
-    for key, v1 in stats.items():
-        if key[0] != "v1" or key[-1] == "prepare_wall":
+    for key, base in stats.items():
+        if key[0] != baseline or key[-1] == "prepare_wall":
             continue
-        v2 = stats.get(("v2", *key[1:]))
-        if v2 and v2[1] > 0:
+        other = stats.get((candidate, *key[1:]))
+        if other and other[1] > 0:
             speedups.append(dict(zip(
-                ("M", "K", "N", "k", "zero_fraction", "metric", "v1_ms", "v2_ms", "speedup"),
-                (*key[1:], v1[1], v2[1], v1[1] / v2[1]))))
-    fields = ["M", "K", "N", "k", "zero_fraction", "metric", "v1_ms", "v2_ms", "speedup"]
+                ("M", "K", "N", "k", "zero_fraction", "metric", f"{baseline}_ms", f"{candidate}_ms", "speedup"),
+                (*key[1:], base[1], other[1], base[1] / other[1]))))
+    fields = ["M", "K", "N", "k", "zero_fraction", "metric", f"{baseline}_ms", f"{candidate}_ms", "speedup"]
     with (output / "speedups.csv").open("w", newline="") as f:
         writer = csv.DictWriter(f, fields)
         writer.writeheader()
         writer.writerows(speedups)
 
-    # Standalone plots for 50%-zero weights; every other case remains in CSV.
+    # Standalone plots for every sparsity; no plotting packages required.
     parts = ["<!doctype html><meta charset='utf-8'><title>SPR GPU comparison</title>",
              "<style>body{font:16px system-ui;max-width:1000px;margin:30px auto}svg{max-width:100%;height:auto}"
              "table{border-collapse:collapse}td,th{padding:5px 10px;border:1px solid #ddd}</style>",
-             "<h1>SPR v1 / v2 GPU comparison</h1><p>Speedup = median(v1) / median(v2). "
-             "Above 1 favors v2. Plots show 50%-zero weights. Full measurements and quartiles are in the CSV files.</p>"]
+             f"<h1>SPR {baseline} / {candidate} GPU comparison</h1><p>Speedup = median({baseline}) / median({candidate}). "
+             f"Above 1 favors {candidate}. Full measurements and quartiles are in the CSV files.</p>"]
     shapes = sorted({(int(r["K"]), int(r["N"])) for r in speedups})
     for K, N in shapes:
-        for metric in ("gpu_event", "end_to_end_wall"):
+        for zero, metric in itertools.product(sorted({float(r["zero_fraction"]) for r in speedups}),
+                                             ("gpu_event", "run_wall", "end_to_end_wall")):
             selected = [r for r in speedups if int(r["K"]) == K and int(r["N"]) == N
-                        and float(r["zero_fraction"]) == .5 and r["metric"] == metric]
+                        and float(r["zero_fraction"]) == zero and r["metric"] == metric]
             if not selected:
                 continue
             ms = sorted({int(r["M"]) for r in selected})
@@ -91,7 +118,7 @@ def summarize(rows, output):
             lo, hi = min(-1, math.floor(min(logs))), max(1, math.ceil(max(logs)))
             def x(m): return 70 + (math.log2(m) / max(1, math.log2(max(ms)))) * 620
             def y(value): return 290 - (math.log2(value) - lo) / (hi - lo) * 240
-            parts.append(f"<h2>{html.escape(metric)}: K={K}, N={N}</h2><svg viewBox='0 0 800 340' role='img' "
+            parts.append(f"<h2>{html.escape(metric)}: K={K}, N={N}, {zero:.0%} zeros</h2><svg viewBox='0 0 800 340' role='img' "
                          "aria-label='Speedup versus input row count'>")
             for exponent in range(lo, hi + 1):
                 value = 2 ** exponent
@@ -119,19 +146,26 @@ def summarize(rows, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--suite", choices=("smoke", "full"), default="full")
+    parser.add_argument("--versions", nargs=2, choices=("v1", "v2", "v3"), default=("v2", "v3"),
+                        metavar=("BASELINE", "CANDIDATE"), help="Speedup is baseline / candidate")
     parser.add_argument("--samples", type=int, default=30)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--arch", default="native")
     parser.add_argument("--profile", action="store_true", help="Also attempt representative Nsight Compute profiles")
+    parser.add_argument("--sanitize", action="store_true", help="Require Compute Sanitizer checks before timing")
     args = parser.parse_args()
     if args.samples <= 0:
         parser.error("--samples must be positive")
+    if args.versions[0] == args.versions[1]:
+        parser.error("--versions must select two different implementations")
+    versions = tuple(args.versions)
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     output = (args.output or ROOT / "results" / f"gpu_compare_{stamp}").resolve()
     output.mkdir(parents=True, exist_ok=False)
     build = output / "build"
     build.mkdir()
     metadata = {"utc": stamp, "suite": args.suite, "samples": args.samples,
+                "versions": versions, "status": "preparing",
                 "arch": args.arch, "seed": 42, "warmups": 5,
                 "validation": "Full reference when M*K*N <= 1e7; otherwise 8 rows x 64 columns, plus all-output finite check",
                 "cache_policy": "Repeated identical X and W; no explicit cache flush",
@@ -140,7 +174,23 @@ def main():
                         ("host", ["hostname"]), ("allocation", ["printenv", "SLURM_JOB_ID"])):
         result = command(argv, capture_output=True)
         metadata[label] = result.stdout + result.stderr
-    versions = ("v1", "v2")
+    (output / "environment.json").write_text(json.dumps(metadata, indent=2))
+    for relative in ("Makefile", "include/spr/kernel.hpp", "include/spr/harness.hpp", "cpu/core.cpp",
+                     "tests/test_correctness.cpp", "tests/test_gpu_correctness.cpp",
+                     "bench/bench_gpu_compare.cu", "bench/run_gpu_compare.py",
+                     "bench/plot_gpu_compare.py", "bench/gpu_compare.sbatch"):
+        path = ROOT / relative
+        metadata["sources"][relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+        destination = output / "source" / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, destination)
+    for source in sorted((ROOT / "gpu" / "spr").glob("*.cu")):
+        relative = str(source.relative_to(ROOT))
+        metadata["sources"][relative] = hashlib.sha256(source.read_bytes()).hexdigest()
+        destination = output / "source" / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+    check_correctness(output, build, versions, args, metadata)
     binaries = {}
     for version in versions:
         source = ROOT / "gpu" / "spr" / f"spr_{version}.cu"
@@ -153,18 +203,21 @@ def main():
         argv = ["nvcc", "-O3", "-std=c++17", "-lineinfo", f"-arch={args.arch}",
                 f"-I{ROOT / 'include'}", f'-DSPR_BENCH_SOURCE="{generated}"',
                 ROOT / "bench" / "bench_gpu_compare.cu", "-o", binary]
-        metadata["commands"].append([str(a) for a in argv])
-        result = command(argv, capture_output=True)
-        (output / f"compile_{version}.log").write_text(result.stdout + result.stderr)
-        if result.returncode:
-            raise RuntimeError(f"Compilation failed: {output / f'compile_{version}.log'}")
+        checked_command(argv, output / f"compile_{version}.log", output, metadata)
         binaries[version] = binary
-    for relative in ("include/spr/kernel.hpp", "bench/bench_gpu_compare.cu", "bench/run_gpu_compare.py", "bench/gpu_compare.sbatch"):
-        path = ROOT / relative
-        metadata["sources"][relative] = hashlib.sha256(path.read_bytes()).hexdigest()
-        destination = output / "source" / relative
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(path, destination)
+
+    if args.sanitize:
+        sanitizer = shutil.which("compute-sanitizer")
+        if not sanitizer:
+            raise RuntimeError("--sanitize requires compute-sanitizer in PATH")
+        for version, tool, M in itertools.product(versions, ("memcheck", "racecheck", "synccheck"), (1, 33)):
+            log = output / f"sanitize_{version}_{tool}_M{M}.log"
+            checked_command([sanitizer, "--tool", tool, "--error-exitcode", "1",
+                             binaries[version], version, M, 129, 17, 8, .5, 42, 1, 1],
+                            log, output, metadata)
+            print(f"Sanitizer {version} {tool} M={M}: PASS", flush=True)
+    metadata["sanitizer_requested"] = args.sanitize
+    metadata["status"] = "benchmarking"
     (output / "environment.json").write_text(json.dumps(metadata, indent=2))
 
     shapes = [(257, 257)] if args.suite == "smoke" else [(1024, 1024), (4096, 4096)]
@@ -172,9 +225,11 @@ def main():
     widths = [4, 8] if args.suite == "smoke" else [4, 8, 16]
     sparsities = [.5] if args.suite == "smoke" else [0., .5, .9]
     configs = list(itertools.product(shapes, batches, widths, sparsities))
+    metadata["configurations_per_version"] = len(configs)
+    (output / "environment.json").write_text(json.dumps(metadata, indent=2))
     rows, failures = [], []
     for index, ((K, N), M, k, zero) in enumerate(configs):
-        # Alternate v1/v2 order between configurations; both use identical seeded inputs.
+        # Alternate version order; both use identical seeded inputs.
         order = versions if index % 2 == 0 else versions[::-1]
         for version in order:
             argv = [binaries[version], version, M, K, N, k, zero, 42, args.samples, 0]
@@ -195,7 +250,11 @@ def main():
                 writer.writerows(rows)
             print(f"[{index + 1}/{len(configs)}] {label}: PASS", flush=True)
     (output / "failures.json").write_text(json.dumps(failures, indent=2))
-    speedups = summarize(rows, output)
+    metadata["status"] = "failed" if failures else "complete"
+    (output / "environment.json").write_text(json.dumps(metadata, indent=2))
+    if failures:
+        raise RuntimeError(f"{len(failures)} benchmark cases failed; inspect {output / 'failures.json'}. No comparison plots generated.")
+    speedups = summarize(rows, output, versions)
 
     if args.profile:
         profiler = shutil.which("ncu")

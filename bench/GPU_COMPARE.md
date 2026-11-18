@@ -1,85 +1,158 @@
-# SPR v1 versus v2 on the student GPU cluster
+# Compare SPR v2 and v3 on the D-INFK student cluster
 
-Run from the project root. Original kernels are not edited. Each version is
-compiled into its own executable to instrument and measure it independently.
-For routine builds and correctness checks of all CUDA kernels, use
-`make build-gpu` and `make test-gpu` (see the root README).
-Requires Python 3 and a CUDA toolkit compatible with
-the allocated GPU; the supplied Slurm script requests one 2080 Ti and CUDA 12.9.
+Run from the updated project root. The workflow compiles the current kernel files;
+it does not change them. Default comparison: v2 baseline versus v3 candidate.
+The Slurm job requests the RTX 5060 Ti (`--gpus=5060ti:1`), account `dphpc`,
+four CPU slots, 16 GiB RAM and one hour. It loads CUDA 12.9 and targets `sm_120`.
+GPU selection and module setup follow the [ETH cluster instructions](https://isg.inf.ethz.ch/Main/HelpClusterComputingStudentClusterRunningJobs).
+
+Ensure the new `gpu/spr/spr_v3.cu` is copied to the cluster too. If transferring
+with Git, include it in your commit: an untracked local file will not arrive via pull.
+V3 is benchmarked with its current launch configuration (currently 32 rows by
+8 helpers); this workflow does not tune or modify helper counts.
 
 ## Submit
 
+First run the short campaign:
+
 ```bash
-sbatch bench/gpu_compare.sbatch
+sbatch bench/gpu_compare.sbatch smoke
 ```
 
-This submits account `dphpc`, requests 30 minutes, and runs the full comparison
-plus four optional Nsight Compute profiles. The job log is `spr-gpu-JOBID.out`.
-Monitor with `squeue -u "$USER"` and `tail -f spr-gpu-JOBID.out`.
-
-For a quick check inside an existing GPU allocation:
+Wait for `Completed:` in `spr-gpu-JOBID.out`. Then submit the full campaign:
 
 ```bash
+sbatch bench/gpu_compare.sbatch full
+```
+
+Monitor with:
+
+```bash
+squeue -u "$USER"
+tail -f spr-gpu-JOBID.out
+```
+
+The log prints the results directory, normally
+`results/gpu_compare_v2_v3_JOBID/`. Both versions run on the same allocated GPU.
+You can change the sample count, for example `sbatch bench/gpu_compare.sbatch full 50`.
+A failed compilation, correctness test, sanitizer check or benchmark case fails the job.
+
+## Correctness runs before timing
+
+The runner builds and executes both suites for **each selected version**:
+
+- `tests/test_correctness.cpp`: exact tree examples and randomized cases, all outputs
+  compared to the FP64-derived reference, including repeated runs.
+- `tests/test_gpu_correctness.cpp`: empty dimensions, all-zero/empty first blocks,
+  ragged shapes, k=1/3/8/16, K=65535, two input bindings and three runs per binding,
+  all outputs checked against a double-precision reference.
+
+The batch job also requires Compute Sanitizer `memcheck`, `racecheck` and
+`synccheck` to pass for each version on M=1 and M=33, K=129, N=17, k=8,
+50% zero weights. These small cases exercise partial blocks and synchronization;
+they supplement the reference tests. Sanitizer executions are separate from timing.
+Logs are retained as `correctness_VERSION_*.log` and `sanitize_VERSION_*.log`.
+
+For standalone correctness inside a GPU allocation:
+
+```bash
+. /etc/profile.d/modules.sh
 module add cuda/12.9
-python3 bench/run_gpu_compare.py --suite smoke --samples 5
+make test-gpu CUDA_ARCH=sm_120 TEST_ARGS="spr.v2.cuda spr.v3.cuda"
 ```
 
-For the full run inside an existing allocation:
+## Running interactively
+
+From the login node, request a GPU shell:
 
 ```bash
-python3 bench/run_gpu_compare.py --suite full --samples 30 --profile
+srun --pty -A dphpc --gpus=5060ti:1 --cpus-per-task=4 --mem=16G -t 01:00:00 bash --login
 ```
 
-## Scope and timing
+Inside it, change to the project root and run:
 
-Full sweep: M = 1,8,31,32,33,128,512; (K,N) = (1024,1024),(4096,4096);
-k = 4,8,16; zero fraction = 0,0.5,0.9. This is 126 configurations per version.
-Weights and inputs use the same fixed seed. There are five warmup runs and 30
-samples per timing metric. Version order alternates between configurations.
-The same input/weights are reused: this is a warm-cache, steady-state comparison.
-GPU clocks are not locked by this script.
+```bash
+. /etc/profile.d/modules.sh
+module add cuda/12.9
+python3 bench/run_gpu_compare.py --versions v2 v3 --suite smoke --samples 5 --arch sm_120 --sanitize
+# After smoke succeeds:
+python3 bench/run_gpu_compare.py --versions v2 v3 --suite full --samples 30 --arch sm_120 --sanitize
+```
 
-- `gpu_event`: CUDA events immediately surrounding the launch, before the
-  existing device synchronization. The hooks exist only in generated build copies.
-- `run_wall`: synchronized `run()` time on the CPU. Event hooks are disabled.
-- `end_to_end_wall`: bind + run + finish. Includes device allocations, input
-  upload, output download, and v2's CPU transpose. Excludes weight preprocessing.
-- `prepare_wall`: one preparation per version/configuration, including metadata
-  allocation/upload, after CUDA context initialization. Not a repeated statistic.
+The Python runner always runs both correctness suites. `--sanitize` additionally
+requires Compute Sanitizer to be available and all its checks to pass.
+`--profile` optionally collects representative Nsight Compute reports; profiling
+failures are recorded separately and do not invalidate successful benchmark timings.
+The previous v1/v2 experiment remains available with `--versions v1 v2`.
 
-The two disabled event-hook branches are also present in the wall-time executable;
-the kernel source and GPU arithmetic are unchanged. For very short kernels, event
-and launch overhead can be significant. Use profiler durations as additional evidence.
+## Workloads and timing
 
-Correctness is checked before/after timing against a dense double-precision CPU
-reference. Small problems (M*K*N <= 1e7) check all outputs. Larger problems check
-eight evenly spaced rows by 64 columns, and all outputs are checked for NaN/Inf.
-The tolerance is the project's existing 2e-3*sqrt(K). This benchmark does not replace
-the separate edge-case correctness tests or Compute Sanitizer.
+Smoke: M={1,33,257}, K=N=257, k={4,8}, zero fraction=0.5: six workloads per version.
+Full: M={1,8,31,32,33,128,512}, (K,N)={(1024,1024),(4096,4096)},
+k={4,8,16}, zero fraction={0,0.5,0.9}: 126 workloads per version.
 
-## Results
+Versions use identical seed-42 input/weight matrices. There are five warm-up
+launches and 30 samples per inference metric in the full campaign. Version order
+alternates between workloads, and timing-phase order rotates between samples.
 
-Each run creates `results/gpu_compare_TIMESTAMP/` containing:
+- `gpu_event`: CUDA events around the launch, before the existing synchronization.
+- `run_wall`: synchronized `run()` time measured on the CPU, with event hooks disabled.
+- `end_to_end_wall`: bind + run + finish, including allocations, CPU input transposition,
+  input upload and output download. Weight preparation is excluded.
+- `prepare_wall`: one preparation per workload/version, including metadata upload,
+  after CUDA context initialization. This is not a repeated timing distribution.
 
-- `raw_samples.csv`: all successful samples and arithmetic/storage accounting.
-- `timing_summary.csv`: first quartile, median, third quartile.
-- `speedups.csv`: median(v1)/median(v2), with matching workload and timing boundary.
-- `comparison.html`: standalone speedup plots at 50% zero weights; no Python plotting packages needed.
-- `environment.json`: GPU/compiler/host information, seed, commands, source hashes.
-- Kernel/source snapshots, compilation logs, per-configuration validation logs.
-- `failures.json`: failures; failed cases are excluded from timing summaries.
+Event hooks are added only to generated source copies. Both disabled event-hook
+branches remain in the wall-time executable. Small kernel timings can be sensitive
+to launch/event overhead. Inputs repeat, caches are warm and GPU clocks are not locked.
 
-Nsight Compute, when available and permitted, profiles M=1 and M=128, K=N=4096,
-k=8, 50% zero weights. Reports are `profile_VERSION_M*.ncu-rep` and companion logs.
-`profiling_status.json` records unavailable tools or failures, including restricted
-performance counters. Profiling is separate from normal timing; cache flushing is
-disabled to approximate the repeated-input workload, but replay/clock policies can
-still differ. Open the reports in Nsight Compute to inspect memory transactions,
-DRAM traffic, occupancy, stalls, and roofline sections.
+Each benchmark checks output correctness before and after timing. Cases with
+M*K*N <= 1e7 check every output against FP64 sums. Larger cases check eight evenly
+spaced rows by 64 columns; every output is also checked for NaN/Inf. Tolerance is
+2e-3*sqrt(K). Thus the dedicated suites fully check their test cases, while large
+benchmark workloads receive sampled reference checks.
 
-For a manually constructed SPR roofline, use actual additions:
-`A = M * adds_per_row`, `performance = A / kernel_seconds`, and
-`intensity = A / (measured DRAM read bytes + write bytes)`.
-Do not use compressed storage bytes as dynamic DRAM traffic or label dense
-`2*M*K*N` work as executed SPR FLOPs. No DRAM bandwidth/roofline values are
-fabricated when hardware-counter collection is unavailable.
+## Plots and results
+
+Every successful run produces, without extra Python packages:
+
+- `comparison.html`: standalone SVG speedup plots for all sparsities and three inference metrics.
+- `raw_samples.csv`, `timing_summary.csv`: samples, medians and quartiles.
+- `speedups.csv`: median(v2)/median(v3), matching M, K, N, k and sparsity.
+- `correctness.json`, correctness/sanitizer logs and `failures.json`.
+- `environment.json`: actual GPU/compiler information, commands, source hashes and campaign status.
+- Kernel, test and benchmark source snapshots plus compilation and per-case logs.
+
+Open `comparison.html` in a browser after copying the results to your laptop.
+**Speedup above 1 means v3 is faster; below 1 means v2 is faster.** Compare GPU-event
+speedup with end-to-end speedup to distinguish kernel improvements from total latency.
+
+For PNG/PDF latency plots with IQR bands, speedup curves, and data-derived analysis:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python bench/plot_gpu_compare.py results/gpu_compare_v2_v3_JOBID
+```
+
+This can run on your laptop after downloading the results; it requires no GPU.
+Plots are saved in `plots/`, with `index.html`, `analysis.md`, `best_k.csv` and
+`validation.json`. The plotter rejects failed/incomplete runs and verifies summary
+statistics against raw samples. It reads the version pair and sample count from
+metadata and makes no assumptions about which version wins.
+
+If NumPy/Matplotlib are already installed in the batch job's Python environment,
+the job generates PNG/PDF plots automatically. For a cluster-created virtual environment:
+
+```bash
+PYTHON="$PWD/.venv/bin/python" sbatch bench/gpu_compare.sbatch full
+```
+
+`best_k.csv` selects the fastest measured k per version/workload using these same
+samples. It is exploratory selection, not a held-out tuning result. IQR bands are
+within-run variability, not confidence intervals across independent jobs.
+
+Optional Nsight reports are `profile_VERSION_M*.ncu-rep`; `profiling_status.json`
+records unavailable tools or restricted performance counters. No DRAM bandwidth
+or roofline values are inferred without hardware counters. Actual SPR additions
+are `M * adds_per_row`; dense `2*M*K*N` is not the work executed by SPR.

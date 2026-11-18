@@ -1,0 +1,13 @@
+version,M,metric,best_tested_k,median_us
+v2,1,gpu_event,4,27.264001
+v2,33,gpu_event,4,33.376001
+v2,257,gpu_event,4,49.663998
+v3,1,gpu_event,4,17.312
+v3,33,gpu_event,4,21.823999999999998
+v3,257,gpu_event,4,61.760001
+v2,1,end_to_end_wall,4,57.774
+v2,33,end_to_end_wall,4,98.34
+v2,257,end_to_end_wall,4,466.05
+v3,1,end_to_end_wall,4,56.162
+v3,33,end_to_end_wall,4,80.446
+v3,257,end_to_end_wall,4,466.235

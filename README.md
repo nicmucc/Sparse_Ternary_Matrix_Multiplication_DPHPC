@@ -16,14 +16,14 @@ include/spr/harness.hpp    problems, saved datasets, verification, layout conver
 include/spr/cache.hpp      cache sizes detected at runtime (tiled SPR versions)
 cpu/core.cpp               registry, FP64 reference, machine info
 cpu/spr/                   our SPR kernels: spr.naive, spr.v0 ... spr.v9
-gpu/spr/                   CUDA SPR kernels: v0, v1 and v2
+gpu/spr/                   CUDA SPR kernels: v0 ... v3
 cpu/orig/                  thin wrappers around the papers' kernels (see cpu/orig/README.md)
 cpu/libs.cpp               dense baselines: naive loop, BLAS, Eigen dense, Eigen sparse
 third_party/               the papers' code, unmodified (see third_party/README.md)
 tests/test_correctness.cpp every registered kernel vs an FP64 reference
 tests/test_gpu_correctness.cpp  CUDA edge cases, rebinding and repeated inference
 bench/bench.cpp            shared CPU/GPU interleaved benchmark driver -> CSV
-bench/GPU_COMPARE.md       dedicated CUDA v1/v2 comparison and profiling workflow
+bench/GPU_COMPARE.md       CUDA comparison, correctness, plotting and profiling workflow
 bench/peaks.cpp            machine compute and bandwidth ceilings
 bench/papers_cpu.sh        smoke, pilot or full D-INFK campaign
 bench/campaign.py, campaign_plots.py   bounded tuning, held-out evaluation and plots
@@ -38,7 +38,7 @@ build/<profile>/          generated executables and objects (ignored by Git)
 | Prefix | What | Source |
 |---|---|---|
 | `spr.*` | our SPR versions (naive and v0 ... v9: compiled tree, flat format, tiling, OpenMP) | `cpu/spr/` |
-| `spr.v0.cuda`, `spr.v1.cuda`, `spr.v2.cuda` | CUDA SPR: initial implementation, compact metadata, coalesced input/scratch | `gpu/spr/` |
+| `spr.v0.cuda` ... `spr.v3.cuda` | CUDA SPR: initial implementation, compact metadata, coalesced input/scratch, cooperative reductions | `gpu/spr/` |
 | `tcsc.*` | the FP32 CPU kernels of the TCSC paper (88: naive ladder, merged, GroupMin/GroupMid in col- and row-major, AVX2 and AVX-512, GEMV) | `third_party/SSR-ternaryLLM-repo/ternaryLLM_CPU` |
 | `ssr.*` | SSR scalar (and a patched copy of it), AVX2 `vec_L2..L8`, `unroll8/16_v2` | `third_party/SSR-ternaryLLM-repo/SSR` |
 | `rsr.*` | RSR / RSR++ in the fp32 version the SSR paper benchmarked | `third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr` |
@@ -89,7 +89,7 @@ and kernel API. `cpu/core.cpp` supplies the shared registry and reference utilit
 
 ```sh
 make build-gpu                          # build/release/gpu/{test_correctness,test_gpu_correctness,bench_gpu}
-make test-gpu                           # both suites, all three CUDA kernels
+make test-gpu                           # both suites, all registered CUDA kernels
 make test-gpu TEST_ARGS="spr.v2.cuda"     # only v2, in both suites
 make bench-gpu BENCH_ARGS="--M 128 --K 1024 --N 1024 --s 0.5 --k 8 --kernels .cuda"
 ```
@@ -99,11 +99,12 @@ Override `NVCC`, `CXX`, `NVCCFLAGS` or `CUDA_ARCH` as needed; CUDA defaults to
 all-zero blocks, ragged shapes, k=1/3/8/16, the 16-bit K boundary, two input bindings,
 and three runs per binding. It supplements the shared correctness suite.
 
-CUDA sources are `spr_v0.cu`, `spr_v1.cu`, and `spr_v2.cu`, registered as
-`spr.v0.cuda`, `spr.v1.cuda`, and `spr.v2.cuda`. Filter with `.cuda` to select
+CUDA sources are `spr_v0.cu` through `spr_v3.cu`, registered as
+`spr.v0.cuda` through `spr.v3.cuda`. Filter with `.cuda` to select
 all CUDA versions.
-The dedicated [v1/v2 comparison](bench/GPU_COMPARE.md) additionally measures CUDA-event
-and end-to-end timings, including v2's CPU transpose in `bind()`.
+The dedicated [GPU comparison](bench/GPU_COMPARE.md) runs correctness tests before
+timing a selected pair (default v2/v3), and produces CSV data and plots. It measures
+CUDA-event and end-to-end timings, including input transposition in `bind()`.
 
 `Makefile` is the current build entry point. The tracked `build-fixed/` directory
 and source copies under `results/` are historical artifacts, not active build inputs.
