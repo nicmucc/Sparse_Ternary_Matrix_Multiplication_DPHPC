@@ -6,6 +6,9 @@
 PROFILE   ?= release
 BUILD_DIR ?= build/$(PROFILE)
 PYTHON    ?= python3
+NVCC      ?= nvcc
+CUDA_ARCH ?= native
+NVCCFLAGS ?= -O3 -lineinfo -std=c++17
 THREADS   ?= 1
 
 TEST_ARGS  ?=
@@ -118,6 +121,11 @@ BENCH_BIN    := $(BUILD_DIR)/bench_cpu
 PEAKS_BIN    := $(BUILD_DIR)/peaks
 BUILD_CONFIG := $(BUILD_DIR)/config.txt
 
+GPU_BUILD_DIR := $(BUILD_DIR)/gpu
+GPU_TEST_BIN := $(GPU_BUILD_DIR)/test_correctness
+GPU_SRCS := cpu/core.cpp tests/test_correctness.cpp $(wildcard gpu/spr/*.cu)
+GPU_HEADERS := $(wildcard include/spr/*.hpp)
+
 RUN_ENV := OMP_NUM_THREADS=$(THREADS) OPENBLAS_NUM_THREADS=$(THREADS) VECLIB_MAXIMUM_THREADS=$(THREADS)
 
 # Per-file flags: each wrapper / upstream file only sees the headers of the repo it comes from
@@ -140,7 +148,7 @@ endif
 # --- Build -------------------------------------------------------------------
 
 .DEFAULT_GOAL := build
-.PHONY: build test bench plots data clean help FORCE
+.PHONY: build test bench plots data clean help FORCE build-gpu test-gpu
 
 build: $(TEST_BIN) $(BENCH_BIN) $(PEAKS_BIN)
 
@@ -168,6 +176,17 @@ $(PEAKS_BIN): bench/peaks.cpp $(BUILD_CONFIG) $(BUILD_CHANGED)
 	$(CXX) $(PEAKS_FLAGS) $(OMP_FLAGS) "$<" $(OMP_LIBS) -o "$@"
 
 -include $(OBJ_DIR)/bench/v8_adapter.d $(OBJECTS:.o=.d) $(TEST_MAIN:.o=.d) $(BENCH_MAIN:.o=.d)
+
+build-gpu: $(GPU_TEST_BIN)
+
+$(GPU_TEST_BIN): $(GPU_SRCS) $(GPU_HEADERS) Makefile
+	@mkdir -p "$(@D)"
+	$(NVCC) -ccbin "$(CXX)" $(CPPFLAGS) $(NVCCFLAGS) \
+		-arch=$(CUDA_ARCH) -Xcompiler=-fopenmp \
+		$(GPU_SRCS) -o "$@"
+
+test-gpu: $(GPU_TEST_BIN)
+	"$(GPU_TEST_BIN)" $(TEST_ARGS)
 
 # --- Test and benchmark ------------------------------------------------------
 
