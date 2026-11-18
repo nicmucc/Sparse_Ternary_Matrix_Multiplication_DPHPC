@@ -1,0 +1,200 @@
+s=0.30 lib.dense_blas                                                                    8.311 ms  prep       6.2 ms 
+s=0.30 rsr.rsr_inference                                                      k=2     1059.783 ms  prep     741.3 ms 
+s=0.30 rsr.rsr_inference                                                      k=3      673.617 ms  prep     771.6 ms 
+s=0.30 rsr.rsr_inference                                                      k=4      458.439 ms  prep     712.0 ms 
+s=0.30 rsr.rsr_inference                                                      k=5      346.543 ms  prep     728.8 ms 
+s=0.30 rsr.rsr_inference                                                      k=6      314.291 ms  prep     731.4 ms 
+s=0.30 rsr.rsr_inference                                                      k=8      620.709 ms  prep     755.4 ms 
+s=0.30 rsr.rsr_pp_inference                                                   k=2     1069.605 ms  prep     730.2 ms 
+s=0.30 rsr.rsr_pp_inference                                                   k=3      680.527 ms  prep     760.7 ms 
+s=0.30 rsr.rsr_pp_inference                                                   k=4      459.272 ms  prep     719.4 ms 
+s=0.30 rsr.rsr_pp_inference                                                   k=5      337.426 ms  prep     734.5 ms 
+s=0.30 rsr.rsr_pp_inference                                                   k=6      281.236 ms  prep     719.7 ms 
+s=0.30 rsr.rsr_pp_inference                                                   k=8      373.523 ms  prep     754.8 ms 
+s=0.30 spr.naive                                                              k=2      171.329 ms  prep     398.0 ms 
+s=0.30 spr.naive                                                              k=3      120.340 ms  prep     311.1 ms 
+s=0.30 spr.naive                                                              k=4      176.208 ms  prep     247.4 ms 
+s=0.30 spr.naive                                                              k=5      340.043 ms  prep     203.4 ms 
+s=0.30 spr.naive                                                              k=6      568.494 ms  prep     171.8 ms 
+s=0.30 spr.naive                                                              k=8      505.975 ms  prep     155.3 ms 
+s=0.30 ssr.ssr_inference_float_vec_L                                          k=2      113.514 ms  prep     765.0 ms 
+s=0.30 ssr.ssr_inference_float_vec_L                                          k=3       95.227 ms  prep     760.8 ms 
+s=0.30 ssr.ssr_inference_float_vec_L                                          k=4       80.207 ms  prep     716.8 ms 
+s=0.30 ssr.ssr_inference_float_vec_L                                          k=5       70.433 ms  prep     723.2 ms 
+s=0.30 ssr.ssr_inference_float_vec_L                                          k=6       65.022 ms  prep     720.2 ms 
+s=0.30 ssr.ssr_inference_float_vec_L                                          k=8       73.190 ms  prep     758.1 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll16_v2                                k=2      147.820 ms  prep     743.1 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll16_v2                                k=3      120.211 ms  prep     759.7 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll16_v2                                k=4      100.249 ms  prep     707.1 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll16_v2                                k=5       88.201 ms  prep     729.6 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll16_v2                                k=6       78.664 ms  prep     712.7 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll16_v2                                k=8       76.958 ms  prep     744.2 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll8_v2                                 k=2      115.669 ms  prep     738.9 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll8_v2                                 k=3       96.969 ms  prep     749.4 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll8_v2                                 k=4       83.523 ms  prep     706.8 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll8_v2                                 k=5       74.141 ms  prep     721.9 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll8_v2                                 k=6       69.175 ms  prep     717.6 ms 
+s=0.30 ssr.ssr_inference_float_vec_unroll8_v2                                 k=8       76.876 ms  prep     749.4 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG16_AVX2_OpenMP              47.138 ms  prep     149.6 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG32_AVX2_OpenMP              50.903 ms  prep     149.6 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG4_AVX2_OpenMP               39.848 ms  prep     147.6 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG8_AVX2_OpenMP               36.726 ms  prep     145.5 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG16_AVX2_OpenMP              45.941 ms  prep     149.5 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG32_AVX2_OpenMP              49.331 ms  prep     151.0 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX2_OpenMP               40.444 ms  prep     149.0 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG8_AVX2_OpenMP               41.884 ms  prep     150.1 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG16_AVX2_OpenMP               46.433 ms  prep     152.1 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG32_AVX2_OpenMP               54.589 ms  prep     151.0 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG4_AVX2_OpenMP                53.987 ms  prep     151.4 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG8_AVX2_OpenMP                48.755 ms  prep     147.8 ms 
+s=0.30 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Naive_oneFor                                   675.634 ms  prep     130.9 ms 
+s=0.50 lib.dense_blas                                                                    8.307 ms  prep      12.3 ms 
+s=0.50 rsr.rsr_inference                                                      k=2     1067.871 ms  prep     705.6 ms 
+s=0.50 rsr.rsr_inference                                                      k=3      675.593 ms  prep     714.4 ms 
+s=0.50 rsr.rsr_inference                                                      k=4      486.700 ms  prep     660.0 ms 
+s=0.50 rsr.rsr_inference                                                      k=5      387.754 ms  prep     693.9 ms 
+s=0.50 rsr.rsr_inference                                                      k=6      359.813 ms  prep     669.3 ms 
+s=0.50 rsr.rsr_inference                                                      k=8      635.571 ms  prep     682.5 ms 
+s=0.50 rsr.rsr_pp_inference                                                   k=2     1079.665 ms  prep     694.2 ms 
+s=0.50 rsr.rsr_pp_inference                                                   k=3      682.417 ms  prep     731.5 ms 
+s=0.50 rsr.rsr_pp_inference                                                   k=4      489.227 ms  prep     670.7 ms 
+s=0.50 rsr.rsr_pp_inference                                                   k=5      377.965 ms  prep     690.4 ms 
+s=0.50 rsr.rsr_pp_inference                                                   k=6      324.414 ms  prep     666.7 ms 
+s=0.50 rsr.rsr_pp_inference                                                   k=8      385.398 ms  prep     685.0 ms 
+s=0.50 spr.naive                                                              k=2      141.761 ms  prep     337.1 ms 
+s=0.50 spr.naive                                                              k=3      116.902 ms  prep     275.5 ms 
+s=0.50 spr.naive                                                              k=4      172.264 ms  prep     240.5 ms 
+s=0.50 spr.naive                                                              k=5      325.960 ms  prep     199.5 ms 
+s=0.50 spr.naive                                                              k=6      527.487 ms  prep     174.6 ms 
+s=0.50 spr.naive                                                              k=8      501.304 ms  prep     155.2 ms 
+s=0.50 ssr.ssr_inference_float_vec_L                                          k=2       88.644 ms  prep     725.2 ms 
+s=0.50 ssr.ssr_inference_float_vec_L                                          k=3       75.476 ms  prep     719.9 ms 
+s=0.50 ssr.ssr_inference_float_vec_L                                          k=4       67.927 ms  prep     717.3 ms 
+s=0.50 ssr.ssr_inference_float_vec_L                                          k=5       61.273 ms  prep     674.1 ms 
+s=0.50 ssr.ssr_inference_float_vec_L                                          k=6       57.883 ms  prep     667.9 ms 
+s=0.50 ssr.ssr_inference_float_vec_L                                          k=8       68.958 ms  prep     684.6 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll16_v2                                k=2      111.883 ms  prep     705.9 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll16_v2                                k=3       94.045 ms  prep     706.8 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll16_v2                                k=4       84.954 ms  prep     653.8 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll16_v2                                k=5       75.317 ms  prep     666.4 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll16_v2                                k=6       70.138 ms  prep     668.8 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll16_v2                                k=8       73.072 ms  prep     670.7 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll8_v2                                 k=2       88.398 ms  prep     724.0 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll8_v2                                 k=3       77.486 ms  prep     715.2 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll8_v2                                 k=4       70.271 ms  prep     659.4 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll8_v2                                 k=5       64.856 ms  prep     675.5 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll8_v2                                 k=6       62.458 ms  prep     675.9 ms 
+s=0.50 ssr.ssr_inference_float_vec_unroll8_v2                                 k=8       72.697 ms  prep     693.8 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG16_AVX2_OpenMP              34.153 ms  prep     118.3 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG32_AVX2_OpenMP              36.183 ms  prep     117.3 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG4_AVX2_OpenMP               29.753 ms  prep     123.2 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG8_AVX2_OpenMP               27.445 ms  prep     122.9 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG16_AVX2_OpenMP              33.511 ms  prep     119.1 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG32_AVX2_OpenMP              35.187 ms  prep     129.4 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX2_OpenMP               31.300 ms  prep     124.7 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG8_AVX2_OpenMP               31.408 ms  prep     122.0 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG16_AVX2_OpenMP               33.852 ms  prep     120.1 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG32_AVX2_OpenMP               39.904 ms  prep     117.7 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG4_AVX2_OpenMP                40.947 ms  prep     126.7 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG8_AVX2_OpenMP                36.029 ms  prep     127.9 ms 
+s=0.50 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Naive_oneFor                                   472.425 ms  prep     107.9 ms 
+s=0.70 lib.dense_blas                                                                    7.982 ms  prep       1.8 ms 
+s=0.70 rsr.rsr_inference                                                      k=2     1067.048 ms  prep     632.5 ms 
+s=0.70 rsr.rsr_inference                                                      k=3      693.460 ms  prep     629.2 ms 
+s=0.70 rsr.rsr_inference                                                      k=4      512.220 ms  prep     578.7 ms 
+s=0.70 rsr.rsr_inference                                                      k=5      424.381 ms  prep     585.6 ms 
+s=0.70 rsr.rsr_inference                                                      k=6      395.925 ms  prep     570.5 ms 
+s=0.70 rsr.rsr_inference                                                      k=8      627.723 ms  prep     570.3 ms 
+s=0.70 rsr.rsr_pp_inference                                                   k=2     1073.297 ms  prep     622.0 ms 
+s=0.70 rsr.rsr_pp_inference                                                   k=3      704.377 ms  prep     633.5 ms 
+s=0.70 rsr.rsr_pp_inference                                                   k=4      509.832 ms  prep     587.3 ms 
+s=0.70 rsr.rsr_pp_inference                                                   k=5      410.793 ms  prep     592.5 ms 
+s=0.70 rsr.rsr_pp_inference                                                   k=6      359.242 ms  prep     578.1 ms 
+s=0.70 rsr.rsr_pp_inference                                                   k=8      376.843 ms  prep     572.3 ms 
+s=0.70 spr.naive                                                              k=2      109.104 ms  prep     254.7 ms 
+s=0.70 spr.naive                                                              k=3      103.136 ms  prep     220.3 ms 
+s=0.70 spr.naive                                                              k=4      145.797 ms  prep     193.7 ms 
+s=0.70 spr.naive                                                              k=5      216.974 ms  prep     174.1 ms 
+s=0.70 spr.naive                                                              k=6      290.800 ms  prep     160.2 ms 
+s=0.70 spr.naive                                                              k=8      376.323 ms  prep     142.7 ms 
+s=0.70 ssr.ssr_inference_float_vec_L                                          k=2       62.063 ms  prep     649.1 ms 
+s=0.70 ssr.ssr_inference_float_vec_L                                          k=3       54.282 ms  prep     624.6 ms 
+s=0.70 ssr.ssr_inference_float_vec_L                                          k=4       49.555 ms  prep     585.6 ms 
+s=0.70 ssr.ssr_inference_float_vec_L                                          k=5       45.808 ms  prep     589.2 ms 
+s=0.70 ssr.ssr_inference_float_vec_L                                          k=6       46.008 ms  prep     577.0 ms 
+s=0.70 ssr.ssr_inference_float_vec_L                                          k=8       56.834 ms  prep     576.1 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll16_v2                                k=2       73.727 ms  prep     644.9 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll16_v2                                k=3       67.093 ms  prep     623.1 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll16_v2                                k=4       61.789 ms  prep     576.4 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll16_v2                                k=5       56.678 ms  prep     595.9 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll16_v2                                k=6       55.127 ms  prep     568.0 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll16_v2                                k=8       62.892 ms  prep     563.4 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll8_v2                                 k=2       63.967 ms  prep     632.2 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll8_v2                                 k=3       53.659 ms  prep     618.7 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll8_v2                                 k=4       51.237 ms  prep     575.0 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll8_v2                                 k=5       49.258 ms  prep     588.1 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll8_v2                                 k=6       49.870 ms  prep     585.7 ms 
+s=0.70 ssr.ssr_inference_float_vec_unroll8_v2                                 k=8       58.002 ms  prep     571.8 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG16_AVX2_OpenMP              21.483 ms  prep      88.9 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG32_AVX2_OpenMP              21.998 ms  prep      88.9 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG4_AVX2_OpenMP               20.031 ms  prep      87.7 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG8_AVX2_OpenMP               17.738 ms  prep      90.5 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG16_AVX2_OpenMP              21.047 ms  prep      89.7 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG32_AVX2_OpenMP              21.392 ms  prep      88.9 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX2_OpenMP               20.870 ms  prep      88.1 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG8_AVX2_OpenMP               20.276 ms  prep      88.6 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG16_AVX2_OpenMP               21.804 ms  prep      87.3 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG32_AVX2_OpenMP               25.389 ms  prep      89.0 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG4_AVX2_OpenMP                27.458 ms  prep      92.2 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG8_AVX2_OpenMP                23.983 ms  prep      89.8 ms 
+s=0.70 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Naive_oneFor                                   268.667 ms  prep      92.0 ms 
+s=0.90 lib.dense_blas                                                                    8.328 ms  prep       1.9 ms 
+s=0.90 rsr.rsr_inference                                                      k=2     1080.176 ms  prep     527.4 ms 
+s=0.90 rsr.rsr_inference                                                      k=3      717.238 ms  prep     503.5 ms 
+s=0.90 rsr.rsr_inference                                                      k=4      541.120 ms  prep     442.8 ms 
+s=0.90 rsr.rsr_inference                                                      k=5      444.679 ms  prep     436.4 ms 
+s=0.90 rsr.rsr_inference                                                      k=6      411.835 ms  prep     413.2 ms 
+s=0.90 rsr.rsr_inference                                                      k=8      598.648 ms  prep     396.7 ms 
+s=0.90 rsr.rsr_pp_inference                                                   k=2     1085.791 ms  prep     520.2 ms 
+s=0.90 rsr.rsr_pp_inference                                                   k=3      725.383 ms  prep     505.9 ms 
+s=0.90 rsr.rsr_pp_inference                                                   k=4      542.049 ms  prep     441.1 ms 
+s=0.90 rsr.rsr_pp_inference                                                   k=5      443.142 ms  prep     439.4 ms 
+s=0.90 rsr.rsr_pp_inference                                                   k=6      379.196 ms  prep     429.7 ms 
+s=0.90 rsr.rsr_pp_inference                                                   k=8      346.075 ms  prep     404.7 ms 
+s=0.90 spr.naive                                                              k=2       43.752 ms  prep     115.3 ms 
+s=0.90 spr.naive                                                              k=3       58.549 ms  prep     110.6 ms 
+s=0.90 spr.naive                                                              k=4       71.203 ms  prep     110.7 ms 
+s=0.90 spr.naive                                                              k=5       86.181 ms  prep     102.9 ms 
+s=0.90 spr.naive                                                              k=6      102.914 ms  prep      99.4 ms 
+s=0.90 spr.naive                                                              k=8      126.161 ms  prep      95.6 ms 
+s=0.90 ssr.ssr_inference_float_vec_L                                          k=2       24.796 ms  prep     555.9 ms 
+s=0.90 ssr.ssr_inference_float_vec_L                                          k=3       22.129 ms  prep     496.3 ms 
+s=0.90 ssr.ssr_inference_float_vec_L                                          k=4       22.625 ms  prep     433.7 ms 
+s=0.90 ssr.ssr_inference_float_vec_L                                          k=5       21.566 ms  prep     434.3 ms 
+s=0.90 ssr.ssr_inference_float_vec_L                                          k=6       22.832 ms  prep     413.2 ms 
+s=0.90 ssr.ssr_inference_float_vec_L                                          k=8       33.077 ms  prep     394.4 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll16_v2                                k=2       30.306 ms  prep     547.9 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll16_v2                                k=3       27.215 ms  prep     488.3 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll16_v2                                k=4       26.585 ms  prep     457.0 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll16_v2                                k=5       27.390 ms  prep     432.8 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll16_v2                                k=6       27.186 ms  prep     413.6 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll16_v2                                k=8       34.875 ms  prep     397.3 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll8_v2                                 k=2       27.068 ms  prep     560.1 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll8_v2                                 k=3       24.987 ms  prep     497.5 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll8_v2                                 k=4       25.024 ms  prep     448.2 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll8_v2                                 k=5       23.359 ms  prep     440.1 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll8_v2                                 k=6       24.560 ms  prep     449.0 ms 
+s=0.90 ssr.ssr_inference_float_vec_unroll8_v2                                 k=8       30.232 ms  prep     404.3 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG16_AVX2_OpenMP               8.276 ms  prep      62.7 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG32_AVX2_OpenMP               8.047 ms  prep      60.2 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG4_AVX2_OpenMP                7.417 ms  prep      63.4 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_16xG8_AVX2_OpenMP                7.198 ms  prep      62.7 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG16_AVX2_OpenMP               7.908 ms  prep      62.6 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG32_AVX2_OpenMP               7.799 ms  prep      62.6 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG4_AVX2_OpenMP                7.961 ms  prep      64.1 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_32xG8_AVX2_OpenMP                8.282 ms  prep      62.9 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG16_AVX2_OpenMP                8.983 ms  prep      64.3 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG32_AVX2_OpenMP               10.430 ms  prep      60.7 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG4_AVX2_OpenMP                10.245 ms  prep      60.7 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Merged_GroupMin_8xG8_AVX2_OpenMP                 9.728 ms  prep      60.6 ms 
+s=0.90 tcsc.GEMM_CPU_FP32_colMajor_TCSC_Naive_oneFor                                    64.168 ms  prep      58.1 ms 

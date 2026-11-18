@@ -1,0 +1,9 @@
+{
+  "threads": 9,
+  "isa": "neon",
+  "peak_simd_gflops": 552.00,
+  "peak_scalar_gflops": 137.82,
+  "bw_l1_gbs": 1473.52,
+  "bw_l2_gbs": 891.89,
+  "bw_dram_gbs": 236.23
+}

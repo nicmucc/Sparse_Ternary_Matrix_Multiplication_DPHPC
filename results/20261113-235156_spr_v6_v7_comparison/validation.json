@@ -1,0 +1,12 @@
+{
+  "configurations": 5568,
+  "failed_configurations": 0,
+  "comparison_points": 928,
+  "correctness_passed": 2600,
+  "correctness_failed": 0,
+  "maximum_absolute_error": 4.57764e-05,
+  "source_matches_current": {
+    "v6": true,
+    "v7": true
+  }
+}

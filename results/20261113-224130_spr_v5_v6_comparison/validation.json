@@ -1,0 +1,19 @@
+{
+  "configurations": 4608,
+  "failed_configurations": 0,
+  "comparison_points": 768,
+  "correctness_passed": 2400,
+  "correctness_failed": 0,
+  "maximum_absolute_error": 4.57764e-05,
+  "source_matches_current": {
+    "v5": true,
+    "v6": true
+  },
+  "inference_rounds": 21,
+  "matched_format_bytes_and_addition_counts": true,
+  "source_sha256": {
+    "v5": "538ef4b564233877d49c8dfe3d5cc4a2e41815a576c82bcf49bf5d637cb85710",
+    "v6": "c1b6638d1f65cc4e737670a04b3a3b49e26c913e35c4d90afe7e380aa6865fe1"
+  },
+  "plotting_command": "/usr/bin/python3 bench/compare_v5_v6.py --plots-only results/20261113-224130_spr_v5_v6_comparison"
+}

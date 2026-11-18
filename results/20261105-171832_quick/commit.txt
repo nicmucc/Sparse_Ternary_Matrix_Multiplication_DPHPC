@@ -1,0 +1,19 @@
+e70a484
+ M CMakeLists.txt
+ M README.md
+ M bench/bench_cpu.cpp
+ M cpu/libs.cpp
+ M cpu/orig/README.md
+ M cpu/orig/ssr.cpp
+ M include/spr/harness.hpp
+ M include/spr/kernel.hpp
+?? bench/run.sh
+?? bench/summarize.py
+?? bench/tune.py
+?? cpu/orig/patched/
+?? cpu/orig/rsrcore.cpp
+?? cpu/spr/
+?? old-code-expermient/
+?? papers/
+?? results/
+?? third_party/RSR-core-repo/

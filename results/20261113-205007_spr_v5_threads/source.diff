@@ -1,0 +1,117 @@
+diff --git a/.gitignore b/.gitignore
+index 083eeaa..964d150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,3 +4,4 @@ build/
+ *.csv
+ __pycache__/
+ build-prof/
++include/spr/cache.hpp
+\ No newline at end of file
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 1dca793..7e4c11c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -90,6 +90,7 @@ add_library(kernels OBJECT
+   cpu/spr/spr_v2.cpp
+   cpu/spr/spr_v3.cpp
+   cpu/spr/spr_v4.cpp
++  cpu/spr/spr_v5.cpp
+ )
+ target_include_directories(kernels PUBLIC include)
+ target_compile_options(kernels PUBLIC ${SPR_FLAGS})
+diff --git a/bench/bench_cpu.cpp b/bench/bench_cpu.cpp
+index 4d021c3..a622808 100644
+--- a/bench/bench_cpu.cpp
++++ b/bench/bench_cpu.cpp
+@@ -16,6 +16,8 @@
+ //                       written with ok=0 and not timed; unchecked configs have max_err = -1.
+ //   --budget-ms B       cap the timed runs per config at ~B ms (never fewer than 3 rounds), so slow
+ //                       configurations do not dominate the wall time. 0 = always --rounds.
++//   --prep-rounds R     report median preparation time over R freshly constructed kernels.
++//                       R > 1 also performs one untimed preparation to warm the runtime.
+ //
+ // Unsupported shapes are skipped silently.
+ #include <cstdio>
+@@ -58,7 +60,7 @@ struct Entry {
+ }  // namespace
+ 
+ int main(int argc, char** argv) {
+-    int M = 256, K = 1024, N = 4096, threads = 1, rounds = 21, warmup = 3;
++    int M = 256, K = 1024, N = 4096, threads = 1, rounds = 21, warmup = 3, prep_rounds = 1;
+     std::string kernels, s_list = "0.5", k_list = "4", tag = "run", out = "bench_cpu.csv", verify = "";
+     int ref_rows = 16;
+     double budget_ms = 0;
+@@ -74,6 +76,7 @@ int main(int argc, char** argv) {
+         else if (a == "--threads") threads = std::stoi(v);
+         else if (a == "--rounds") rounds = std::stoi(v);
+         else if (a == "--warmup") warmup = std::stoi(v);
++        else if (a == "--prep-rounds") prep_rounds = std::stoi(v);
+         else if (a == "--tag") tag = v;
+         else if (a == "--out") out = v;
+         else if (a == "--seed") seed = std::stoull(v);
+@@ -83,6 +86,11 @@ int main(int argc, char** argv) {
+         else { std::fprintf(stderr, "unknown option %s\n", a.c_str()); return 2; }
+     }
+ 
++    if (threads < 1 || rounds < 1 || prep_rounds < 1) {
++        std::fprintf(stderr, "threads, rounds and prep-rounds must be positive\n");
++        return 2;
++    }
++
+     // (kernel name, its k list): the first matching pattern decides the k list
+     std::vector<int> ks_default;
+     for (auto& x : split(k_list)) ks_default.push_back(std::stoi(x));
+@@ -135,9 +143,21 @@ int main(int argc, char** argv) {
+                 e.p.k = k; e.p.threads = threads;
+                 if (!e.kern->supports(M, K, N, e.p)) continue;
+                 try {
+-                    double t0 = now_ms();
+-                    e.kern->prepare(P.W.data(), K, N, e.p);
+-                    e.prep_ms = now_ms() - t0;
++                    if (prep_rounds > 1) {
++                        auto warm = make_kernel(name);
++                        warm->prepare(P.W.data(), K, N, e.p);
++                    }
++                    std::vector<double> prep_times;
++                    for (int r = 0; r < prep_rounds; ++r) {
++                        // Construction and destruction are outside the preparation timer.
++                        auto prepared = make_kernel(name);
++                        double t0 = now_ms();
++                        prepared->prepare(P.W.data(), K, N, e.p);
++                        prep_times.push_back(now_ms() - t0);
++                        e.kern = std::move(prepared);
++                    }
++                    std::sort(prep_times.begin(), prep_times.end());
++                    e.prep_ms = prep_times[prep_times.size() / 2];
+                 } catch (const NotImplemented&) {
+                     break;
+                 }
+diff --git a/bench/peaks.cpp b/bench/peaks.cpp
+index e1e773c..cd7467a 100644
+--- a/bench/peaks.cpp
++++ b/bench/peaks.cpp
+@@ -32,7 +32,7 @@
+ #endif
+ 
+ static double now() { return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count(); }
+-static volatile float g_sink;   // keeps results alive
++static thread_local volatile float g_sink;   // keeps results alive without cross-thread writes
+ 
+ // Optimization barrier: the value must exist in a register here, so the compiler can neither drop nor
+ // merge the independent accumulator chains (it otherwise collapses most of them).
+@@ -155,8 +155,12 @@ static double read_bw(int T, size_t bytes_per_thread, double target_bytes) {
+     const long passes = std::max<long>(1, (long)(target_bytes / bytes_per_thread));
+     double t = best_time(T, 5, [&](int tid) {
+         float s = 0;
+-        for (long p = 0; p < passes; ++p) s += read_sum(bufs[tid], n);
+-        if (s == 42.f) g_sink = s;
++        for (long p = 0; p < passes; ++p) {
++            // Each pass must read memory again, even though the buffer is unchanged.
++            asm volatile("" : : "r"(bufs[tid]) : "memory");
++            s += read_sum(bufs[tid], n);
++        }
++        g_sink = s;
+     });
+     for (auto b : bufs) std::free(b);
+     return (double)T * passes * n * sizeof(float) / t / 1e9;

@@ -1,0 +1,212 @@
+{
+  "cpu": "machdep.cpu.brand_string: Apple M4 Pro\nhw.physicalcpu: 14\nhw.perflevel0.physicalcpu: 10\nhw.perflevel1.physicalcpu: 4\nhw.cachelinesize: 128\nhw.perflevel0.l1dcachesize: 131072\nhw.perflevel0.l2cachesize: 16777216\nhw.perflevel1.l1dcachesize: 65536\nhw.perflevel1.l2cachesize: 4194304\n",
+  "threads": [
+    1,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14
+  ],
+  "jobs": [
+    {
+      "pattern": "iid",
+      "M": 32,
+      "K": 1024,
+      "N": 4096
+    },
+    {
+      "pattern": "iid",
+      "M": 32,
+      "K": 2048,
+      "N": 2048
+    },
+    {
+      "pattern": "iid",
+      "M": 32,
+      "K": 4096,
+      "N": 1024
+    },
+    {
+      "pattern": "iid",
+      "M": 32,
+      "K": 2048,
+      "N": 8192
+    },
+    {
+      "pattern": "iid",
+      "M": 32,
+      "K": 1024,
+      "N": 32
+    },
+    {
+      "pattern": "iid",
+      "M": 64,
+      "K": 1024,
+      "N": 4096
+    },
+    {
+      "pattern": "iid",
+      "M": 64,
+      "K": 2048,
+      "N": 2048
+    },
+    {
+      "pattern": "iid",
+      "M": 64,
+      "K": 4096,
+      "N": 1024
+    },
+    {
+      "pattern": "iid",
+      "M": 64,
+      "K": 2048,
+      "N": 8192
+    },
+    {
+      "pattern": "iid",
+      "M": 64,
+      "K": 1024,
+      "N": 32
+    },
+    {
+      "pattern": "iid",
+      "M": 256,
+      "K": 1024,
+      "N": 4096
+    },
+    {
+      "pattern": "iid",
+      "M": 256,
+      "K": 2048,
+      "N": 2048
+    },
+    {
+      "pattern": "iid",
+      "M": 256,
+      "K": 4096,
+      "N": 1024
+    },
+    {
+      "pattern": "iid",
+      "M": 256,
+      "K": 2048,
+      "N": 8192
+    },
+    {
+      "pattern": "iid",
+      "M": 256,
+      "K": 1024,
+      "N": 32
+    },
+    {
+      "pattern": "iid",
+      "M": 512,
+      "K": 1024,
+      "N": 4096
+    },
+    {
+      "pattern": "iid",
+      "M": 512,
+      "K": 2048,
+      "N": 2048
+    },
+    {
+      "pattern": "iid",
+      "M": 512,
+      "K": 4096,
+      "N": 1024
+    },
+    {
+      "pattern": "iid",
+      "M": 512,
+      "K": 2048,
+      "N": 8192
+    },
+    {
+      "pattern": "iid",
+      "M": 512,
+      "K": 1024,
+      "N": 32
+    },
+    {
+      "pattern": "iid",
+      "M": 1024,
+      "K": 1024,
+      "N": 4096
+    },
+    {
+      "pattern": "iid",
+      "M": 1024,
+      "K": 2048,
+      "N": 2048
+    },
+    {
+      "pattern": "iid",
+      "M": 1024,
+      "K": 4096,
+      "N": 1024
+    },
+    {
+      "pattern": "iid",
+      "M": 1024,
+      "K": 2048,
+      "N": 8192
+    },
+    {
+      "pattern": "iid",
+      "M": 1024,
+      "K": 1024,
+      "N": 32
+    },
+    {
+      "pattern": "column_clustered",
+      "M": 256,
+      "K": 1024,
+      "N": 4096
+    },
+    {
+      "pattern": "column_clustered",
+      "M": 256,
+      "K": 2048,
+      "N": 8192
+    },
+    {
+      "pattern": "column_clustered",
+      "M": 512,
+      "K": 1024,
+      "N": 4096
+    },
+    {
+      "pattern": "column_clustered",
+      "M": 512,
+      "K": 2048,
+      "N": 8192
+    }
+  ],
+  "sparsities": [
+    0.3,
+    0.5,
+    0.7,
+    0.9
+  ],
+  "ks": [
+    2,
+    3,
+    4
+  ],
+  "rounds": 21,
+  "command": [
+    "bench/compare_v6_v7.py"
+  ],
+  "seed": 42,
+  "prep_rounds": 1,
+  "cache_overrides": {
+    "SPR_L1_BYTES": null,
+    "SPR_L2_BYTES": null,
+    "SPR_LLC_BYTES": null
+  },
+  "commit": "4f4877a23bc070822d1a01f958053b215a1da237"
+}

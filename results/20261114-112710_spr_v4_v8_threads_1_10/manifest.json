@@ -1,0 +1,322 @@
+{
+  "date": "2026-11-14T11:27:10.608780+01:00",
+  "cpu": "machdep.cpu.brand_string: Apple M4 Pro\nhw.physicalcpu: 14\nhw.logicalcpu: 14\nhw.perflevel0.physicalcpu: 10\nhw.perflevel1.physicalcpu: 4\nhw.cachelinesize: 128\nhw.perflevel0.l1dcachesize: 131072\nhw.perflevel0.l2cachesize: 16777216\n",
+  "threads": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "jobs": [
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 32,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 32,
+      "K": 4096,
+      "N": 1024,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 32,
+      "K": 2048,
+      "N": 8192,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 64,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 64,
+      "K": 4096,
+      "N": 1024,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 64,
+      "K": 2048,
+      "N": 8192,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 256,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 256,
+      "K": 4096,
+      "N": 1024,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 256,
+      "K": 2048,
+      "N": 8192,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 320,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 320,
+      "K": 4096,
+      "N": 1024,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 320,
+      "K": 2048,
+      "N": 8192,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 512,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 512,
+      "K": 4096,
+      "N": 1024,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "regular",
+      "pattern": "iid",
+      "M": 512,
+      "K": 2048,
+      "N": 8192,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "tiny",
+      "pattern": "iid",
+      "M": 1,
+      "K": 128,
+      "N": 128,
+      "sparsities": [
+        0.5
+      ]
+    },
+    {
+      "category": "decode",
+      "pattern": "iid",
+      "M": 1,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "tail",
+      "pattern": "iid",
+      "M": 63,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "tail",
+      "pattern": "iid",
+      "M": 65,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "narrow",
+      "pattern": "iid",
+      "M": 32,
+      "K": 1024,
+      "N": 32,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "narrow",
+      "pattern": "iid",
+      "M": 64,
+      "K": 1024,
+      "N": 32,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "narrow",
+      "pattern": "iid",
+      "M": 320,
+      "K": 1024,
+      "N": 32,
+      "sparsities": [
+        0.5,
+        0.9
+      ]
+    },
+    {
+      "category": "clustered",
+      "pattern": "column_clustered",
+      "M": 64,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5
+      ]
+    },
+    {
+      "category": "clustered",
+      "pattern": "column_clustered",
+      "M": 320,
+      "K": 1024,
+      "N": 4096,
+      "sparsities": [
+        0.5
+      ]
+    }
+  ],
+  "sparsities": [
+    0.5,
+    0.9
+  ],
+  "ks": [
+    2,
+    3,
+    4
+  ],
+  "rounds": 21,
+  "seed": 42,
+  "correctness_run": false,
+  "environment": {
+    "OMP_DYNAMIC": "FALSE",
+    "OMP_WAIT_POLICY": "PASSIVE",
+    "KMP_BLOCKTIME": "0",
+    "OMP_PROC_BIND": "close",
+    "OMP_PLACES": "cores",
+    "SPR_L1_BYTES": null,
+    "SPR_L2_BYTES": null,
+    "SPR_LLC_BYTES": null
+  },
+  "command": [
+    "bench/compare_v4_v8.py"
+  ],
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin\n",
+  "commit": "97c81b7d3ae17e525755ab4f27093c48871d3efb",
+  "source_hashes": {
+    "cpu/spr/spr_v4.cpp": "5a65bdae4e4686124dd7a844c8a1033324e990993186475bbd3859dbbea996cb",
+    "cpu/spr/spr_v8.cpp": "5b9c7230e63877148b4672787191c57d69021c8a717f86e16d3c38a7ba25cb82",
+    "cpu/core.cpp": "eb9ade84407d0fde18dce1fd4ffa09a46de2767e35fba5cef8a19d7f8ee76e2f",
+    "include/spr/cache.hpp": "83cd00a99d7ba12dcfeefc9eb308a282ff0b94f47429c70b21989cc3bb52cbf1",
+    "include/spr/harness.hpp": "69216f1d39030afdae8cab66196d8d1b5ba1b578249e895984aff46c8be13530",
+    "include/spr/kernel.hpp": "7f89d64882e097d28fcf99854253da7e044a7bc0117e6459a516431adeafe7e3",
+    "bench/bench_cpu.cpp": "61584300c02dc19524cf778ffa1d4ea6b652ce782672da01634d51fe8b8fab31",
+    "bench/peaks.cpp": "2ffa17006da5b950e7e8fa421ca0bd9d2e197afc61cf9555310a4ae51c68e1f9",
+    "bench/compare_v4_v8.py": "6b6830418834739809f9e4a80c2cf896ac8aad2d3f26dd81959e52f525e3dee0",
+    "CMakeLists.txt": "336f6bf89eeb2e3828254c9905d3bbb816a139cc64a57920fd8c9a67a1cb17d5"
+  },
+  "binary_hashes": {
+    "bench_cpu": "b0cbfa69be2c0e7643a4c572a4ea1e62330038dec6a54d02c9524c05b4fe3f66",
+    "peaks": "4aa43a2dea78234e33395e697d3214074cc9a9cfac1f7994202e2fdd6f024fa6"
+  }
+}

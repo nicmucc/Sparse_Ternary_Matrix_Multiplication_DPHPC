@@ -1,0 +1,159 @@
+diff --git a/.gitignore b/.gitignore
+index 083eeaa..964d150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,3 +4,4 @@ build/
+ *.csv
+ __pycache__/
+ build-prof/
++include/spr/cache.hpp
+\ No newline at end of file
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 778a89c..f905715 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -92,6 +92,8 @@ add_library(kernels OBJECT
+   cpu/spr/spr_v4.cpp
+   cpu/spr/spr_v5.cpp
+   cpu/spr/spr_v6.cpp
++  cpu/spr/spr_v7.cpp
++  cpu/spr/spr_v8.cpp
+ )
+ target_include_directories(kernels PUBLIC include)
+ target_compile_options(kernels PUBLIC ${SPR_FLAGS})
+diff --git a/cpu/spr/spr_v6.cpp b/cpu/spr/spr_v6.cpp
+index bab34e1..05c2e93 100644
+--- a/cpu/spr/spr_v6.cpp
++++ b/cpu/spr/spr_v6.cpp
+@@ -140,13 +140,16 @@ public:
+         blk_num_seg_.clear(); pieces_cnt.clear(); pieces_.clear(); rows_.clear();
+         lvl_meta_.clear();
+         pos_.clear(); neg_.clear(); merges_.clear();
+-        buf_.clear();
++        group_offsets_.clear();
+ 
+         struct SlotRow { uint16_t slot; uint16_t row; };
+         std::vector<SlotRow> sr;          // All blocks concatenated
+         std::vector<size_t> blk_off{0};   // Block boundaries in sr
++        struct TreeOffsets { size_t levels, pos, neg, merges; };
++        std::vector<TreeOffsets> tree_offsets;
+ 
+         for (int c0 = 0; c0 < N; c0 += k_) {
++            tree_offsets.push_back({lvl_meta_.size(), pos_.size(), neg_.size(), merges_.size()});
+             int width = std::min(k_, N - c0);
+ 
+             // generate base 3 keys
+@@ -291,6 +294,9 @@ public:
+         rows_.reserve(sr.size());
+         std::vector<size_t> cur(blk_off.begin(), blk_off.end() - 1);   // read cursor per block
+         for (int g0 = 0; g0 < nb; g0 += G_) {
++            const auto& tree = tree_offsets[g0];
++            group_offsets_.push_back({pieces_cnt.size(), pieces_.size(), rows_.size(),
++                                      tree.levels, tree.pos, tree.neg, tree.merges});
+             const int g1 = std::min(g0 + G_, nb);
+             for (int c = 0; c < Nc_; ++c) {
+                 for (int b = g0; b < g1; ++b) {
+@@ -312,8 +318,6 @@ public:
+             }
+         }
+ 
+-        // G_ bufs: block b of a group uses buf_[(b - g0) * max_D_ * B ...]
+-        buf_.assign((size_t) G_ * std::max<size_t>(max_D_, 1) * B, 0.f);
+     }
+ 
+     // ------------------------------------------------------------------ inference (TIMED)
+diff --git a/tests/test_correctness.cpp b/tests/test_correctness.cpp
+index 50d2aee..9fa1bbb 100644
+--- a/tests/test_correctness.cpp
++++ b/tests/test_correctness.cpp
+@@ -96,12 +96,17 @@ static std::pair<int, int> check_spr_parallel_groups(Kernel& kern) {
+         }
+         problems.push_back(std::move(P));
+     }
+-    if (kern.name().rfind("spr.v6.", 0) == 0) {
++    if (kern.name().rfind("spr.v6.", 0) == 0 || kern.name().rfind("spr.v7.", 0) == 0 ||
++        kern.name().rfind("spr.v8.", 0) == 0) {
+         // Several full tiles, a partial tile, and a single group: parallel work
+         // must also be available along M. The final case exercises both axes.
+         for (auto [M, N] : {std::pair{67, 3}, std::pair{96, 3}, std::pair{67, 65}})
+             problems.push_back(make_problem(M, 529, N, 0.5, 9123));
+     }
++    if (kern.name().rfind("spr.v7.", 0) == 0 || kern.name().rfind("spr.v8.", 0) == 0) {
++        // Enough full tiles for all 14 workers plus a partial final tile.
++        problems.push_back(make_problem(515, 129, 17, 0.5, 9124));
++    }
+     int pass = 0, fail = 0;
+     const int saved_threads = omp_get_max_threads();
+     for (int threads : {1, 2, 4, 10, 14}) {
+@@ -127,6 +132,52 @@ static std::pair<int, int> check_spr_parallel_groups(Kernel& kern) {
+     return {pass, fail};
+ }
+ 
++// Interleaved bindings and thread changes must refresh the rectangle plan.
++// Sentinel outputs also catch unwritten all-zero groups and tails.
++static std::pair<int, int> check_spr_rectangles(Kernel& kern) {
++    const int saved_threads = omp_get_max_threads();
++    int pass = 0, fail = 0;
++    for (const char* pattern : {"iid", "column_clustered", "all_zero"}) {
++        const bool zeros = std::string(pattern) == "all_zero";
++        std::vector<Problem> problems;
++        for (int M : {1, 35, 99, 515})
++            problems.push_back(make_problem(M, 129, 193, zeros ? 1.0 : 0.75, 10124,
++                                            -1, zeros ? "iid" : pattern));
++
++        Params p; p.k = 3;
++        kern.prepare(problems.front().W.data(), 129, 193, p);
++        IO empty{0, 129, 193, nullptr, nullptr};
++        kern.run(empty); // Empty inference must also work without bind().
++        set_threads(1);
++        std::vector<std::unique_ptr<Bound>> bindings;
++        for (const auto& P : problems) bindings.push_back(std::make_unique<Bound>(&kern, P));
++        for (size_t i = 0; i < problems.size(); ++i) {
++            const auto& P = problems[i];
++            auto& b = *bindings[i];
++            for (int threads : {1, 2, 4, 6, 8, 10, 12, 14}) {
++                set_threads(threads);
++                bool ok = true;
++                for (int repeat = 0; repeat < 2; ++repeat) {
++                    std::fill_n(b.Y.p, b.Y.n, 123.f);
++                    b.run();
++                    kern.finish(b.io);
++                    for (int m = 0; m < P.M; ++m)
++                        for (int n = 0; n < P.N; ++n)
++                            if (!(std::fabs(b.Y.p[(size_t)n * P.M + m] -
++                                            P.Yref[(size_t)m * P.N + n]) <= tolerance(P.K))) ok = false;
++                }
++                if (ok) ++pass;
++                else {
++                    ++fail;
++                    std::printf("    wrong rectangles: %s M=%d threads=%d\n", pattern, P.M, threads);
++                }
++            }
++        }
++    }
++    set_threads(saved_threads);
++    return {pass, fail};
++}
++
+ int main(int argc, char** argv) {
+     std::vector<std::string> filters(argv + 1, argv + argc);
+     auto selected = [&](const std::string& name) {
+@@ -157,11 +208,17 @@ int main(int argc, char** argv) {
+             pass += examples.first;
+             fail += examples.second;
+         }
+-        if (name.rfind("spr.v5.", 0) == 0 || name.rfind("spr.v6.", 0) == 0) {
++        if (name.rfind("spr.v5.", 0) == 0 || name.rfind("spr.v6.", 0) == 0 ||
++            name.rfind("spr.v7.", 0) == 0 || name.rfind("spr.v8.", 0) == 0) {
+             const auto groups = check_spr_parallel_groups(*kern);
+             pass += groups.first;
+             fail += groups.second;
+         }
++        if (name.rfind("spr.v8.", 0) == 0) {
++            const auto rectangles = check_spr_rectangles(*kern);
++            pass += rectangles.first;
++            fail += rectangles.second;
++        }
+         bool not_impl = false;
+         for (const auto& P : problems) {
+             for (int k : ks) {

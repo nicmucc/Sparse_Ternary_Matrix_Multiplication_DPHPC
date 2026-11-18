@@ -1,0 +1,14 @@
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/test_correctness spr.v6 spr.v7
+PASS spr.v6.b16                                                      255 passed    0 failed
+PASS spr.v6.b32                                                      255 passed    0 failed
+PASS spr.v6.b32.kc256.g8                                             255 passed    0 failed
+PASS spr.v6.b32.kc512.g4                                             255 passed    0 failed
+PASS spr.v6.b32.l2                                                   255 passed    0 failed
+PASS spr.v7.b16                                                      265 passed    0 failed
+PASS spr.v7.b32                                                      265 passed    0 failed
+PASS spr.v7.b32.kc256.g8                                             265 passed    0 failed
+PASS spr.v7.b32.kc512.g4                                             265 passed    0 failed
+PASS spr.v7.b32.l2                                                   265 passed    0 failed
+
+2600 cases passed, 0 failed (0 kernels with failures)

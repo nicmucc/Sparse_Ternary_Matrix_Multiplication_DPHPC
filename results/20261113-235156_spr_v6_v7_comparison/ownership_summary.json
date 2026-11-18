@@ -1,0 +1,17 @@
+[
+  {
+    "condition": "underfilled",
+    "points": 256,
+    "v7_vs_v6": 0.3859362404472599
+  },
+  {
+    "condition": "whole_tiles_in_both",
+    "points": 160,
+    "v7_vs_v6": 0.9969750192611341
+  },
+  {
+    "condition": "enough_but_uneven",
+    "points": 144,
+    "v7_vs_v6": 0.9197600017520735
+  }
+]

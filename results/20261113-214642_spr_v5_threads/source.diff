@@ -1,0 +1,467 @@
+diff --git a/.gitignore b/.gitignore
+index 083eeaa..964d150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,3 +4,4 @@ build/
+ *.csv
+ __pycache__/
+ build-prof/
++include/spr/cache.hpp
+\ No newline at end of file
+diff --git a/bench/spr_threads.py b/bench/spr_threads.py
+index 33e48e6..85c2c26 100644
+--- a/bench/spr_threads.py
++++ b/bench/spr_threads.py
+@@ -4,7 +4,8 @@
+     /usr/bin/python3 bench/spr_threads.py
+     /usr/bin/python3 bench/spr_threads.py --plots-only results/RUN
+ 
+-V5 parallelizes prepare(), so preparation and serial inference are plotted separately.
++Preparation and inference scaling are plotted separately. New runs use V5's
++parallel inference; older manifests retain their serial-inference rooflines.
+ Build with CMake first. Requires Matplotlib in the selected Python environment.
+ """
+ import argparse
+@@ -48,6 +49,8 @@ def run(cmd, log, env):
+ 
+ def summarize(out):
+     manifest = json.loads((out / "manifest.json").read_text())
++    parallel_inference = manifest.get("parallel_inference", False)
++    inference_mode = "parallel" if parallel_inference else "serial"
+     threads = manifest["threads"]
+     all_rows = []
+     for t in threads:
+@@ -108,9 +111,9 @@ def summarize(out):
+ 
+     for field, filename, title, ylabel in [
+         ("prep_speedup", "speedup.png", "V5 preparation speedup on Apple M4 Pro", "speedup vs V5 at 1 thread"),
+-        ("inference_speedup", "inference_speedup.png", "V5 inference scaling (inference is serial)", "speedup vs V5 at 1 thread"),
++        ("inference_speedup", "inference_speedup.png", f"V5 inference scaling ({inference_mode})", "speedup vs V5 at 1 thread"),
+         ("prep_ms", "preparation.png", "V5 preparation time on Apple M4 Pro", "preparation median [ms]"),
+-        ("inference_ms", "runtime.png", "V5 inference time (inference is serial)", "inference median [ms]"),
++        ("inference_ms", "runtime.png", f"V5 inference time ({inference_mode})", "inference median [ms]"),
+     ]:
+         fig, axs = panels()
+         for ax, sh in zip(axs.flat, shapes):
+@@ -143,31 +146,40 @@ def summarize(out):
+         ax.grid(alpha=0.25)
+     save(fig, "version_speedup.png", "SPR version progression on Apple M4 Pro (1 thread, best k)")
+ 
+-    # Inference is serial: use the measured ONE-thread roofs for this overlay.
++    # Historical serial runs use one-thread roofs; new parallel runs use the
++    # matching aggregate SIMD/DRAM roof for each requested thread count.
+     pk = json.loads((out / "t01" / "peaks.json").read_text())
++    thread_peaks = {t: json.loads((out / f"t{t:02}" / "peaks.json").read_text()) for t in threads}
+     fig, axs = panels()
+     for ax, sh in zip(axs.flat, shapes):
+         xs = [10 ** (-2 + i * 5 / 200) for i in range(201)]
+-        peak = pk["peak_simd_gflops"]
+-        for name, style in [("dram", "-"), ("l2", "--"), ("l1", ":")]:
++        peak = max(p["peak_simd_gflops"] for p in thread_peaks.values()) if parallel_inference else pk["peak_simd_gflops"]
++        for name, style in ([] if parallel_inference else [("dram", "-"), ("l2", "--"), ("l1", ":")]):
+             bw = pk[f"bw_{name}_gbs"]
+             ax.plot(xs, [min(peak, x * bw) for x in xs], style, color="gray", linewidth=1,
+                     label=f"{name.upper()} {bw:.0f} GB/s")
+-        ax.axhline(pk["peak_scalar_gflops"], linestyle="-.", color="gray", linewidth=0.8,
+-                   label=f"scalar add peak {pk['peak_scalar_gflops']:.1f} GFLOP/s")
+-        ax.text(0.03, peak * 1.08, f"SIMD add peak {peak:.1f} GFLOP/s", fontsize=8, color="gray")
++        if not parallel_inference:
++            ax.axhline(pk["peak_scalar_gflops"], linestyle="-.", color="gray", linewidth=0.8,
++                       label=f"scalar add peak {pk['peak_scalar_gflops']:.1f} GFLOP/s")
++            ax.text(0.03, peak * 1.08, f"SIMD add peak {peak:.1f} GFLOP/s", fontsize=8, color="gray")
+         for t in threads:
+             rs = [lookup[(t, V5, *key, selected[key]["param"])] for key in keys if key[:3] == sh]
+             work = [r["M"] * r["adds_per_row"] for r in rs]
+             ai = [w / (r["bytes"] + 4 * r["M"] * (r["K"] + r["N"])) for r, w in zip(rs, work)]
+             perf = [w / r["median_ms"] / 1e6 for r, w in zip(rs, work)]
+-            ax.scatter(ai, perf, s=40, marker=["o", "s", "^", "D", "v", "P", "X", "*"][threads.index(t) % 8],
++            color = plt.rcParams["axes.prop_cycle"].by_key()["color"][threads.index(t) % 10]
++            if parallel_inference:
++                tp = thread_peaks[t]
++                ax.plot(xs, [min(tp["peak_simd_gflops"], x * tp["bw_dram_gbs"]) for x in xs],
++                        color=color, alpha=0.6, linewidth=1)
++            ax.scatter(ai, perf, s=40, color=color, marker=["o", "s", "^", "D", "v", "P", "X", "*"][threads.index(t) % 8],
+                        label=f"{t} requested thread{'s' if t != 1 else ''}", alpha=0.8)
+         ax.set(xscale="log", yscale="log", xlim=(0.02, 1000), ylim=(1, peak * 2),
+                title=f"M={sh[0]}, K={sh[1]}, N={sh[2]}", xlabel="additions / compulsory byte",
+                ylabel="GFLOP/s (fp32 additions)")
+         ax.grid(alpha=0.25)
+-    save(fig, "roofline.png", "V5 inference roofline — Apple M4 Pro (B=32)\nSerial inference: one-thread roofs; fixed k across thread counts")
++    roof_note = "Parallel inference: matching thread-count SIMD/DRAM roofs" if parallel_inference else "Serial inference: one-thread roofs"
++    save(fig, "roofline.png", f"V5 inference roofline — Apple M4 Pro (B=32)\n{roof_note}; fixed k across thread counts")
+ 
+     summary = []
+     for t in threads:
+@@ -177,7 +189,8 @@ def summarize(out):
+                             prep_vs_v4=gmean([r["prep_vs_v4"] for r in rs])))
+     lines = ["# SPR V5 thread sweep — Apple M4 Pro", "",
+              "CPU: 10 performance cores + 4 efficiency cores; macOS chooses core placement (no pinning).",
+-             "V5 parallelizes the first preparation stage only. Its inference remains serial.", "",
++             ("V5 parallelizes preparation and inference across independent groups." if parallel_inference else
++              "V5 parallelizes the first preparation stage only. Its inference remains serial."), "",
+              f"Scaling kernel: `{V5}`; serial controls: `{V4}` and `spr.v2.b32`.",
+              f"Grid: M={manifest['M']}; K×N={SHAPES}; sparsities={manifest['sparsities']}; k={manifest['ks']}.",
+              f"Preparation: median of {manifest['prep_rounds']} fresh-kernel measurements after one untimed preparation.",
+@@ -192,9 +205,9 @@ def summarize(out):
+         lines.append(f"| {r['threads']} | {r['prep_speedup']:.2f}× | {r['inference_speedup']:.2f}× | {r['prep_vs_v4']:.2f}× |")
+     lines += ["", "Ratios above are geometric means over the 16 shape/sparsity workloads.", "",
+               "## Plots", "", "- `speedup.png`: preparation scaling.",
+-              "- `preparation.png`: absolute preparation time.", "- `inference_speedup.png`: inference scaling (serial control).",
++              "- `preparation.png`: absolute preparation time.", f"- `inference_speedup.png`: {inference_mode} inference scaling.",
+               "- `runtime.png`: absolute inference time.", "- `version_speedup.png`: inference progression from naive through V5 at one thread.",
+-              "- `roofline.png`: V5 across requested thread counts, using measured one-thread roofs because inference is serial.",
++              f"- `roofline.png`: {roof_note.lower()}.",
+               "- `tXX/{report.md,roofline.png,runtime.png}`: existing infrastructure reports, with measured XX-thread machine ceilings.",
+               "", "## Interpretation limits", "",
+               "Roofline intensity uses compulsory format + input + output traffic, not measured cache traffic.",
+@@ -237,6 +250,7 @@ def main():
+     if "Apple M4 Pro" not in cpu:
+         raise RuntimeError("Default sweep targets an Apple M4 Pro; check hardware before running")
+     manifest = dict(threads=threads, M=a.M, ks=a.ks, sparsities=a.sparsities,
++                    parallel_inference=True,
+                     rounds=a.rounds, prep_rounds=a.prep_rounds, cpu=cpu, command=sys.argv,
+                     cache_overrides={k: env.get(k) for k in ("SPR_L1_BYTES", "SPR_L2_BYTES", "SPR_LLC_BYTES")},
+                     commit=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip())
+diff --git a/cpu/spr/spr_v5.cpp b/cpu/spr/spr_v5.cpp
+index 43a8557..ce990f7 100644
+--- a/cpu/spr/spr_v5.cpp
++++ b/cpu/spr/spr_v5.cpp
+@@ -114,9 +114,19 @@ private:
+ 
+     
+     // =============================================
+-    // Scratchpad used to do computation (inference)
++    // Starting positions in each instruction stream, in elements (not bytes).
+     // =============================================
+-    std::vector<float> buf_;        
++    struct GroupOffsets {
++        size_t pieces_cnt, pieces, rows;
++        size_t lvl_meta, pos, neg, merges;
++    };
++    std::vector<GroupOffsets> group_offsets_;
++
++    template <class T>
++    static const T* group_cursor(const std::vector<T>& stream, size_t offset) {
++        // Empty streams occur for all-zero blocks; avoid arithmetic on nullptr.
++        return offset ? stream.data() + offset : stream.data();
++    }
+ 
+ public:
+     // kc / g = 0: chosen automatically in prepare() for the cache `level`
+@@ -149,7 +159,7 @@ public:
+         blk_num_seg_.clear(); pieces_cnt.clear(); pieces_.clear(); rows_.clear();
+         lvl_meta_.clear();
+         pos_.clear(); neg_.clear(); merges_.clear();
+-        buf_.clear();
++        group_offsets_.clear();
+ 
+         struct SlotRow { uint16_t slot; uint16_t row; };
+         std::vector<SlotRow> sr;          // All blocks concatenated
+@@ -366,32 +376,75 @@ public:
+         //   pieces_    : (slot, len) of each piece
+         //   rows_      : the len rows of each piece, back to back
+         // =============================================
++
++        struct GroupPrecomp {
++            std::vector<uint16_t> pieces_cnt;
++            std::vector<Piece> pieces;
++            std::vector<uint16_t> rows;
++        };
++
++        int num_groups = (nb + G_ - 1) / G_;
++
++        std::vector<GroupPrecomp> group_data(num_groups);
++
+         rows_.reserve(sr.size());
+         std::vector<size_t> cur(blk_off.begin(), blk_off.end() - 1);   // read cursor per block
+-        for (int g0 = 0; g0 < nb; g0 += G_) {
++
++#ifdef _OPENMP
++        #pragma omp parallel for schedule(static) if(num_groups > 1)
++#endif
++        for (int g = 0; g < num_groups; ++g) {
++            const int g0 = g * G_;
+             const int g1 = std::min(g0 + G_, nb);
++            GroupPrecomp& out = group_data[g];
+             for (int c = 0; c < Nc_; ++c) {
+                 for (int b = g0; b < g1; ++b) {
+-                    const size_t cnt_at = pieces_cnt.size();
+-                    pieces_cnt.push_back(0);
++                    const size_t cnt_at = out.pieces_cnt.size();
++                    out.pieces_cnt.push_back(0);
+                     size_t e = cur[b];
+                     while (e < blk_off[b + 1] && sr[e].row / Kc_ == c) {   // rows of chunk c
+                         const uint16_t slot = sr[e].slot;
+                         uint16_t len = 0;
+                         while (e < blk_off[b + 1] && sr[e].row / Kc_ == c && sr[e].slot == slot) {
+-                            rows_.push_back(sr[e].row);
++                            out.rows.push_back(sr[e].row);
+                             ++len; ++e;
+                         }
+-                        pieces_.push_back({slot, len});
+-                        ++pieces_cnt[cnt_at];
++                        out.pieces.push_back({slot, len});
++                        ++out.pieces_cnt[cnt_at];
+                     }
+                     cur[b] = e;
+                 }
+             }
+         }
+ 
+-        // G_ bufs: block b of a group uses buf_[(b - g0) * max_D_ * B ...]
+-        buf_.assign((size_t) G_ * std::max<size_t>(max_D_, 1) * B, 0.f);
++        group_offsets_.reserve(num_groups);
++        size_t level_offset = 0, pos_offset = 0, neg_offset = 0, merge_offset = 0;
++        for (int g = 0; g < num_groups; ++g) {
++            const GroupPrecomp& out = group_data[g];
++            group_offsets_.push_back({pieces_cnt.size(), pieces_.size(), rows_.size(),
++                                      level_offset, pos_offset, neg_offset, merge_offset});
++            pieces_cnt.insert(
++                pieces_cnt.end(), out.pieces_cnt.begin(), out.pieces_cnt.end()
++            );
++
++            pieces_.insert(
++                pieces_.end(), out.pieces.begin(), out.pieces.end()
++            );
++
++            rows_.insert(
++                rows_.end(), out.rows.begin(), out.rows.end()
++            );
++
++            // Tree streams were concatenated in block order above. Each group
++            // owns consecutive blocks, including a possibly shorter last block.
++            const int g1 = std::min((g + 1) * G_, nb);
++            for (int b = g * G_; b < g1; ++b) {
++                level_offset += block_data[b].lvl_meta.size();
++                pos_offset += block_data[b].pos.size();
++                neg_offset += block_data[b].neg.size();
++                merge_offset += block_data[b].merges.size();
++            }
++        }
+     }
+ 
+     // ------------------------------------------------------------------ inference (TIMED)
+@@ -407,76 +460,90 @@ public:
+         const float * __restrict X = io.X + m;     // column j of the tile starts at X + j * M
+         float * __restrict Y = io.Y + m;
+ 
+-        float *buf = buf_.data();
+         const size_t buf_stride = std::max<size_t>(max_D_, 1) * B;   // one block's buf (slot-major: slot * B + ib)
+         const int num_blocks = (int) blk_num_seg_.size();
++        const int num_groups = (int) group_offsets_.size();
+ 
+-        const uint16_t *p_pieces_cnt    = pieces_cnt.data();
+-        const Piece *p_pieces           = pieces_.data();
+-        const uint16_t *p_rows          = rows_.data();
+-        const LvlMetadata *p_lvl_meta   = lvl_meta_.data();
+-        const uint16_t *p_pos           = pos_.data();
+-        const uint16_t *p_neg           = neg_.data();
+-        const MergeOp *p_merges         = merges_.data();
+-
+-        for (int g0 = 0; g0 < num_blocks; g0 += G_) {
+-            const int g1 = std::min(g0 + G_, num_blocks);
++#ifdef _OPENMP
++        #pragma omp parallel if(num_groups > 1)
++#endif
++        {
++            // each thread gets its own local buffer to write to
++            std::vector<float> local_buf_(G_ * buf_stride);
++            float* local_buf = local_buf_.data();
+ 
+-            // a slot gets pieces from several chunks: start from 0
+-            if constexpr (Chunked) {
+-                for (int b = g0; b < g1; ++b) {
+-                    float *bb = buf + (size_t) (b - g0) * buf_stride;
+-                    const size_t used = (size_t) blk_num_seg_[b] * B;
+-                    for (size_t i = 0; i < used; ++i) bb[i] = 0.f;
++#ifdef _OPENMP
++            #pragma omp for schedule(static)
++#endif
++            for (int g = 0; g < num_groups; ++g) {
++                const int g0 = g * G_;
++                const int g1 = std::min(g0 + G_, num_blocks);
++
++                const GroupOffsets& offsets = group_offsets_[g];
++                const uint16_t *p_pieces_cnt = group_cursor(pieces_cnt, offsets.pieces_cnt);
++                const Piece *p_pieces = group_cursor(pieces_, offsets.pieces);
++                const uint16_t *p_rows = group_cursor(rows_, offsets.rows);
++                const LvlMetadata *p_lvl_meta = group_cursor(lvl_meta_, offsets.lvl_meta);
++                const uint16_t *p_pos = group_cursor(pos_, offsets.pos);
++                const uint16_t *p_neg = group_cursor(neg_, offsets.neg);
++                const MergeOp *p_merges = group_cursor(merges_, offsets.merges);
++
++                // a slot gets pieces from several chunks: start from 0
++                if constexpr (Chunked) {
++                    for (int b = g0; b < g1; ++b) {
++                        float *bb = local_buf + (size_t) (b - g0) * buf_stride;
++                        const size_t used = (size_t) blk_num_seg_[b] * B;
++                        for (size_t i = 0; i < used; ++i) bb[i] = 0.f;
++                    }
+                 }
+-            }
+ 
+-            // Segmented Sum: chunk outer, so the Kc rows of X stay in L1 for all G blocks
+-            for (int c = 0; c < Nc_; ++c) {
+-                for (int b = g0; b < g1; ++b) {
+-                    float *bb = buf + (size_t) (b - g0) * buf_stride;
+-                    const int num_pieces = (int) *(p_pieces_cnt++);
+-                    for (int i = 0; i < num_pieces; ++i) {
+-                        const auto [slot, len] = *(p_pieces++);
+-                        float t[B] = {0.f}; // do computation in registers for low B
+-                        for (int j = 0; j < len; ++j) {
+-                            const float *x_blocked_col = X + M * (size_t) *(p_rows++);
+-                            for (int ib = 0; ib < n; ++ib) t[ib] += x_blocked_col[ib];
++                // Segmented Sum: chunk outer, so the Kc rows of X stay in L1 for all G blocks
++                for (int c = 0; c < Nc_; ++c) {
++                    for (int b = g0; b < g1; ++b) {
++                        float *bb = local_buf + (size_t) (b - g0) * buf_stride;
++                        const int num_pieces = (int) *(p_pieces_cnt++);
++                        for (int i = 0; i < num_pieces; ++i) {
++                            const auto [slot, len] = *(p_pieces++);
++                            float t[B] = {0.f}; // do computation in registers for low B
++                            for (int j = 0; j < len; ++j) {
++                                const float *x_blocked_col = X + M * (size_t) *(p_rows++);
++                                for (int ib = 0; ib < n; ++ib) t[ib] += x_blocked_col[ib];
++                            }
++
++                            // register to mem
++                            float *d = bb + (size_t) slot * B;
++                            if constexpr (Chunked) { for (int ib = 0; ib < n; ++ib) d[ib] += t[ib]; }
++                            else                   { for (int ib = 0; ib < n; ++ib) d[ib] = t[ib]; }
+                         }
+-
+-                        // register to mem
+-                        float *d = bb + (size_t) slot * B;
+-                        if constexpr (Chunked) { for (int ib = 0; ib < n; ++ib) d[ib] += t[ib]; }
+-                        else                   { for (int ib = 0; ib < n; ++ib) d[ib] = t[ib]; }
+                     }
+                 }
+-            }
+ 
+-            // compute the result using the Dynamic Tree Merges (block order, as in v2)
+-            for (int b = g0; b < g1; ++b) {
+-                float *bb = buf + (size_t) (b - g0) * buf_stride;
+-                const int c0 = b * k_;
+-                const int width = std::min(k_, N_ - c0);
+-                for (int l = 0; l < width; ++l) {
+-                    float t[B] = {0.f};
+-                    auto [p_len, n_len, m_len] = *(p_lvl_meta++);
+-                    for (int i = 0; i < p_len; ++i) {
+-                        const float *s = bb + (size_t) *(p_pos++) * B;
+-                        for (int ib = 0; ib < n; ++ib) t[ib] += s[ib];
+-                    }
+-                    for (int i = 0; i < n_len; ++i) {
+-                        const float *s = bb + (size_t) *(p_neg++) * B;
+-                        for (int ib = 0; ib < n; ++ib) t[ib] -= s[ib];
+-                    }
+-                    float *y = Y + (size_t) (c0 + l) * M;
+-                    for (int ib = 0; ib < n; ++ib) y[ib] = t[ib];
+-
+-                    // merge
+-                    for (int i = 0; i < m_len; ++i) {
+-                        auto [dst, src] = *(p_merges++);
+-                        float *d = bb + (size_t) dst * B;
+-                        const float *s = bb + (size_t) src * B;
+-                        for (int ib = 0; ib < n; ++ib) d[ib] += s[ib];
++                // compute the result using the Dynamic Tree Merges (block order, as in v2)
++                for (int b = g0; b < g1; ++b) {
++                    float *bb = local_buf + (size_t) (b - g0) * buf_stride;
++                    const int c0 = b * k_;
++                    const int width = std::min(k_, N_ - c0);
++                    for (int l = 0; l < width; ++l) {
++                        float t[B] = {0.f};
++                        auto [p_len, n_len, m_len] = *(p_lvl_meta++);
++                        for (int i = 0; i < p_len; ++i) {
++                            const float *s = bb + (size_t) *(p_pos++) * B;
++                            for (int ib = 0; ib < n; ++ib) t[ib] += s[ib];
++                        }
++                        for (int i = 0; i < n_len; ++i) {
++                            const float *s = bb + (size_t) *(p_neg++) * B;
++                            for (int ib = 0; ib < n; ++ib) t[ib] -= s[ib];
++                        }
++                        float *y = Y + (size_t) (c0 + l) * M;
++                        for (int ib = 0; ib < n; ++ib) y[ib] = t[ib];
++
++                        // merge
++                        for (int i = 0; i < m_len; ++i) {
++                            auto [dst, src] = *(p_merges++);
++                            float *d = bb + (size_t) dst * B;
++                            const float *s = bb + (size_t) src * B;
++                            for (int ib = 0; ib < n; ++ib) d[ib] += s[ib];
++                        }
+                     }
+                 }
+             }
+@@ -501,7 +568,8 @@ public:
+         return blk_num_seg_.size() * sizeof(uint16_t) + pieces_cnt.size() * sizeof(uint16_t) +
+                pieces_.size() * sizeof(Piece) + rows_.size() * sizeof(uint16_t) +
+                lvl_meta_.size() * sizeof(LvlMetadata) + pos_.size() * sizeof(uint16_t) +
+-               neg_.size() * sizeof(uint16_t) + merges_.size() * sizeof(MergeOp);
++               neg_.size() * sizeof(uint16_t) + merges_.size() * sizeof(MergeOp) +
++               group_offsets_.size() * sizeof(GroupOffsets);
+     }
+ 
+     // Additions per row of X: one per non-zero row, one per extra piece of a slot (adding the
+diff --git a/tests/test_correctness.cpp b/tests/test_correctness.cpp
+index 9a5e0a3..f127355 100644
+--- a/tests/test_correctness.cpp
++++ b/tests/test_correctness.cpp
+@@ -81,6 +81,46 @@ static std::pair<int, int> check_spr_examples(Kernel& kern) {
+     return {pass, fail};
+ }
+ 
++// V5 groups must start their cursors independently, even after empty groups.
++// Fixed kc/g variants force multiple chunks and groups on these ragged shapes.
++static std::pair<int, int> check_v5_parallel_groups(Kernel& kern) {
++    std::vector<Problem> problems;
++    for (int kind = 0; kind < 3; ++kind) {
++        Problem P = make_problem(35, 1100, 65, kind == 2 ? 1.0 : 0.5, 8123);
++        if (kind == 1) {
++            // At k=3, this empties the first group of both fixed G=4 and G=8
++            // variants. Later groups must still start at the correct cursors.
++            for (int r = 0; r < P.K; ++r)
++                std::fill_n(P.W.data() + (size_t)r * P.N, 24, int8_t{0});
++            reference_gemm(P.X.data(), P.W.data(), P.Yref.data(), P.M, P.K, P.N);
++        }
++        problems.push_back(std::move(P));
++    }
++    int pass = 0, fail = 0;
++    const int saved_threads = omp_get_max_threads();
++    for (int threads : {1, 2, 4, 10, 14}) {
++        set_threads(threads);
++        for (const auto& P : problems) {
++            for (int k : {3, 8}) {
++                Params p; p.k = k; p.threads = threads;
++                kern.prepare(P.W.data(), P.K, P.N, p);
++                Bound b(&kern, P);
++                bool ok = true;
++                // Repeated inference must reset scratch and all seven cursors.
++                for (int repeat = 0; repeat < 3; ++repeat)
++                    ok = b.verify(P) <= tolerance(P.K) && ok;
++                if (ok) ++pass;
++                else {
++                    ++fail;
++                    std::printf("    wrong V5 groups: threads=%d k=%d\n", threads, k);
++                }
++            }
++        }
++    }
++    set_threads(saved_threads);
++    return {pass, fail};
++}
++
+ int main(int argc, char** argv) {
+     std::vector<std::string> filters(argv + 1, argv + argc);
+     auto selected = [&](const std::string& name) {
+@@ -111,6 +151,11 @@ int main(int argc, char** argv) {
+             pass += examples.first;
+             fail += examples.second;
+         }
++        if (name.rfind("spr.v5.", 0) == 0) {
++            const auto groups = check_v5_parallel_groups(*kern);
++            pass += groups.first;
++            fail += groups.second;
++        }
+         bool not_impl = false;
+         for (const auto& P : problems) {
+             for (int k : ks) {

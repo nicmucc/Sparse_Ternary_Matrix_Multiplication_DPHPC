@@ -1,0 +1,11 @@
+{
+  "configurations": 2688,
+  "failed_configurations": 0,
+  "inference_rounds": [
+    11
+  ],
+  "maximum_absolute_error": 0.000221252,
+  "correctness_cases_passed": 4095,
+  "correctness_cases_failed": 0,
+  "plot_command": "/usr/bin/python3 bench/spr_threads.py --plots-only results/20261113-205007_spr_v5_threads"
+}

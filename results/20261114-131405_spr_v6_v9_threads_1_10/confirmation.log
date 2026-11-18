@@ -1,0 +1,64 @@
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 4096 --s .5 --k 8 --threads 1 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm0_high_k8 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=8        6.249 ms  prep      25.2 ms 
+s=0.50 spr.v9.b32                                                             k=8        7.658 ms  prep      24.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 4096 --s .5 --k 8 --threads 10 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm0_high_k8 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=8        0.767 ms  prep      25.1 ms 
+s=0.50 spr.v9.b32                                                             k=8        0.893 ms  prep      24.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 1024 --N 4096 --s .5 --k 6 --threads 1 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm0_high_k6 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=6       47.554 ms  prep      29.0 ms 
+s=0.50 spr.v9.b32                                                             k=6       40.341 ms  prep      28.3 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 1024 --N 4096 --s .5 --k 6 --threads 10 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm0_high_k6 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=6        5.572 ms  prep      27.9 ms 
+s=0.50 spr.v9.b32                                                             k=6        4.966 ms  prep      27.5 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 1024 --N 4096 --s .5 --k 4 --threads 1 --sparsity-pattern column_clustered --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm0_clustered --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=4        7.127 ms  prep      26.0 ms 
+s=0.50 spr.v9.b32                                                             k=4        6.832 ms  prep      26.1 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 1024 --N 4096 --s .5 --k 4 --threads 10 --sparsity-pattern column_clustered --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm0_clustered --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=4        0.999 ms  prep      25.1 ms 
+s=0.50 spr.v9.b32                                                             k=4        1.445 ms  prep      24.8 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 63 --K 1024 --N 4096 --s .5 --k 4 --threads 1 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm0_tail --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=4        7.306 ms  prep      39.5 ms 
+s=0.50 spr.v9.b32                                                             k=4        7.409 ms  prep      38.8 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 63 --K 1024 --N 4096 --s .5 --k 4 --threads 10 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm0_tail --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=4        1.164 ms  prep      39.2 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.916 ms  prep      38.8 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 4096 --s .5 --k 8 --threads 1 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm1_high_k8 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=8        6.282 ms  prep      26.6 ms 
+s=0.50 spr.v9.b32                                                             k=8        7.788 ms  prep      25.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 4096 --s .5 --k 8 --threads 10 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm1_high_k8 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=8        0.795 ms  prep      25.5 ms 
+s=0.50 spr.v9.b32                                                             k=8        0.945 ms  prep      24.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 1024 --N 4096 --s .5 --k 6 --threads 1 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm1_high_k6 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=6       47.866 ms  prep      28.9 ms 
+s=0.50 spr.v9.b32                                                             k=6       40.434 ms  prep      28.2 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 1024 --N 4096 --s .5 --k 6 --threads 10 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm1_high_k6 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=6        5.732 ms  prep      28.1 ms 
+s=0.50 spr.v9.b32                                                             k=6        5.135 ms  prep      27.8 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 1024 --N 4096 --s .5 --k 4 --threads 1 --sparsity-pattern column_clustered --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm1_clustered --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=4        7.264 ms  prep      26.2 ms 
+s=0.50 spr.v9.b32                                                             k=4        6.855 ms  prep      25.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 1024 --N 4096 --s .5 --k 4 --threads 10 --sparsity-pattern column_clustered --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm1_clustered --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=4        1.068 ms  prep      25.5 ms 
+s=0.50 spr.v9.b32                                                             k=4        1.455 ms  prep      25.6 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 63 --K 1024 --N 4096 --s .5 --k 4 --threads 1 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm1_tail --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=4        7.308 ms  prep      40.1 ms 
+s=0.50 spr.v9.b32                                                             k=4        7.411 ms  prep      38.7 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 63 --K 1024 --N 4096 --s .5 --k 4 --threads 10 --sparsity-pattern iid --kernels =spr.v6.b32,=spr.v9.b32 --rounds 61 --warmup 3 --verify none --ref-rows 0 --seed 42 --tag confirm1_tail --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/confirmation.csv
+s=0.50 spr.v6.b32                                                             k=4        1.121 ms  prep      39.5 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.922 ms  prep      38.9 ms 

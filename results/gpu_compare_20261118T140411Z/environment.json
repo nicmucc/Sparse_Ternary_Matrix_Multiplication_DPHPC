@@ -1,0 +1,48 @@
+{
+  "utc": "20261118T140411Z",
+  "suite": "full",
+  "samples": 30,
+  "arch": "native",
+  "seed": 42,
+  "warmups": 5,
+  "validation": "Full reference when M*K*N <= 1e7; otherwise 8 rows x 64 columns, plus all-output finite check",
+  "cache_policy": "Repeated identical X and W; no explicit cache flush",
+  "sources": {
+    "gpu/spr/spr_v1.cu": "e7d6a04df7ccabab674f1658c9fd564f0c50cb193cb74a8cc46da54a9c7b331f",
+    "gpu/spr/spr_v2.cu": "d695c09e1db55ae3e4689f90dbaeb4be789b2e0701456774f6b00563b6293db6",
+    "include/spr/kernel.hpp": "7f89d64882e097d28fcf99854253da7e044a7bc0117e6459a516431adeafe7e3",
+    "bench/bench_gpu_compare.cu": "f1b5f439dc7ef279cf291c1b35a1e673e555828e2c028553945566b708c0fe33",
+    "bench/run_gpu_compare.py": "77ad620b3f47a9c008069603b9c5ca48c12c76ad6b43fb180b9c81aeba7830c1",
+    "bench/gpu_compare.sbatch": "a06d605678467feaa9204c36d33cf0cc75f0dfdcae717b11ededce6b2d74ecb8"
+  },
+  "commands": [
+    [
+      "nvcc",
+      "-O3",
+      "-std=c++17",
+      "-lineinfo",
+      "-arch=native",
+      "-I/home/araybaut/spr-gpu-compare/include",
+      "-DSPR_BENCH_SOURCE=\"/home/araybaut/spr-gpu-compare/results/gpu_compare_20261118T140411Z/build/instrumented_v1.cu\"",
+      "/home/araybaut/spr-gpu-compare/bench/bench_gpu_compare.cu",
+      "-o",
+      "/home/araybaut/spr-gpu-compare/results/gpu_compare_20261118T140411Z/build/bench_v1"
+    ],
+    [
+      "nvcc",
+      "-O3",
+      "-std=c++17",
+      "-lineinfo",
+      "-arch=native",
+      "-I/home/araybaut/spr-gpu-compare/include",
+      "-DSPR_BENCH_SOURCE=\"/home/araybaut/spr-gpu-compare/results/gpu_compare_20261118T140411Z/build/instrumented_v2.cu\"",
+      "/home/araybaut/spr-gpu-compare/bench/bench_gpu_compare.cu",
+      "-o",
+      "/home/araybaut/spr-gpu-compare/results/gpu_compare_20261118T140411Z/build/bench_v2"
+    ]
+  ],
+  "gpu": "Wed Nov 18 15:04:12 2026       \n+-----------------------------------------------------------------------------------------+\n| NVIDIA-SMI 615.71.09              KMD Version: 615.71.09     CUDA UMD Version: 13.4     |\n+-----------------------------------------+------------------------+----------------------+\n| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |\n| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |\n|                                         |                        |               MIG M. |\n|=========================================+========================+======================|\n|   0  NVIDIA GeForce RTX 2080 Ti     On  |   00000000:1B:00.0 Off |                  N/A |\n|  0%   30C    P8              1W /  250W |       1MiB /  11264MiB |      0%      Default |\n|                                         |                        |                  N/A |\n+-----------------------------------------+------------------------+----------------------+\n\n+-----------------------------------------------------------------------------------------+\n| Processes:                                                                              |\n|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |\n|        ID   ID                                                               Usage      |\n|=========================================================================================|\n|  No running processes found                                                             |\n+-----------------------------------------------------------------------------------------+\n",
+  "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Tue_May_27_02:21:03_PDT_2025\nCuda compilation tools, release 12.9, V12.9.86\nBuild cuda_12.9.r12.9/compiler.36037853_0\n",
+  "host": "studgpu-node13.inf.ethz.ch\n",
+  "allocation": "4443\n"
+}
