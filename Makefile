@@ -106,7 +106,7 @@ OBJECTS      := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(filter %.cpp,$(SOURCES))) \
 TEST_MAIN    := $(OBJ_DIR)/tests/test_correctness.o
 # The benchmark adapter compiles Ahmed's original v8 source plus the fixed-tile factory.
 BENCH_OBJECTS := $(filter-out $(OBJ_DIR)/cpu/spr/spr_v8.o,$(OBJECTS)) $(OBJ_DIR)/bench/v8_adapter.o
-BENCH_MAIN   := $(OBJ_DIR)/bench/bench_cpu.o
+BENCH_MAIN   := $(OBJ_DIR)/bench/bench.o
 ifeq ($(shell uname -s),Linux)
 ifeq ($(findstring clang,$(CXX_ID)),)
   BENCH_TEAM_LINK := -Wl,--wrap=GOMP_parallel
@@ -114,7 +114,7 @@ ifeq ($(findstring clang,$(CXX_ID)),)
 endif
 endif
 # Preserve NaN checks in the original verifier under the release fast-math flags.
-$(BENCH_MAIN): EXTRA += -fno-finite-math-only
+$(BENCH_MAIN): EXTRA += -DSPR_BENCH_CPU -fno-finite-math-only
 
 TEST_BIN     := $(BUILD_DIR)/test_correctness
 BENCH_BIN    := $(BUILD_DIR)/bench_cpu
@@ -123,6 +123,8 @@ BUILD_CONFIG := $(BUILD_DIR)/config.txt
 
 GPU_BUILD_DIR := $(BUILD_DIR)/gpu
 GPU_TEST_BIN := $(GPU_BUILD_DIR)/test_correctness
+GPU_BENCH_BIN := $(GPU_BUILD_DIR)/bench_gpu
+GPU_BENCH_SRCS := cpu/core.cpp bench/bench.cpp $(wildcard gpu/spr/*.cu)
 GPU_SRCS := cpu/core.cpp tests/test_correctness.cpp $(wildcard gpu/spr/*.cu)
 GPU_HEADERS := $(wildcard include/spr/*.hpp)
 
@@ -148,7 +150,7 @@ endif
 # --- Build -------------------------------------------------------------------
 
 .DEFAULT_GOAL := build
-.PHONY: build test bench plots data clean help FORCE build-gpu test-gpu
+.PHONY: build test bench plots data clean help FORCE build-gpu test-gpu bench-gpu
 
 build: $(TEST_BIN) $(BENCH_BIN) $(PEAKS_BIN)
 
@@ -177,13 +179,22 @@ $(PEAKS_BIN): bench/peaks.cpp $(BUILD_CONFIG) $(BUILD_CHANGED)
 
 -include $(OBJ_DIR)/bench/v8_adapter.d $(OBJECTS:.o=.d) $(TEST_MAIN:.o=.d) $(BENCH_MAIN:.o=.d)
 
-build-gpu: $(GPU_TEST_BIN)
+build-gpu: $(GPU_TEST_BIN) $(GPU_BENCH_BIN)
 
 $(GPU_TEST_BIN): $(GPU_SRCS) $(GPU_HEADERS) Makefile
 	@mkdir -p "$(@D)"
 	$(NVCC) -ccbin "$(CXX)" $(CPPFLAGS) $(NVCCFLAGS) \
 		-arch=$(CUDA_ARCH) -Xcompiler=-fopenmp \
 		$(GPU_SRCS) -o "$@"
+
+$(GPU_BENCH_BIN): $(GPU_BENCH_SRCS) $(GPU_HEADERS) Makefile
+	@mkdir -p "$(@D)"
+	$(NVCC) -ccbin "$(CXX)" $(CPPFLAGS) $(NVCCFLAGS) \
+		-arch=$(CUDA_ARCH) -Xcompiler=-fopenmp \
+		$(GPU_BENCH_SRCS) -o "$@"
+
+bench-gpu: $(GPU_BENCH_BIN)
+	$(RUN_ENV) "$(GPU_BENCH_BIN)" $(BENCH_ARGS)
 
 test-gpu: $(GPU_TEST_BIN)
 	"$(GPU_TEST_BIN)" $(TEST_ARGS)
@@ -215,7 +226,7 @@ help:
 	@printf '%s\n' \
 		'make                 Build test_correctness, bench_cpu and peaks into build/<profile>/' \
 		'make test            Correctness of every kernel vs an FP64 reference (TEST_ARGS="spr. tcsc." filters)' \
-		'make bench           Run bench_cpu with BENCH_ARGS (see bench/bench_cpu.cpp)' \
+		'make bench           Run bench_cpu with BENCH_ARGS (see bench/bench.cpp)' \
 		'make plots           Offline campaign plots (RESULTS=campaign directory, optional PLOT_DIR)' \
 		'make data            Generate saved datasets (OVERWRITE=1 regenerates)' \
 		'make clean           Remove the build directory of the selected profile' \

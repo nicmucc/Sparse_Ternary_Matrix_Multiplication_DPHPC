@@ -337,11 +337,15 @@ public:
     }
     
     // ------------------------------------------------------------------ accounting (CPU)
-    // Format as stored here: every index is a 4-byte int (an obvious place to shrink: uint16). 
-    // TODO: fill out
     size_t bytes() const override {
-        size_t n = 0;
-        return n * sizeof(int);
+        size_t n = blocks_.size() * sizeof(DeviceBlock);
+        for (const Block& b : blocks_) {
+            n += (b.rows.size() + b.seg_end.size()) * sizeof(int);
+            n += b.levels.size() * sizeof(DeviceLevel);
+            for (const Level& l : b.levels)
+                n += (l.pos.size() + l.neg.size() + 2 * l.merge.size()) * sizeof(int);
+        }
+        return n;
     }
 
     // Additions per row of X: segmented sums + output terms + merges.

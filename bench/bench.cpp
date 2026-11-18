@@ -1,4 +1,4 @@
-// CPU benchmark driver. One process = one shape, a list of sparsities, a list of kernels and
+// Shared CPU/GPU benchmark driver. One process = one shape, a list of sparsities, a list of kernels and
 // a list of k values. All (kernel, k) configurations are timed INTERLEAVED (round-robin with a
 // rotating start) so machine drift hits every kernel equally; the median is reported.
 //
@@ -35,9 +35,11 @@
 
 #include "spr/harness.hpp"
 
+#ifdef SPR_BENCH_CPU
 namespace spr {
 std::unique_ptr<Kernel> make_fixed_v8(int b, int kc, int g);
 }
+#endif
 using namespace spr;
 
 // On the GCC cluster build, observe the team inside the untimed verification
@@ -188,6 +190,7 @@ int main(int argc, char** argv) {
     for (auto& x : split(k_list)) ks_default.push_back(std::stoi(x));
     std::vector<std::pair<std::string, std::vector<int>>> configs;
     auto pats = split(kernels);
+#ifdef SPR_BENCH_CPU
     for (const auto& pattern : pats) {
         int b, kc, g, end = 0;
         auto exact = pattern.substr(0, pattern.find('@'));
@@ -196,6 +199,7 @@ int main(int argc, char** argv) {
             registry()[exact.substr(1)] = [=] { return make_fixed_v8(b,kc,g); };
         }
     }
+#endif
     for (auto& n : kernel_names()) {
         if (pats.empty()) { configs.push_back({n, ks_default}); continue; }
         for (auto& p : pats) {
