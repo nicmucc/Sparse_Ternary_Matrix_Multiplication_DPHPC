@@ -123,9 +123,13 @@ BUILD_CONFIG := $(BUILD_DIR)/config.txt
 
 GPU_BUILD_DIR := $(BUILD_DIR)/gpu
 GPU_TEST_BIN := $(GPU_BUILD_DIR)/test_correctness
+GPU_EDGE_TEST_BIN := $(GPU_BUILD_DIR)/test_gpu_correctness
 GPU_BENCH_BIN := $(GPU_BUILD_DIR)/bench_gpu
-GPU_BENCH_SRCS := cpu/core.cpp bench/bench.cpp $(wildcard gpu/spr/*.cu)
-GPU_SRCS := cpu/core.cpp tests/test_correctness.cpp $(wildcard gpu/spr/*.cu)
+GPU_KERNEL_SRCS := $(wildcard gpu/spr/*.cu)
+GPU_COMMON_SRCS := cpu/core.cpp $(GPU_KERNEL_SRCS)
+GPU_BENCH_SRCS := $(GPU_COMMON_SRCS) bench/bench.cpp
+GPU_SRCS := $(GPU_COMMON_SRCS) tests/test_correctness.cpp
+GPU_EDGE_TEST_SRCS := $(GPU_COMMON_SRCS) tests/test_gpu_correctness.cpp
 GPU_HEADERS := $(wildcard include/spr/*.hpp)
 
 RUN_ENV := OMP_NUM_THREADS=$(THREADS) OPENBLAS_NUM_THREADS=$(THREADS) VECLIB_MAXIMUM_THREADS=$(THREADS)
@@ -179,7 +183,7 @@ $(PEAKS_BIN): bench/peaks.cpp $(BUILD_CONFIG) $(BUILD_CHANGED)
 
 -include $(OBJ_DIR)/bench/v8_adapter.d $(OBJECTS:.o=.d) $(TEST_MAIN:.o=.d) $(BENCH_MAIN:.o=.d)
 
-build-gpu: $(GPU_TEST_BIN) $(GPU_BENCH_BIN)
+build-gpu: $(GPU_TEST_BIN) $(GPU_EDGE_TEST_BIN) $(GPU_BENCH_BIN)
 
 $(GPU_TEST_BIN): $(GPU_SRCS) $(GPU_HEADERS) Makefile
 	@mkdir -p "$(@D)"
@@ -193,11 +197,18 @@ $(GPU_BENCH_BIN): $(GPU_BENCH_SRCS) $(GPU_HEADERS) Makefile
 		-arch=$(CUDA_ARCH) -Xcompiler=-fopenmp \
 		$(GPU_BENCH_SRCS) -o "$@"
 
+$(GPU_EDGE_TEST_BIN): $(GPU_EDGE_TEST_SRCS) $(GPU_HEADERS) Makefile
+	@mkdir -p "$(@D)"
+	$(NVCC) -ccbin "$(CXX)" $(CPPFLAGS) $(NVCCFLAGS) \
+		-arch=$(CUDA_ARCH) -Xcompiler=-fopenmp \
+		$(GPU_EDGE_TEST_SRCS) -o "$@"
+
 bench-gpu: $(GPU_BENCH_BIN)
 	$(RUN_ENV) "$(GPU_BENCH_BIN)" $(BENCH_ARGS)
 
-test-gpu: $(GPU_TEST_BIN)
+test-gpu: $(GPU_TEST_BIN) $(GPU_EDGE_TEST_BIN)
 	"$(GPU_TEST_BIN)" $(TEST_ARGS)
+	"$(GPU_EDGE_TEST_BIN)" $(TEST_ARGS)
 
 # --- Test and benchmark ------------------------------------------------------
 
@@ -227,9 +238,13 @@ help:
 		'make                 Build test_correctness, bench_cpu and peaks into build/<profile>/' \
 		'make test            Correctness of every kernel vs an FP64 reference (TEST_ARGS="spr. tcsc." filters)' \
 		'make bench           Run bench_cpu with BENCH_ARGS (see bench/bench.cpp)' \
+		'make build-gpu       Build CUDA kernels, both correctness suites and bench_gpu (requires NVCC)' \
+		'make test-gpu        Run common correctness and GPU edge cases (TEST_ARGS filters)' \
+		'make bench-gpu       Run bench_gpu with BENCH_ARGS' \
 		'make plots           Offline campaign plots (RESULTS=campaign directory, optional PLOT_DIR)' \
 		'make data            Generate saved datasets (OVERWRITE=1 regenerates)' \
 		'make clean           Remove the build directory of the selected profile' \
 		'' \
 		'PROFILE=release|sanitizer   separate build per profile' \
-		'THREADS=n                   threads for make bench'
+		'THREADS=n                   threads for make bench' \
+		'NVCC=nvcc CUDA_ARCH=native   CUDA compiler and target architecture'

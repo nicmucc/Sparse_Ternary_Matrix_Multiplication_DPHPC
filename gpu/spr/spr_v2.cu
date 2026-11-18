@@ -9,6 +9,8 @@
 #include "spr/kernel.hpp"
 
 namespace spr {
+// Keep implementation symbols private when all CUDA versions are linked together.
+namespace {
 
 void cuda_check(cudaError_t status, const char* operation) {
     if (status != cudaSuccess)
@@ -437,4 +439,5 @@ public:
 };
 
 SPR_REGISTER_KERNEL("spr.v2.cuda", SPRV2CUDA);
-}
+} // namespace
+} // namespace spr

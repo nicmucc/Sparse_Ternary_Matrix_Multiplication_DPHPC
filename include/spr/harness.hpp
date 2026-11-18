@@ -1,6 +1,6 @@
 #pragma once
 // Runs one Kernel on one problem. Shared by tests/test_correctness.cpp and
-// bench/bench_cpu.cpp so both exercise the kernels in exactly the same way.
+// bench/bench.cpp so both exercise the kernels in exactly the same way.
 #include <omp.h>
 
 #include <algorithm>

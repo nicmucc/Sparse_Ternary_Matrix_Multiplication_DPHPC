@@ -1,8 +1,10 @@
 # SPR v1 versus v2 on the student GPU cluster
 
-Run from an extracted project root containing the files below. Original kernels
-are not edited. Each version is compiled into its own executable to avoid their
-duplicate helper symbols. Requires Python 3 and a CUDA toolkit compatible with
+Run from the project root. Original kernels are not edited. Each version is
+compiled into its own executable to instrument and measure it independently.
+For routine builds and correctness checks of all CUDA kernels, use
+`make build-gpu` and `make test-gpu` (see the root README).
+Requires Python 3 and a CUDA toolkit compatible with
 the allocated GPU; the supplied Slurm script requests one 2080 Ti and CUDA 12.9.
 
 ## Submit
