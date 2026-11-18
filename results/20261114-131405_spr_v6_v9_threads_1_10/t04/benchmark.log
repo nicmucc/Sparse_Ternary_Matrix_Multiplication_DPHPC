@@ -1,0 +1,342 @@
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 32 --K 1024 --N 4096 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.408 ms  prep      71.3 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.413 ms  prep      59.4 ms 
+s=0.50 spr.v6.b32                                                             k=4        0.459 ms  prep      39.7 ms 
+s=0.50 spr.v9.b32                                                             k=2        0.407 ms  prep      71.0 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.406 ms  prep      59.5 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.460 ms  prep      39.8 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.159 ms  prep      20.3 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.181 ms  prep      20.3 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.170 ms  prep      16.5 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.158 ms  prep      20.5 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.181 ms  prep      20.5 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.168 ms  prep      16.7 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 32 --K 4096 --N 1024 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.392 ms  prep      85.2 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.416 ms  prep      71.2 ms 
+s=0.50 spr.v6.b32                                                             k=4        0.540 ms  prep      43.1 ms 
+s=0.50 spr.v9.b32                                                             k=2        0.393 ms  prep      84.6 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.410 ms  prep      71.1 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.532 ms  prep      43.2 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.151 ms  prep      24.0 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.195 ms  prep      24.1 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.212 ms  prep      17.9 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.155 ms  prep      23.8 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.194 ms  prep      24.4 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.256 ms  prep      17.6 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 32 --K 2048 --N 8192 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        1.568 ms  prep     323.2 ms 
+s=0.50 spr.v6.b32                                                             k=3        1.528 ms  prep     271.6 ms 
+s=0.50 spr.v6.b32                                                             k=4        2.143 ms  prep     172.8 ms 
+s=0.50 spr.v9.b32                                                             k=2        1.566 ms  prep     325.5 ms 
+s=0.50 spr.v9.b32                                                             k=3        1.494 ms  prep     282.5 ms 
+s=0.50 spr.v9.b32                                                             k=4        2.165 ms  prep     176.2 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.557 ms  prep      98.4 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.681 ms  prep      96.7 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.832 ms  prep      74.8 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.551 ms  prep      99.1 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.660 ms  prep      99.1 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.772 ms  prep      75.1 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 4096 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.999 ms  prep      72.2 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.966 ms  prep      60.7 ms 
+s=0.50 spr.v6.b32                                                             k=4        1.172 ms  prep      40.5 ms 
+s=0.50 spr.v9.b32                                                             k=2        1.011 ms  prep      73.4 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.991 ms  prep      60.8 ms 
+s=0.50 spr.v9.b32                                                             k=4        1.224 ms  prep      40.6 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.377 ms  prep      20.7 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.395 ms  prep      20.8 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.442 ms  prep      17.2 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.356 ms  prep      21.2 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.387 ms  prep      20.9 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.399 ms  prep      17.3 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 4096 --N 1024 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.987 ms  prep      88.1 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.938 ms  prep      72.8 ms 
+s=0.50 spr.v6.b32                                                             k=4        1.103 ms  prep      43.7 ms 
+s=0.50 spr.v9.b32                                                             k=2        0.994 ms  prep      86.9 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.939 ms  prep      72.4 ms 
+s=0.50 spr.v9.b32                                                             k=4        1.107 ms  prep      44.0 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.319 ms  prep      25.6 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.376 ms  prep      24.9 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.429 ms  prep      17.9 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.314 ms  prep      24.3 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.372 ms  prep      24.7 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.431 ms  prep      17.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 2048 --N 8192 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        3.989 ms  prep     332.9 ms 
+s=0.50 spr.v6.b32                                                             k=3        3.682 ms  prep     280.4 ms 
+s=0.50 spr.v6.b32                                                             k=4        4.445 ms  prep     174.1 ms 
+s=0.50 spr.v9.b32                                                             k=2        3.835 ms  prep     325.2 ms 
+s=0.50 spr.v9.b32                                                             k=3        3.749 ms  prep     276.2 ms 
+s=0.50 spr.v9.b32                                                             k=4        4.709 ms  prep     174.7 ms 
+s=0.90 spr.v6.b32                                                             k=2        1.246 ms  prep      97.4 ms 
+s=0.90 spr.v6.b32                                                             k=3        1.401 ms  prep      97.4 ms 
+s=0.90 spr.v6.b32                                                             k=4        1.654 ms  prep      74.8 ms 
+s=0.90 spr.v9.b32                                                             k=2        1.217 ms  prep      98.6 ms 
+s=0.90 spr.v9.b32                                                             k=3        1.407 ms  prep      97.5 ms 
+s=0.90 spr.v9.b32                                                             k=4        1.646 ms  prep      75.2 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 256 --K 1024 --N 4096 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        6.468 ms  prep      70.9 ms 
+s=0.50 spr.v6.b32                                                             k=3        5.506 ms  prep      59.3 ms 
+s=0.50 spr.v6.b32                                                             k=4        4.788 ms  prep      40.0 ms 
+s=0.50 spr.v9.b32                                                             k=2        6.570 ms  prep      72.5 ms 
+s=0.50 spr.v9.b32                                                             k=3        5.463 ms  prep      59.4 ms 
+s=0.50 spr.v9.b32                                                             k=4        4.805 ms  prep      39.6 ms 
+s=0.90 spr.v6.b32                                                             k=2        1.781 ms  prep      20.7 ms 
+s=0.90 spr.v6.b32                                                             k=3        1.929 ms  prep      21.1 ms 
+s=0.90 spr.v6.b32                                                             k=4        1.833 ms  prep      16.8 ms 
+s=0.90 spr.v9.b32                                                             k=2        1.807 ms  prep      20.9 ms 
+s=0.90 spr.v9.b32                                                             k=3        1.820 ms  prep      21.4 ms 
+s=0.90 spr.v9.b32                                                             k=4        1.792 ms  prep      17.3 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 256 --K 4096 --N 1024 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        6.353 ms  prep      86.2 ms 
+s=0.50 spr.v6.b32                                                             k=3        5.162 ms  prep      74.6 ms 
+s=0.50 spr.v6.b32                                                             k=4        4.671 ms  prep      44.1 ms 
+s=0.50 spr.v9.b32                                                             k=2        6.570 ms  prep      85.4 ms 
+s=0.50 spr.v9.b32                                                             k=3        5.292 ms  prep      72.8 ms 
+s=0.50 spr.v9.b32                                                             k=4        4.816 ms  prep      44.0 ms 
+s=0.90 spr.v6.b32                                                             k=2        1.703 ms  prep      24.9 ms 
+s=0.90 spr.v6.b32                                                             k=3        1.768 ms  prep      25.0 ms 
+s=0.90 spr.v6.b32                                                             k=4        1.854 ms  prep      18.4 ms 
+s=0.90 spr.v9.b32                                                             k=2        1.757 ms  prep      24.7 ms 
+s=0.90 spr.v9.b32                                                             k=3        1.780 ms  prep      24.8 ms 
+s=0.90 spr.v9.b32                                                             k=4        1.891 ms  prep      19.0 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 256 --K 2048 --N 8192 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2       25.106 ms  prep     326.7 ms 
+s=0.50 spr.v6.b32                                                             k=3       20.614 ms  prep     276.9 ms 
+s=0.50 spr.v6.b32                                                             k=4       17.693 ms  prep     174.7 ms 
+s=0.50 spr.v9.b32                                                             k=2       25.083 ms  prep     328.2 ms 
+s=0.50 spr.v9.b32                                                             k=3       20.414 ms  prep     273.9 ms 
+s=0.50 spr.v9.b32                                                             k=4       17.616 ms  prep     177.6 ms 
+s=0.90 spr.v6.b32                                                             k=2        6.772 ms  prep     100.0 ms 
+s=0.90 spr.v6.b32                                                             k=3        7.133 ms  prep      99.3 ms 
+s=0.90 spr.v6.b32                                                             k=4        6.782 ms  prep      75.4 ms 
+s=0.90 spr.v9.b32                                                             k=2        6.671 ms  prep      99.7 ms 
+s=0.90 spr.v9.b32                                                             k=3        6.788 ms  prep      98.2 ms 
+s=0.90 spr.v9.b32                                                             k=4        6.671 ms  prep      74.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 1024 --N 4096 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        6.566 ms  prep      70.9 ms 
+s=0.50 spr.v6.b32                                                             k=3        5.883 ms  prep      59.7 ms 
+s=0.50 spr.v6.b32                                                             k=4        5.527 ms  prep      39.6 ms 
+s=0.50 spr.v9.b32                                                             k=2        6.139 ms  prep      70.5 ms 
+s=0.50 spr.v9.b32                                                             k=3        5.580 ms  prep      59.7 ms 
+s=0.50 spr.v9.b32                                                             k=4        6.083 ms  prep      39.1 ms 
+s=0.90 spr.v6.b32                                                             k=2        1.888 ms  prep      20.2 ms 
+s=0.90 spr.v6.b32                                                             k=3        2.153 ms  prep      20.4 ms 
+s=0.90 spr.v6.b32                                                             k=4        1.951 ms  prep      16.8 ms 
+s=0.90 spr.v9.b32                                                             k=2        1.748 ms  prep      20.3 ms 
+s=0.90 spr.v9.b32                                                             k=3        1.993 ms  prep      20.7 ms 
+s=0.90 spr.v9.b32                                                             k=4        2.194 ms  prep      16.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 4096 --N 1024 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        6.448 ms  prep      85.8 ms 
+s=0.50 spr.v6.b32                                                             k=3        5.583 ms  prep      72.0 ms 
+s=0.50 spr.v6.b32                                                             k=4        5.932 ms  prep      43.6 ms 
+s=0.50 spr.v9.b32                                                             k=2        6.328 ms  prep      85.0 ms 
+s=0.50 spr.v9.b32                                                             k=3        5.469 ms  prep      71.9 ms 
+s=0.50 spr.v9.b32                                                             k=4        6.151 ms  prep      43.2 ms 
+s=0.90 spr.v6.b32                                                             k=2        1.820 ms  prep      23.8 ms 
+s=0.90 spr.v6.b32                                                             k=3        2.084 ms  prep      24.2 ms 
+s=0.90 spr.v6.b32                                                             k=4        2.350 ms  prep      18.0 ms 
+s=0.90 spr.v9.b32                                                             k=2        1.737 ms  prep      23.9 ms 
+s=0.90 spr.v9.b32                                                             k=3        2.070 ms  prep      24.5 ms 
+s=0.90 spr.v9.b32                                                             k=4        2.441 ms  prep      18.6 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 2048 --N 8192 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2       25.831 ms  prep     333.3 ms 
+s=0.50 spr.v6.b32                                                             k=3       22.629 ms  prep     281.6 ms 
+s=0.50 spr.v6.b32                                                             k=4       21.817 ms  prep     178.3 ms 
+s=0.50 spr.v9.b32                                                             k=2       25.348 ms  prep     331.3 ms 
+s=0.50 spr.v9.b32                                                             k=3       21.352 ms  prep     282.5 ms 
+s=0.50 spr.v9.b32                                                             k=4       22.266 ms  prep     178.4 ms 
+s=0.90 spr.v6.b32                                                             k=2        7.130 ms  prep      97.5 ms 
+s=0.90 spr.v6.b32                                                             k=3        8.227 ms  prep      96.8 ms 
+s=0.90 spr.v6.b32                                                             k=4        8.108 ms  prep      74.3 ms 
+s=0.90 spr.v9.b32                                                             k=2        6.560 ms  prep      98.2 ms 
+s=0.90 spr.v9.b32                                                             k=3        7.519 ms  prep      97.3 ms 
+s=0.90 spr.v9.b32                                                             k=4        8.204 ms  prep      73.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 1024 --N 4096 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2       13.780 ms  prep      70.8 ms 
+s=0.50 spr.v6.b32                                                             k=3       11.369 ms  prep      59.4 ms 
+s=0.50 spr.v6.b32                                                             k=4        9.679 ms  prep      38.7 ms 
+s=0.50 spr.v9.b32                                                             k=2       14.464 ms  prep      72.0 ms 
+s=0.50 spr.v9.b32                                                             k=3       11.590 ms  prep      59.2 ms 
+s=0.50 spr.v9.b32                                                             k=4        9.656 ms  prep      39.4 ms 
+s=0.90 spr.v6.b32                                                             k=2        3.949 ms  prep      20.1 ms 
+s=0.90 spr.v6.b32                                                             k=3        4.151 ms  prep      20.3 ms 
+s=0.90 spr.v6.b32                                                             k=4        3.783 ms  prep      16.6 ms 
+s=0.90 spr.v9.b32                                                             k=2        4.073 ms  prep      20.1 ms 
+s=0.90 spr.v9.b32                                                             k=3        3.901 ms  prep      20.6 ms 
+s=0.90 spr.v9.b32                                                             k=4        3.632 ms  prep      16.6 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 4096 --N 1024 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2       13.446 ms  prep      85.7 ms 
+s=0.50 spr.v6.b32                                                             k=3       10.935 ms  prep      72.0 ms 
+s=0.50 spr.v6.b32                                                             k=4        9.829 ms  prep      44.0 ms 
+s=0.50 spr.v9.b32                                                             k=2       16.046 ms  prep      87.0 ms 
+s=0.50 spr.v9.b32                                                             k=3       11.100 ms  prep      74.0 ms 
+s=0.50 spr.v9.b32                                                             k=4       10.758 ms  prep      43.7 ms 
+s=0.90 spr.v6.b32                                                             k=2        3.658 ms  prep      24.6 ms 
+s=0.90 spr.v6.b32                                                             k=3        3.738 ms  prep      24.6 ms 
+s=0.90 spr.v6.b32                                                             k=4        3.861 ms  prep      18.1 ms 
+s=0.90 spr.v9.b32                                                             k=2        4.318 ms  prep      24.6 ms 
+s=0.90 spr.v9.b32                                                             k=3        3.952 ms  prep      24.9 ms 
+s=0.90 spr.v9.b32                                                             k=4        3.988 ms  prep      18.2 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 2048 --N 8192 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_regular --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2       53.878 ms  prep     326.7 ms 
+s=0.50 spr.v6.b32                                                             k=3       43.825 ms  prep     273.4 ms 
+s=0.50 spr.v6.b32                                                             k=4       39.142 ms  prep     176.4 ms 
+s=0.50 spr.v9.b32                                                             k=2       54.854 ms  prep     334.7 ms 
+s=0.50 spr.v9.b32                                                             k=3       43.583 ms  prep     279.3 ms 
+s=0.50 spr.v9.b32                                                             k=4       38.378 ms  prep     174.3 ms 
+s=0.90 spr.v6.b32                                                             k=2       14.529 ms  prep      96.9 ms 
+s=0.90 spr.v6.b32                                                             k=3       15.223 ms  prep      96.5 ms 
+s=0.90 spr.v6.b32                                                             k=4       14.996 ms  prep      73.6 ms 
+s=0.90 spr.v9.b32                                                             k=2       14.498 ms  prep     100.0 ms 
+s=0.90 spr.v9.b32                                                             k=3       14.181 ms  prep      97.3 ms 
+s=0.90 spr.v9.b32                                                             k=4       14.474 ms  prep      74.4 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 1 --K 128 --N 128 --s 0.5 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_tiny --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.015 ms  prep       0.2 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.015 ms  prep       0.2 ms 
+s=0.50 spr.v6.b32                                                             k=4        0.016 ms  prep       0.2 ms 
+s=0.50 spr.v9.b32                                                             k=2        0.015 ms  prep       0.2 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.015 ms  prep       0.2 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.016 ms  prep       0.1 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 1 --K 1024 --N 4096 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_decode --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.310 ms  prep      71.2 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.324 ms  prep      61.1 ms 
+s=0.50 spr.v6.b32                                                             k=4        0.271 ms  prep      39.5 ms 
+s=0.50 spr.v9.b32                                                             k=2        0.307 ms  prep      70.7 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.325 ms  prep      59.7 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.262 ms  prep      39.4 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.135 ms  prep      20.7 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.151 ms  prep      20.2 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.126 ms  prep      16.5 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.132 ms  prep      20.0 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.152 ms  prep      20.3 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.124 ms  prep      16.8 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 63 --K 1024 --N 4096 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_tail --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        3.226 ms  prep      71.2 ms 
+s=0.50 spr.v6.b32                                                             k=3        2.865 ms  prep      60.5 ms 
+s=0.50 spr.v6.b32                                                             k=4        2.675 ms  prep      39.4 ms 
+s=0.50 spr.v9.b32                                                             k=2        2.147 ms  prep      70.8 ms 
+s=0.50 spr.v9.b32                                                             k=3        1.977 ms  prep      58.8 ms 
+s=0.50 spr.v9.b32                                                             k=4        1.991 ms  prep      40.4 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.969 ms  prep      20.8 ms 
+s=0.90 spr.v6.b32                                                             k=3        1.049 ms  prep      20.3 ms 
+s=0.90 spr.v6.b32                                                             k=4        1.034 ms  prep      16.6 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.656 ms  prep      20.0 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.729 ms  prep      20.2 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.736 ms  prep      16.5 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 65 --K 1024 --N 4096 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_tail --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        2.294 ms  prep      70.7 ms 
+s=0.50 spr.v6.b32                                                             k=3        1.636 ms  prep      59.8 ms 
+s=0.50 spr.v6.b32                                                             k=4        1.953 ms  prep      39.2 ms 
+s=0.50 spr.v9.b32                                                             k=2        1.775 ms  prep      70.4 ms 
+s=0.50 spr.v9.b32                                                             k=3        1.564 ms  prep      58.8 ms 
+s=0.50 spr.v9.b32                                                             k=4        1.660 ms  prep      39.0 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.550 ms  prep      20.9 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.588 ms  prep      20.6 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.705 ms  prep      16.5 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.539 ms  prep      20.3 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.625 ms  prep      20.4 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.575 ms  prep      16.6 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 32 --K 1024 --N 32 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_narrow --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.012 ms  prep       0.6 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.022 ms  prep       0.5 ms 
+s=0.50 spr.v6.b32                                                             k=4        0.019 ms  prep       0.3 ms 
+s=0.50 spr.v9.b32                                                             k=2        0.012 ms  prep       0.6 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.021 ms  prep       0.5 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.018 ms  prep       0.3 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.005 ms  prep       0.2 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.005 ms  prep       0.2 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.016 ms  prep       0.1 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.005 ms  prep       0.2 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.005 ms  prep       0.2 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.016 ms  prep       0.1 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 32 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_narrow --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.032 ms  prep       0.6 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.028 ms  prep       0.5 ms 
+s=0.50 spr.v6.b32                                                             k=4        0.025 ms  prep       0.3 ms 
+s=0.50 spr.v9.b32                                                             k=2        0.032 ms  prep       0.6 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.028 ms  prep       0.5 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.025 ms  prep       0.3 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.019 ms  prep       0.2 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.020 ms  prep       0.2 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.018 ms  prep       0.1 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.019 ms  prep       0.2 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.020 ms  prep       0.2 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.017 ms  prep       0.1 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 1024 --N 32 --s 0.5,0.9 --sparsity-pattern iid --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_narrow --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        0.062 ms  prep       0.6 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.062 ms  prep       0.5 ms 
+s=0.50 spr.v6.b32                                                             k=4        0.059 ms  prep       0.3 ms 
+s=0.50 spr.v9.b32                                                             k=2        0.068 ms  prep       0.6 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.087 ms  prep       0.5 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.073 ms  prep       0.3 ms 
+s=0.90 spr.v6.b32                                                             k=2        0.036 ms  prep       0.2 ms 
+s=0.90 spr.v6.b32                                                             k=3        0.037 ms  prep       0.2 ms 
+s=0.90 spr.v6.b32                                                             k=4        0.037 ms  prep       0.1 ms 
+s=0.90 spr.v9.b32                                                             k=2        0.036 ms  prep       0.2 ms 
+s=0.90 spr.v9.b32                                                             k=3        0.037 ms  prep       0.2 ms 
+s=0.90 spr.v9.b32                                                             k=4        0.041 ms  prep       0.1 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 4096 --s 0.5 --sparsity-pattern column_clustered --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_clustered --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        1.260 ms  prep      42.8 ms 
+s=0.50 spr.v6.b32                                                             k=3        0.884 ms  prep      31.2 ms 
+s=0.50 spr.v6.b32                                                             k=4        0.751 ms  prep      25.6 ms 
+s=0.50 spr.v9.b32                                                             k=2        1.312 ms  prep      42.6 ms 
+s=0.50 spr.v9.b32                                                             k=3        0.896 ms  prep      31.3 ms 
+s=0.50 spr.v9.b32                                                             k=4        0.812 ms  prep      26.3 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 320 --K 1024 --N 4096 --s 0.5 --sparsity-pattern column_clustered --k 2,3,4 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_clustered --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=2        5.256 ms  prep      42.9 ms 
+s=0.50 spr.v6.b32                                                             k=3        3.251 ms  prep      31.3 ms 
+s=0.50 spr.v6.b32                                                             k=4        2.370 ms  prep      25.4 ms 
+s=0.50 spr.v9.b32                                                             k=2        7.542 ms  prep      42.3 ms 
+s=0.50 spr.v9.b32                                                             k=3        5.283 ms  prep      31.3 ms 
+s=0.50 spr.v9.b32                                                             k=4        3.698 ms  prep      25.5 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 4096 --s 0.5 --sparsity-pattern iid --k 6 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_high_k6 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=6        1.621 ms  prep      28.8 ms 
+s=0.50 spr.v9.b32                                                             k=6        1.601 ms  prep      28.0 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 256 --K 1024 --N 4096 --s 0.5 --sparsity-pattern iid --k 6 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_high_k6 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=6        6.063 ms  prep      28.4 ms 
+s=0.50 spr.v9.b32                                                             k=6        5.378 ms  prep      27.9 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 1024 --N 4096 --s 0.5 --sparsity-pattern iid --k 6 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_high_k6 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=6       12.056 ms  prep      28.7 ms 
+s=0.50 spr.v9.b32                                                             k=6       10.540 ms  prep      27.8 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 64 --K 1024 --N 4096 --s 0.5 --sparsity-pattern iid --k 8 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_high_k8 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=8        1.680 ms  prep      25.4 ms 
+s=0.50 spr.v9.b32                                                             k=8        2.060 ms  prep      25.1 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 256 --K 1024 --N 4096 --s 0.5 --sparsity-pattern iid --k 8 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_high_k8 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=8        6.352 ms  prep      25.8 ms 
+s=0.50 spr.v9.b32                                                             k=8        6.119 ms  prep      25.3 ms 
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/bench_cpu --M 512 --K 1024 --N 4096 --s 0.5 --sparsity-pattern iid --k 8 --threads 4 --kernels =spr.v6.b32,=spr.v9.b32 --rounds 21 --warmup 3 --prep-rounds 1 --verify none --ref-rows 0 --seed 42 --tag v6v9_high_k8 --out /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/results/20261114-131405_spr_v6_v9_threads_1_10/t04/raw.csv
+s=0.50 spr.v6.b32                                                             k=8       12.729 ms  prep      25.6 ms 
+s=0.50 spr.v9.b32                                                             k=8       11.875 ms  prep      25.4 ms 

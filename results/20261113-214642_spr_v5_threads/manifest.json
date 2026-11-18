@@ -1,0 +1,28 @@
+{
+  "threads": [
+    1,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14
+  ],
+  "M": 64,
+  "ks": "2,3,4,5,6,8",
+  "sparsities": "0.3,0.5,0.7,0.9",
+  "parallel_inference": true,
+  "rounds": 11,
+  "prep_rounds": 5,
+  "cpu": "machdep.cpu.brand_string: Apple M4 Pro\nhw.physicalcpu: 14\nhw.perflevel0.physicalcpu: 10\nhw.perflevel1.physicalcpu: 4\nhw.cachelinesize: 128\nhw.perflevel0.l1dcachesize: 131072\nhw.perflevel0.l2cachesize: 16777216\nhw.perflevel1.l1dcachesize: 65536\nhw.perflevel1.l2cachesize: 4194304\n",
+  "command": [
+    "bench/spr_threads.py"
+  ],
+  "cache_overrides": {
+    "SPR_L1_BYTES": null,
+    "SPR_L2_BYTES": null,
+    "SPR_LLC_BYTES": null
+  },
+  "commit": "9216547a62168184611f831ed66ac5f6e9a4550e"
+}

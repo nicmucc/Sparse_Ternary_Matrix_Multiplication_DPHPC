@@ -1,0 +1,10 @@
+e70a484
+ M CMakeLists.txt
+ M bench/bench_cpu.cpp
+ M include/spr/kernel.hpp
+?? bench/run.sh
+?? bench/summarize.py
+?? cpu/spr/
+?? old-code-expermient/
+?? papers/
+?? results/

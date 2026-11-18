@@ -1,0 +1,22 @@
+[
+  {
+    "version": "v1",
+    "M": 1,
+    "returncode": 0
+  },
+  {
+    "version": "v2",
+    "M": 1,
+    "returncode": 0
+  },
+  {
+    "version": "v1",
+    "M": 128,
+    "returncode": 0
+  },
+  {
+    "version": "v2",
+    "M": 128,
+    "returncode": 0
+  }
+]

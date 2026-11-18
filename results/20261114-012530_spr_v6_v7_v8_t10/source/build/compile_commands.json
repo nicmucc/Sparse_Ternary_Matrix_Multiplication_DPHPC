@@ -1,0 +1,182 @@
+[
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++  -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/shim -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/ternaryLLM_CPU/src/GEMM_CPU_FP32.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/ternaryLLM_CPU/src/GEMM_CPU_FP32.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/ternaryLLM_CPU/src/GEMM_CPU_FP32.cpp",
+  "output": "CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/ternaryLLM_CPU/src/GEMM_CPU_FP32.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++  -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/shim -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/ssr.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/ssr.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/ssr.cpp",
+  "output": "CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/ssr.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++  -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/shim -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/ssr_vec.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/ssr_vec.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/ssr_vec.cpp",
+  "output": "CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/ssr_vec.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++  -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/shim -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/rsr.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/rsr.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/rsr.cpp",
+  "output": "CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/rsr.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++  -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/shim -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/utils.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/utils.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/utils.cpp",
+  "output": "CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/utils.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++  -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/shim -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/naive.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/naive.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/naive.cpp",
+  "output": "CMakeFiles/upstream.dir/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr/naive.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/clang   -O3 -DNDEBUG -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream_rsrcore.dir/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_prep_nonsquare.c.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_prep_nonsquare.c",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_prep_nonsquare.c",
+  "output": "CMakeFiles/upstream_rsrcore.dir/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_prep_nonsquare.c.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/clang   -O3 -DNDEBUG -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream_rsrcore.dir/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_v3_1.c.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_v3_1.c",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_v3_1.c",
+  "output": "CMakeFiles/upstream_rsrcore.dir/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_v3_1.c.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/clang   -O3 -DNDEBUG -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -w -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/upstream_rsrcore.dir/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_v3_3.c.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_v3_3.c",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_v3_3.c",
+  "output": "CMakeFiles/upstream_rsrcore.dir/third_party/RSR-core-repo/kernels/bit_1_58/cpu/rsr_ternary_v3_3.c.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/core.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/core.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/core.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/core.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/libs.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/libs.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/libs.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/libs.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/ternaryLLM_CPU/src -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/shim -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -w -o CMakeFiles/kernels.dir/cpu/orig/tcsc.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/tcsc.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/tcsc.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/orig/tcsc.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -w -o CMakeFiles/kernels.dir/cpu/orig/ssr.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/ssr.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/ssr.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/orig/ssr.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/third_party/SSR-ternaryLLM-repo/SSR/SSR/original_rsr -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -w -o CMakeFiles/kernels.dir/cpu/orig/rsr.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/rsr.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/rsr.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/orig/rsr.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/orig/rsrcore.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/rsrcore.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/orig/rsrcore.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/orig/rsrcore.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_naive.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_naive.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_naive.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_naive.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v0.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v0.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v0.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v0.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v1.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v1.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v1.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v1.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v2.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v2.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v2.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v2.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v3.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v3.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v3.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v3.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v4.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v4.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v4.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v4.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v5.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v5.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v5.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v5.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v6.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v6.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v6.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v6.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v7.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v7.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v7.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v7.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -F/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk/System/Library/Frameworks -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/kernels.dir/cpu/spr/spr_v8.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v8.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/spr/spr_v8.cpp",
+  "output": "CMakeFiles/kernels.dir/cpu/spr/spr_v8.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/test_correctness.dir/tests/test_correctness.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/tests/test_correctness.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/tests/test_correctness.cpp",
+  "output": "CMakeFiles/test_correctness.dir/tests/test_correctness.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++ -DSPR_HAVE_BLAS -DSPR_HAVE_EIGEN -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -isystem /opt/homebrew/opt/eigen@3/include/eigen3 -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/bench_cpu.dir/bench/bench_cpu.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/bench/bench_cpu.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/bench/bench_cpu.cpp",
+  "output": "CMakeFiles/bench_cpu.dir/bench/bench_cpu.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++   -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O2 -mcpu=native -fno-vectorize -fno-slp-vectorize -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/peaks.dir/bench/peaks.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/bench/peaks.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/bench/peaks.cpp",
+  "output": "CMakeFiles/peaks.dir/bench/peaks.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++  -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/prof_v1.dir/bench/prof_v1.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/bench/prof_v1.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/bench/prof_v1.cpp",
+  "output": "CMakeFiles/prof_v1.dir/bench/prof_v1.cpp.o"
+},
+{
+  "directory": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build",
+  "command": "/usr/bin/c++  -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/include -I/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR -O3 -DNDEBUG -std=gnu++17 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk -O3 -ffast-math -DNDEBUG -mcpu=native -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -o CMakeFiles/prof_v1.dir/cpu/core.cpp.o -c /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/core.cpp",
+  "file": "/Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/cpu/core.cpp",
+  "output": "CMakeFiles/prof_v1.dir/cpu/core.cpp.o"
+}
+]

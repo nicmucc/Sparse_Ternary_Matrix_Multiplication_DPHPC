@@ -1,0 +1,25 @@
+
+$ /Users/alexray/Documents/ETH/DPHPC/Project_Two/SPR/build/test_correctness spr.
+PASS spr.naive                                                       195 passed    0 failed
+PASS spr.v0                                                          195 passed    0 failed
+PASS spr.v1                                                          195 passed    0 failed
+PASS spr.v2.b16                                                      195 passed    0 failed
+PASS spr.v2.b32                                                      195 passed    0 failed
+PASS spr.v2.b64                                                      195 passed    0 failed
+PASS spr.v2.b8                                                       195 passed    0 failed
+PASS spr.v3.b16.u2                                                   195 passed    0 failed
+PASS spr.v3.b32.u1                                                   195 passed    0 failed
+PASS spr.v3.b8.u2                                                    195 passed    0 failed
+PASS spr.v3.b8.u4                                                    195 passed    0 failed
+PASS spr.v4.b16                                                      195 passed    0 failed
+PASS spr.v4.b32                                                      195 passed    0 failed
+PASS spr.v4.b32.kc256.g8                                             195 passed    0 failed
+PASS spr.v4.b32.kc512.g4                                             195 passed    0 failed
+PASS spr.v4.b32.l2                                                   195 passed    0 failed
+PASS spr.v5.b16                                                      225 passed    0 failed
+PASS spr.v5.b32                                                      225 passed    0 failed
+PASS spr.v5.b32.kc256.g8                                             225 passed    0 failed
+PASS spr.v5.b32.kc512.g4                                             225 passed    0 failed
+PASS spr.v5.b32.l2                                                   225 passed    0 failed
+
+4245 cases passed, 0 failed (0 kernels with failures)

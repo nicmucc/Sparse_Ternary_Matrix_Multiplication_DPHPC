@@ -1,0 +1,180 @@
+<!doctype html><meta charset='utf-8'><title>SPR GPU comparison</title>
+<style>body{font:16px system-ui;max-width:1000px;margin:30px auto}svg{max-width:100%;height:auto}table{border-collapse:collapse}td,th{padding:5px 10px;border:1px solid #ddd}</style>
+<h1>SPR v1 / v2 GPU comparison</h1><p>Speedup = median(v1) / median(v2). Above 1 favors v2. Plots show 50%-zero weights. Full measurements and quartiles are in the CSV files.</p>
+<h2>gpu_event: K=1024, N=1024</h2><svg viewBox='0 0 800 340' role='img' aria-label='Speedup versus input row count'>
+<path d='M70 290.0H690' stroke='#ddd'/><text x='10' y='295.0'>0.5×</text>
+<path d='M70 250.0H690' stroke='#ddd'/><text x='10' y='255.0'>1×</text>
+<path d='M70 210.0H690' stroke='#ddd'/><text x='10' y='215.0'>2×</text>
+<path d='M70 170.0H690' stroke='#ddd'/><text x='10' y='175.0'>4×</text>
+<path d='M70 130.0H690' stroke='#ddd'/><text x='10' y='135.0'>8×</text>
+<path d='M70 90.0H690' stroke='#ddd'/><text x='10' y='95.0'>16×</text>
+<path d='M70 50.0H690' stroke='#ddd'/><text x='10' y='55.0'>32×</text>
+<text x='70.0' y='315' text-anchor='middle'>1</text>
+<text x='276.66666666666663' y='315' text-anchor='middle'>8</text>
+<text x='411.28907915998474' y='315' text-anchor='middle'>31</text>
+<text x='414.44444444444446' y='315' text-anchor='middle'>32</text>
+<text x='417.502706000249' y='315' text-anchor='middle'>33</text>
+<text x='552.2222222222222' y='315' text-anchor='middle'>128</text>
+<text x='690.0' y='315' text-anchor='middle'>512</text>
+<text x='350' y='338'>Input rows M (log scale)</text>
+<polyline points='70.00,177.25 276.67,187.34 411.29,190.35 414.44,203.35 417.50,187.47 552.22,146.21 690.00,108.93' fill='none' stroke='#2563eb' stroke-width='2'/>
+<circle cx='70.0' cy='177.25473549555159' r='4' fill='#2563eb'><title>M=1, k=4: 3.527×</title></circle>
+<circle cx='276.66666666666663' cy='187.34244492467997' r='4' fill='#2563eb'><title>M=8, k=4: 2.962×</title></circle>
+<circle cx='411.28907915998474' cy='190.35022269751352' r='4' fill='#2563eb'><title>M=31, k=4: 2.811×</title></circle>
+<circle cx='414.44444444444446' cy='203.34929565610804' r='4' fill='#2563eb'><title>M=32, k=4: 2.244×</title></circle>
+<circle cx='417.502706000249' cy='187.46830942981438' r='4' fill='#2563eb'><title>M=33, k=4: 2.955×</title></circle>
+<circle cx='552.2222222222222' cy='146.21012263003257' r='4' fill='#2563eb'><title>M=128, k=4: 6.041×</title></circle>
+<circle cx='690.0' cy='108.92785929142724' r='4' fill='#2563eb'><title>M=512, k=4: 11.526×</title></circle>
+<text x='715' y='70' fill='#2563eb'>k=4</text>
+<polyline points='70.00,158.46 276.67,188.51 411.29,181.81 414.44,192.37 417.50,181.88 552.22,155.06 690.00,64.08' fill='none' stroke='#c2410c' stroke-width='2'/>
+<circle cx='70.0' cy='158.4585063470824' r='4' fill='#c2410c'><title>M=1, k=8: 4.886×</title></circle>
+<circle cx='276.66666666666663' cy='188.512178639505' r='4' fill='#c2410c'><title>M=8, k=8: 2.902×</title></circle>
+<circle cx='411.28907915998474' cy='181.81117141777344' r='4' fill='#c2410c'><title>M=31, k=8: 3.260×</title></circle>
+<circle cx='414.44444444444446' cy='192.37247318640448' r='4' fill='#c2410c'><title>M=32, k=8: 2.715×</title></circle>
+<circle cx='417.502706000249' cy='181.88328731201648' r='4' fill='#c2410c'><title>M=33, k=8: 3.256×</title></circle>
+<circle cx='552.2222222222222' cy='155.05931714603796' r='4' fill='#c2410c'><title>M=128, k=8: 5.182×</title></circle>
+<circle cx='690.0' cy='64.08448411067556' r='4' fill='#c2410c'><title>M=512, k=8: 25.070×</title></circle>
+<text x='715' y='95' fill='#c2410c'>k=8</text>
+<polyline points='70.00,193.89 276.67,194.30 411.29,202.86 414.44,195.86 417.50,201.45 552.22,174.72 690.00,111.09' fill='none' stroke='#15803d' stroke-width='2'/>
+<circle cx='70.0' cy='193.8889056614796' r='4' fill='#15803d'><title>M=1, k=16: 2.644×</title></circle>
+<circle cx='276.66666666666663' cy='194.3009787641855' r='4' fill='#15803d'><title>M=8, k=16: 2.625×</title></circle>
+<circle cx='411.28907915998474' cy='202.85822879516354' r='4' fill='#15803d'><title>M=31, k=16: 2.263×</title></circle>
+<circle cx='414.44444444444446' cy='195.86255856978403' r='4' fill='#15803d'><title>M=32, k=16: 2.555×</title></circle>
+<circle cx='417.502706000249' cy='201.44688850091575' r='4' fill='#15803d'><title>M=33, k=16: 2.320×</title></circle>
+<circle cx='552.2222222222222' cy='174.71777715067702' r='4' fill='#15803d'><title>M=128, k=16: 3.686×</title></circle>
+<circle cx='690.0' cy='111.0946535692569' r='4' fill='#15803d'><title>M=512, k=16: 11.101×</title></circle>
+<text x='715' y='120' fill='#15803d'>k=16</text>
+</svg>
+<h2>end_to_end_wall: K=1024, N=1024</h2><svg viewBox='0 0 800 340' role='img' aria-label='Speedup versus input row count'>
+<path d='M70 290.0H690' stroke='#ddd'/><text x='10' y='295.0'>0.5×</text>
+<path d='M70 242.0H690' stroke='#ddd'/><text x='10' y='247.0'>1×</text>
+<path d='M70 194.0H690' stroke='#ddd'/><text x='10' y='199.0'>2×</text>
+<path d='M70 146.0H690' stroke='#ddd'/><text x='10' y='151.0'>4×</text>
+<path d='M70 98.0H690' stroke='#ddd'/><text x='10' y='103.0'>8×</text>
+<path d='M70 50.0H690' stroke='#ddd'/><text x='10' y='55.0'>16×</text>
+<text x='70.0' y='315' text-anchor='middle'>1</text>
+<text x='276.66666666666663' y='315' text-anchor='middle'>8</text>
+<text x='411.28907915998474' y='315' text-anchor='middle'>31</text>
+<text x='414.44444444444446' y='315' text-anchor='middle'>32</text>
+<text x='417.502706000249' y='315' text-anchor='middle'>33</text>
+<text x='552.2222222222222' y='315' text-anchor='middle'>128</text>
+<text x='690.0' y='315' text-anchor='middle'>512</text>
+<text x='350' y='338'>Input rows M (log scale)</text>
+<polyline points='70.00,168.14 276.67,185.90 411.29,224.15 414.44,230.79 417.50,233.81 552.22,212.04 690.00,192.55' fill='none' stroke='#2563eb' stroke-width='2'/>
+<circle cx='70.0' cy='168.14004114794972' r='4' fill='#2563eb'><title>M=1, k=4: 2.905×</title></circle>
+<circle cx='276.66666666666663' cy='185.90035871090967' r='4' fill='#2563eb'><title>M=8, k=4: 2.248×</title></circle>
+<circle cx='411.28907915998474' cy='224.14841765236437' r='4' fill='#2563eb'><title>M=31, k=4: 1.294×</title></circle>
+<circle cx='414.44444444444446' cy='230.7947836854713' r='4' fill='#2563eb'><title>M=32, k=4: 1.176×</title></circle>
+<circle cx='417.502706000249' cy='233.81475978041817' r='4' fill='#2563eb'><title>M=33, k=4: 1.125×</title></circle>
+<circle cx='552.2222222222222' cy='212.0432913634727' r='4' fill='#2563eb'><title>M=128, k=4: 1.541×</title></circle>
+<circle cx='690.0' cy='192.54990521611603' r='4' fill='#2563eb'><title>M=512, k=4: 2.042×</title></circle>
+<text x='715' y='70' fill='#2563eb'>k=4</text>
+<polyline points='70.00,136.80 276.67,179.24 411.29,179.68 414.44,194.77 417.50,180.00 552.22,177.33 690.00,87.15' fill='none' stroke='#c2410c' stroke-width='2'/>
+<circle cx='70.0' cy='136.79997964900792' r='4' fill='#c2410c'><title>M=1, k=8: 4.568×</title></circle>
+<circle cx='276.66666666666663' cy='179.24420970232865' r='4' fill='#c2410c'><title>M=8, k=8: 2.475×</title></circle>
+<circle cx='411.28907915998474' cy='179.6817299368675' r='4' fill='#c2410c'><title>M=31, k=8: 2.459×</title></circle>
+<circle cx='414.44444444444446' cy='194.774615981242' r='4' fill='#c2410c'><title>M=32, k=8: 1.978×</title></circle>
+<circle cx='417.502706000249' cy='180.00156531317586' r='4' fill='#c2410c'><title>M=33, k=8: 2.448×</title></circle>
+<circle cx='552.2222222222222' cy='177.32594931632866' r='4' fill='#c2410c'><title>M=128, k=8: 2.544×</title></circle>
+<circle cx='690.0' cy='87.15002231041728' r='4' fill='#c2410c'><title>M=512, k=8: 9.357×</title></circle>
+<text x='715' y='95' fill='#c2410c'>k=8</text>
+<polyline points='70.00,177.32 276.67,189.17 411.29,197.61 414.44,193.44 417.50,197.29 552.22,184.05 690.00,130.64' fill='none' stroke='#15803d' stroke-width='2'/>
+<circle cx='70.0' cy='177.32033152690525' r='4' fill='#15803d'><title>M=1, k=16: 2.545×</title></circle>
+<circle cx='276.66666666666663' cy='189.17446638858462' r='4' fill='#15803d'><title>M=8, k=16: 2.144×</title></circle>
+<circle cx='411.28907915998474' cy='197.60619051611974' r='4' fill='#15803d'><title>M=31, k=16: 1.899×</title></circle>
+<circle cx='414.44444444444446' cy='193.44388240929845' r='4' fill='#15803d'><title>M=32, k=16: 2.016×</title></circle>
+<circle cx='417.502706000249' cy='197.2928553872423' r='4' fill='#15803d'><title>M=33, k=16: 1.907×</title></circle>
+<circle cx='552.2222222222222' cy='184.04747374373667' r='4' fill='#15803d'><title>M=128, k=16: 2.309×</title></circle>
+<circle cx='690.0' cy='130.6377631403121' r='4' fill='#15803d'><title>M=512, k=16: 4.993×</title></circle>
+<text x='715' y='120' fill='#15803d'>k=16</text>
+</svg>
+<h2>gpu_event: K=4096, N=4096</h2><svg viewBox='0 0 800 340' role='img' aria-label='Speedup versus input row count'>
+<path d='M70 290.0H690' stroke='#ddd'/><text x='10' y='295.0'>0.5×</text>
+<path d='M70 255.71428571428572H690' stroke='#ddd'/><text x='10' y='260.7142857142857'>1×</text>
+<path d='M70 221.42857142857144H690' stroke='#ddd'/><text x='10' y='226.42857142857144'>2×</text>
+<path d='M70 187.14285714285717H690' stroke='#ddd'/><text x='10' y='192.14285714285717'>4×</text>
+<path d='M70 152.85714285714286H690' stroke='#ddd'/><text x='10' y='157.85714285714286'>8×</text>
+<path d='M70 118.57142857142856H690' stroke='#ddd'/><text x='10' y='123.57142857142856'>16×</text>
+<path d='M70 84.2857142857143H690' stroke='#ddd'/><text x='10' y='89.2857142857143'>32×</text>
+<path d='M70 50.0H690' stroke='#ddd'/><text x='10' y='55.0'>64×</text>
+<text x='70.0' y='315' text-anchor='middle'>1</text>
+<text x='276.66666666666663' y='315' text-anchor='middle'>8</text>
+<text x='411.28907915998474' y='315' text-anchor='middle'>31</text>
+<text x='414.44444444444446' y='315' text-anchor='middle'>32</text>
+<text x='417.502706000249' y='315' text-anchor='middle'>33</text>
+<text x='552.2222222222222' y='315' text-anchor='middle'>128</text>
+<text x='690.0' y='315' text-anchor='middle'>512</text>
+<text x='350' y='338'>Input rows M (log scale)</text>
+<polyline points='70.00,227.57 276.67,234.79 411.29,175.94 414.44,157.75 417.50,179.88 552.22,147.30 690.00,161.71' fill='none' stroke='#2563eb' stroke-width='2'/>
+<circle cx='70.0' cy='227.5740269390755' r='4' fill='#2563eb'><title>M=1, k=4: 1.766×</title></circle>
+<circle cx='276.66666666666663' cy='234.78686835231133' r='4' fill='#2563eb'><title>M=8, k=4: 1.527×</title></circle>
+<circle cx='411.28907915998474' cy='175.942481406859' r='4' fill='#2563eb'><title>M=31, k=4: 5.016×</title></circle>
+<circle cx='414.44444444444446' cy='157.74818330984692' r='4' fill='#2563eb'><title>M=32, k=4: 7.247×</title></circle>
+<circle cx='417.502706000249' cy='179.88176109825028' r='4' fill='#2563eb'><title>M=33, k=4: 4.632×</title></circle>
+<circle cx='552.2222222222222' cy='147.29783972844422' r='4' fill='#2563eb'><title>M=128, k=4: 8.952×</title></circle>
+<circle cx='690.0' cy='161.70773070462496' r='4' fill='#2563eb'><title>M=512, k=4: 6.689×</title></circle>
+<text x='715' y='70' fill='#2563eb'>k=4</text>
+<polyline points='70.00,186.81 276.67,207.61 411.29,180.36 414.44,172.75 417.50,179.85 552.22,76.78 690.00,75.06' fill='none' stroke='#c2410c' stroke-width='2'/>
+<circle cx='70.0' cy='186.80506604920222' r='4' fill='#c2410c'><title>M=1, k=8: 4.027×</title></circle>
+<circle cx='276.66666666666663' cy='207.61499250631994' r='4' fill='#c2410c'><title>M=8, k=8: 2.644×</title></circle>
+<circle cx='411.28907915998474' cy='180.3614814415564' r='4' fill='#c2410c'><title>M=31, k=8: 4.588×</title></circle>
+<circle cx='414.44444444444446' cy='172.74842396452777' r='4' fill='#c2410c'><title>M=32, k=8: 5.351×</title></circle>
+<circle cx='417.502706000249' cy='179.84753383635046' r='4' fill='#c2410c'><title>M=33, k=8: 4.636×</title></circle>
+<circle cx='552.2222222222222' cy='76.78256569167439' r='4' fill='#c2410c'><title>M=128, k=8: 37.242×</title></circle>
+<circle cx='690.0' cy='75.06493513378521' r='4' fill='#c2410c'><title>M=512, k=8: 38.557×</title></circle>
+<text x='715' y='95' fill='#c2410c'>k=8</text>
+<polyline points='70.00,188.74 276.67,214.46 411.29,196.96 414.44,191.45 417.50,197.16 552.22,113.09 690.00,89.03' fill='none' stroke='#15803d' stroke-width='2'/>
+<circle cx='70.0' cy='188.73868005241656' r='4' fill='#15803d'><title>M=1, k=16: 3.873×</title></circle>
+<circle cx='276.66666666666663' cy='214.45762750541132' r='4' fill='#15803d'><title>M=8, k=16: 2.303×</title></circle>
+<circle cx='411.28907915998474' cy='196.956623026191' r='4' fill='#15803d'><title>M=31, k=16: 3.280×</title></circle>
+<circle cx='414.44444444444446' cy='191.45211675378184' r='4' fill='#15803d'><title>M=32, k=16: 3.666×</title></circle>
+<circle cx='417.502706000249' cy='197.1588093479097' r='4' fill='#15803d'><title>M=33, k=16: 3.267×</title></circle>
+<circle cx='552.2222222222222' cy='113.08861689311448' r='4' fill='#15803d'><title>M=128, k=16: 17.876×</title></circle>
+<circle cx='690.0' cy='89.02942012350869' r='4' fill='#15803d'><title>M=512, k=16: 29.074×</title></circle>
+<text x='715' y='120' fill='#15803d'>k=16</text>
+</svg>
+<h2>end_to_end_wall: K=4096, N=4096</h2><svg viewBox='0 0 800 340' role='img' aria-label='Speedup versus input row count'>
+<path d='M70 290.0H690' stroke='#ddd'/><text x='10' y='295.0'>0.5×</text>
+<path d='M70 250.0H690' stroke='#ddd'/><text x='10' y='255.0'>1×</text>
+<path d='M70 210.0H690' stroke='#ddd'/><text x='10' y='215.0'>2×</text>
+<path d='M70 170.0H690' stroke='#ddd'/><text x='10' y='175.0'>4×</text>
+<path d='M70 130.0H690' stroke='#ddd'/><text x='10' y='135.0'>8×</text>
+<path d='M70 90.0H690' stroke='#ddd'/><text x='10' y='95.0'>16×</text>
+<path d='M70 50.0H690' stroke='#ddd'/><text x='10' y='55.0'>32×</text>
+<text x='70.0' y='315' text-anchor='middle'>1</text>
+<text x='276.66666666666663' y='315' text-anchor='middle'>8</text>
+<text x='411.28907915998474' y='315' text-anchor='middle'>31</text>
+<text x='414.44444444444446' y='315' text-anchor='middle'>32</text>
+<text x='417.502706000249' y='315' text-anchor='middle'>33</text>
+<text x='552.2222222222222' y='315' text-anchor='middle'>128</text>
+<text x='690.0' y='315' text-anchor='middle'>512</text>
+<text x='350' y='338'>Input rows M (log scale)</text>
+<polyline points='70.00,219.38 276.67,234.34 411.29,193.53 414.44,176.90 417.50,196.72 552.22,176.87 690.00,184.76' fill='none' stroke='#2563eb' stroke-width='2'/>
+<circle cx='70.0' cy='219.3826727081393' r='4' fill='#2563eb'><title>M=1, k=4: 1.700×</title></circle>
+<circle cx='276.66666666666663' cy='234.3406747126505' r='4' fill='#2563eb'><title>M=8, k=4: 1.312×</title></circle>
+<circle cx='411.28907915998474' cy='193.53389896869515' r='4' fill='#2563eb'><title>M=31, k=4: 2.660×</title></circle>
+<circle cx='414.44444444444446' cy='176.8984459498169' r='4' fill='#2563eb'><title>M=32, k=4: 3.549×</title></circle>
+<circle cx='417.502706000249' cy='196.71652094901216' r='4' fill='#2563eb'><title>M=33, k=4: 2.518×</title></circle>
+<circle cx='552.2222222222222' cy='176.86611400736973' r='4' fill='#2563eb'><title>M=128, k=4: 3.551×</title></circle>
+<circle cx='690.0' cy='184.7594931140046' r='4' fill='#2563eb'><title>M=512, k=4: 3.097×</title></circle>
+<text x='715' y='70' fill='#2563eb'>k=4</text>
+<polyline points='70.00,175.90 276.67,205.98 411.29,180.25 414.44,174.85 417.50,179.55 552.22,72.46 690.00,66.83' fill='none' stroke='#c2410c' stroke-width='2'/>
+<circle cx='70.0' cy='175.90008111461066' r='4' fill='#c2410c'><title>M=1, k=8: 3.611×</title></circle>
+<circle cx='276.66666666666663' cy='205.97881202528956' r='4' fill='#c2410c'><title>M=8, k=8: 2.144×</title></circle>
+<circle cx='411.28907915998474' cy='180.2465163106009' r='4' fill='#c2410c'><title>M=31, k=8: 3.349×</title></circle>
+<circle cx='414.44444444444446' cy='174.84914540309492' r='4' fill='#c2410c'><title>M=32, k=8: 3.678×</title></circle>
+<circle cx='417.502706000249' cy='179.54635796766195' r='4' fill='#c2410c'><title>M=33, k=8: 3.390×</title></circle>
+<circle cx='552.2222222222222' cy='72.4633786828056' r='4' fill='#c2410c'><title>M=128, k=8: 21.682×</title></circle>
+<circle cx='690.0' cy='66.82869301009649' r='4' fill='#c2410c'><title>M=512, k=8: 23.906×</title></circle>
+<text x='715' y='95' fill='#c2410c'>k=8</text>
+<polyline points='70.00,176.10 276.67,208.16 411.29,192.21 414.44,187.32 417.50,192.24 552.22,107.10 690.00,76.33' fill='none' stroke='#15803d' stroke-width='2'/>
+<circle cx='70.0' cy='176.1030830363585' r='4' fill='#15803d'><title>M=1, k=16: 3.599×</title></circle>
+<circle cx='276.66666666666663' cy='208.1575833380586' r='4' fill='#15803d'><title>M=8, k=16: 2.065×</title></circle>
+<circle cx='411.28907915998474' cy='192.2055621193528' r='4' fill='#15803d'><title>M=31, k=16: 2.722×</title></circle>
+<circle cx='414.44444444444446' cy='187.31856878723795' r='4' fill='#15803d'><title>M=32, k=16: 2.963×</title></circle>
+<circle cx='417.502706000249' cy='192.24093045825606' r='4' fill='#15803d'><title>M=33, k=16: 2.721×</title></circle>
+<circle cx='552.2222222222222' cy='107.10113718880422' r='4' fill='#15803d'><title>M=128, k=16: 11.897×</title></circle>
+<circle cx='690.0' cy='76.3320915766802' r='4' fill='#15803d'><title>M=512, k=16: 20.276×</title></circle>
+<text x='715' y='120' fill='#15803d'>k=16</text>
+</svg>
+<p>Kernel-event timing excludes bind/finish. End-to-end includes allocation, input conversion/upload, synchronized run, and output download. Sources are unchanged; event hooks exist only in generated build copies.</p>

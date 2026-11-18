@@ -1,0 +1,5 @@
+==WARNING== Note: Running with uncontrolled GPU caches. Profiling results may be inconsistent.
+==PROF== Connected to process 11582 (/home/araybaut/spr-gpu-compare/results/gpu_compare_20261118T140411Z/build/bench_v2)
+==PROF== Profiling "spr_v2_kernel" - 0 (1/1): 0%....50%....100% - 34 passes
+==PROF== Disconnected from process 11582
+==PROF== Report: /home/araybaut/spr-gpu-compare/results/gpu_compare_20261118T140411Z/profile_v2_M1.ncu-repz

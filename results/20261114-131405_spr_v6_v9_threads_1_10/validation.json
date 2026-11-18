@@ -1,0 +1,13 @@
+{
+  "configurations": 2820,
+  "timed_calls": 59220,
+  "correctness_run": false,
+  "unchecked_configurations": 2820,
+  "comparison_points": 510,
+  "confirmation_configurations": 32,
+  "confirmation_timed_calls": 1952,
+  "source_matches_current": {
+    "v6": true,
+    "v9": true
+  }
+}

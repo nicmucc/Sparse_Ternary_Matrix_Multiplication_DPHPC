@@ -1,0 +1,12 @@
+{
+  "timing_configurations": 1368,
+  "fixed_k_workloads": 152,
+  "correctness_checks_run": false,
+  "unchecked_configurations": 1368,
+  "threads": 10,
+  "source_matches_current": {
+    "6": true,
+    "7": true,
+    "8": true
+  }
+}

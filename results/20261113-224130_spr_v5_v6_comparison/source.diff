@@ -1,0 +1,137 @@
+diff --git a/.gitignore b/.gitignore
+index 083eeaa..964d150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -4,3 +4,4 @@ build/
+ *.csv
+ __pycache__/
+ build-prof/
++include/spr/cache.hpp
+\ No newline at end of file
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7e4c11c..778a89c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -91,6 +91,7 @@ add_library(kernels OBJECT
+   cpu/spr/spr_v3.cpp
+   cpu/spr/spr_v4.cpp
+   cpu/spr/spr_v5.cpp
++  cpu/spr/spr_v6.cpp
+ )
+ target_include_directories(kernels PUBLIC include)
+ target_compile_options(kernels PUBLIC ${SPR_FLAGS})
+diff --git a/bench/bench_cpu.cpp b/bench/bench_cpu.cpp
+index a622808..9285c90 100644
+--- a/bench/bench_cpu.cpp
++++ b/bench/bench_cpu.cpp
+@@ -18,6 +18,8 @@
+ //                       configurations do not dominate the wall time. 0 = always --rounds.
+ //   --prep-rounds R     report median preparation time over R freshly constructed kernels.
+ //                       R > 1 also performs one untimed preparation to warm the runtime.
++//   --sparsity-pattern  iid (default), or column_clustered: floor(s*N) leading
++//                       output columns are zero and the remaining columns are dense +/-1.
+ //
+ // Unsupported shapes are skipped silently.
+ #include <cstdio>
+@@ -62,6 +64,7 @@ struct Entry {
+ int main(int argc, char** argv) {
+     int M = 256, K = 1024, N = 4096, threads = 1, rounds = 21, warmup = 3, prep_rounds = 1;
+     std::string kernels, s_list = "0.5", k_list = "4", tag = "run", out = "bench_cpu.csv", verify = "";
++    std::string sparsity_pattern = "iid";
+     int ref_rows = 16;
+     double budget_ms = 0;
+     uint64_t seed = 42;
+@@ -71,6 +74,7 @@ int main(int argc, char** argv) {
+         else if (a == "--K") K = std::stoi(v);
+         else if (a == "--N") N = std::stoi(v);
+         else if (a == "--s") s_list = v;
++        else if (a == "--sparsity-pattern") sparsity_pattern = v;
+         else if (a == "--k") k_list = v;
+         else if (a == "--kernels") kernels = v;
+         else if (a == "--threads") threads = std::stoi(v);
+@@ -131,7 +135,7 @@ int main(int argc, char** argv) {
+ 
+     for (auto& s_str : split(s_list)) {
+         const double s = std::stod(s_str);
+-        Problem P = make_problem(M, K, N, s, seed, any_check ? ref_rows : 0);
++        Problem P = make_problem(M, K, N, s, seed, any_check ? ref_rows : 0, sparsity_pattern);
+ 
+         // ---- build + verify every configuration
+         std::vector<Entry> E;
+diff --git a/include/spr/harness.hpp b/include/spr/harness.hpp
+index c0a394c..be3ed05 100644
+--- a/include/spr/harness.hpp
++++ b/include/spr/harness.hpp
+@@ -65,9 +65,21 @@ struct Problem {
+ 
+ // ref_rows < M: only the first ref_rows rows of Y get a reference (and are verified). The
+ // benchmark uses this to keep the O(MKN) double-precision reference cheap; tests use all rows.
+-inline Problem make_problem(int M, int K, int N, double s, uint64_t seed, int ref_rows = -1) {
++inline Problem make_problem(int M, int K, int N, double s, uint64_t seed, int ref_rows = -1,
++                            const std::string& sparsity_pattern = "iid") {
+     ref_rows = ref_rows < 0 ? M : std::min(ref_rows, M);
+-    Problem P{M, K, N, random_dense(M, K, seed), random_ternary(K, N, s, seed + 1), {}, ref_rows};
++    if (sparsity_pattern != "iid" && sparsity_pattern != "column_clustered")
++        throw std::invalid_argument("unknown sparsity pattern: " + sparsity_pattern);
++    if (s < 0 || s > 1) throw std::invalid_argument("sparsity must be in [0, 1]");
++    auto W = random_ternary(K, N, sparsity_pattern == "iid" ? s : 0.0, seed + 1);
++    if (sparsity_pattern == "column_clustered") {
++        // Deliberately imbalanced diagnostic: contiguous zero output columns,
++        // followed by dense random +/-1 columns. Zero fraction = floor(s*N)/N.
++        const int zero_columns = (int)(s * N);
++        for (int r = 0; r < K; ++r)
++            std::fill_n(W.data() + (size_t)r * N, zero_columns, int8_t{0});
++    }
++    Problem P{M, K, N, random_dense(M, K, seed), std::move(W), {}, ref_rows};
+     P.Yref.resize((size_t)ref_rows * N);
+     reference_gemm(P.X.data(), P.W.data(), P.Yref.data(), ref_rows, K, N);
+     return P;
+diff --git a/tests/test_correctness.cpp b/tests/test_correctness.cpp
+index f127355..50d2aee 100644
+--- a/tests/test_correctness.cpp
++++ b/tests/test_correctness.cpp
+@@ -81,9 +81,9 @@ static std::pair<int, int> check_spr_examples(Kernel& kern) {
+     return {pass, fail};
+ }
+ 
+-// V5 groups must start their cursors independently, even after empty groups.
++// Parallel groups must start their cursors independently, even after empty groups.
+ // Fixed kc/g variants force multiple chunks and groups on these ragged shapes.
+-static std::pair<int, int> check_v5_parallel_groups(Kernel& kern) {
++static std::pair<int, int> check_spr_parallel_groups(Kernel& kern) {
+     std::vector<Problem> problems;
+     for (int kind = 0; kind < 3; ++kind) {
+         Problem P = make_problem(35, 1100, 65, kind == 2 ? 1.0 : 0.5, 8123);
+@@ -96,6 +96,12 @@ static std::pair<int, int> check_v5_parallel_groups(Kernel& kern) {
+         }
+         problems.push_back(std::move(P));
+     }
++    if (kern.name().rfind("spr.v6.", 0) == 0) {
++        // Several full tiles, a partial tile, and a single group: parallel work
++        // must also be available along M. The final case exercises both axes.
++        for (auto [M, N] : {std::pair{67, 3}, std::pair{96, 3}, std::pair{67, 65}})
++            problems.push_back(make_problem(M, 529, N, 0.5, 9123));
++    }
+     int pass = 0, fail = 0;
+     const int saved_threads = omp_get_max_threads();
+     for (int threads : {1, 2, 4, 10, 14}) {
+@@ -112,7 +118,7 @@ static std::pair<int, int> check_v5_parallel_groups(Kernel& kern) {
+                 if (ok) ++pass;
+                 else {
+                     ++fail;
+-                    std::printf("    wrong V5 groups: threads=%d k=%d\n", threads, k);
++                    std::printf("    wrong %s groups: threads=%d k=%d\n", kern.name().c_str(), threads, k);
+                 }
+             }
+         }
+@@ -151,8 +157,8 @@ int main(int argc, char** argv) {
+             pass += examples.first;
+             fail += examples.second;
+         }
+-        if (name.rfind("spr.v5.", 0) == 0) {
+-            const auto groups = check_v5_parallel_groups(*kern);
++        if (name.rfind("spr.v5.", 0) == 0 || name.rfind("spr.v6.", 0) == 0) {
++            const auto groups = check_spr_parallel_groups(*kern);
+             pass += groups.first;
+             fail += groups.second;
+         }
