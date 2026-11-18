@@ -104,13 +104,13 @@ __global__ void spr_v0_kernel(
             const DeviceLevel& L = levels[block.levels_offset + l]; 
 
             float acc = 0.f;
-            for (int i = 0; i < L.pos_count; ++i) acc += buf[(pos + L.pos_offset)[i]];
-            for (int i = 0; i < L.neg_count; ++i) acc -= buf[(neg + L.neg_offset)[i]];
+            for (int p = 0; p < L.pos_count; ++p) acc += buf[(pos + L.pos_offset)[p]];
+            for (int p = 0; p < L.neg_count; ++p) acc -= buf[(neg + L.neg_offset)[p]];
 
             Y[i * N + block.c0 + l] = acc;
-            for (int i = 0; i < L.merge_count; ++i) {
-                int dst = (merges + L.merge_offset)[2 * i];
-                int src = (merges + L.merge_offset)[2 * i + 1];
+            for (int p = 0; p < L.merge_count; ++p) {
+                int dst = (merges + L.merge_offset)[2 * p];
+                int src = (merges + L.merge_offset)[2 * p + 1];
 
                 buf[dst] += buf[src];
             }
@@ -121,7 +121,7 @@ __global__ void spr_v0_kernel(
 
 class SPRCudaV0 final : public Kernel {
 public:
-    std::string name() const override { return "spr_gpu.v0"; }
+    std::string name() const override { return "spr.cuda.v0"; }
     bool uses_k() const override { return true; }
     bool supports(int, int, int, const Params &p) const override {
         return p.k >= 1 && p.k <= 16;
@@ -409,7 +409,7 @@ private:
     }
 };
 
-SPR_REGISTER_KERNEL("spr_gpu.v0", SPRCudaV0);
+SPR_REGISTER_KERNEL("spr.cuda.v0", SPRCudaV0);
 
 } // namespace
 } // namespace spr
