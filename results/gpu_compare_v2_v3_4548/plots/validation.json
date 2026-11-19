@@ -1,0 +1,36 @@
+{
+  "versions": [
+    "v2",
+    "v3"
+  ],
+  "raw_rows": 192,
+  "workloads": 6,
+  "speedups": {
+    "gpu_event": {
+      "candidate_wins": 5,
+      "count": 6,
+      "min": 0.8440659759180414,
+      "median": 1.5077025223726426,
+      "max": 2.0083563713813617
+    },
+    "run_wall": {
+      "candidate_wins": 4,
+      "count": 6,
+      "min": 0.8552492491484757,
+      "median": 1.5072000237071532,
+      "max": 1.922369429541224
+    },
+    "end_to_end_wall": {
+      "candidate_wins": 6,
+      "count": 6,
+      "min": 1.0208261192184023,
+      "median": 1.1668906562717,
+      "max": 1.5403650636721806
+    }
+  },
+  "input_hashes": {
+    "/Users/alexray/Documents/ETH/DPHPC/Project/Sparse_Ternary_Matrix_Multiplication_DPHPC/results/gpu_compare_v2_v3_4548/raw_samples.csv": "af205905cc7342a292de1bf54f3bb05710e76cf3eb8f1605c9cc485f6ed3573d",
+    "/Users/alexray/Documents/ETH/DPHPC/Project/Sparse_Ternary_Matrix_Multiplication_DPHPC/results/gpu_compare_v2_v3_4548/timing_summary.csv": "877a670ac172855eb0b013719ab2448b25cbbde8ee639bf8e62bb7835817d83d",
+    "/Users/alexray/Documents/ETH/DPHPC/Project/Sparse_Ternary_Matrix_Multiplication_DPHPC/results/gpu_compare_v2_v3_4548/environment.json": "2e1376b72cecd379f03387deb3f5592a0f1a67cbcab7e3e109875d1519a3233a"
+  }
+}

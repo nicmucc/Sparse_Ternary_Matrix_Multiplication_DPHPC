@@ -1,0 +1,1 @@
+PASS spr.v2.cuda: 108 cases against double-precision reference, each with two bindings and three runs per binding.

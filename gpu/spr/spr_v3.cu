@@ -115,16 +115,13 @@ __global__ void spr_v2_kernel(const float* X, float* Y, float* scratch,
         partial[tid] = t; // write the accumulated value to shared memory
         __syncthreads();
 
-        // now we will reduce the partials sums
-        for(unsigned s = blockDim.y / 2; s > 0; s >>= 1) {
-            if(threadIdx.y < s)
-                partial[tid] += partial[tid + s * blockDim.x];
-            
-            __syncthreads();
-        }
-
         if(active && threadIdx.y == 0) {
-            y[l] = partial[threadIdx.x];
+            // Accumulation stays parallel. helper 0 combines everything together instead of doing parallel reduction
+            //i do not use the accumulation barriers as before given that this introducing synchrnoization slowdown
+            float total = 0.0f;
+            for (unsigned h = 0; h < blockDim.y; ++h)
+                total += partial[h * blockDim.x + threadIdx.x];
+            y[l] = total;
 
             // we keep the merges sequential
             // only one of the helpers actually processes that (helper 0)
@@ -136,6 +133,7 @@ __global__ void spr_v2_kernel(const float* X, float* Y, float* scratch,
         }
 
         merge += lvl.m_len;
+        // Finish shared-memory reads and merges before the next level reuses them.
         __syncthreads();
     }
 
@@ -422,7 +420,7 @@ public:
         // this is SIMILAR tot he SIMD approach we did for CPU
 
         // 32 input rows
-        // 4 helper threads per row
+        // 8 helper threads per row
         dim3 threads(32, 8);
 
         dim3 grid(

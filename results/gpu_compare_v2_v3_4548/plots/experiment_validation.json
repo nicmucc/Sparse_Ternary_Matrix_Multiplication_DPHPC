@@ -1,0 +1,28 @@
+{
+  "jobs": [
+    4493,
+    4548
+  ],
+  "changed_sources": [
+    "gpu/spr/spr_v3.cu"
+  ],
+  "correctness_cases_per_version": {
+    "v2": 303,
+    "v3": 303
+  },
+  "sanitizer_checks_per_job": 12,
+  "samples_per_metric": 5,
+  "workloads_per_version": 6,
+  "input_hashes": {
+    "gpu_compare_v2_v3_4493/environment.json": "ee42070c40e553980b9eb50d94ca4bc7501ecbe9a979bcb0502ec6fa48b6012b",
+    "gpu_compare_v2_v3_4493/raw_samples.csv": "4dc80475967fc2db934c7d290573038556440ee0614ed0a36525ea175fb17c92",
+    "gpu_compare_v2_v3_4493/timing_summary.csv": "8f1f012cb78d13ab89ab3aebde5290ea4b98d6ffa36c2c858d87d9b9f9a90a5d",
+    "gpu_compare_v2_v3_4493/correctness.json": "d88cb0b5133f813ec520f54da0f95febdc69ba33c442ace9b8ed7e534615e90a",
+    "gpu_compare_v2_v3_4493/failures.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "gpu_compare_v2_v3_4548/environment.json": "2e1376b72cecd379f03387deb3f5592a0f1a67cbcab7e3e109875d1519a3233a",
+    "gpu_compare_v2_v3_4548/raw_samples.csv": "af205905cc7342a292de1bf54f3bb05710e76cf3eb8f1605c9cc485f6ed3573d",
+    "gpu_compare_v2_v3_4548/timing_summary.csv": "877a670ac172855eb0b013719ab2448b25cbbde8ee639bf8e62bb7835817d83d",
+    "gpu_compare_v2_v3_4548/correctness.json": "d88cb0b5133f813ec520f54da0f95febdc69ba33c442ace9b8ed7e534615e90a",
+    "gpu_compare_v2_v3_4548/failures.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  }
+}

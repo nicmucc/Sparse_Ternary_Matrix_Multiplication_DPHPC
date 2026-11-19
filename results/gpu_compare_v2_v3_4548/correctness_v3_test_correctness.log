@@ -1,0 +1,3 @@
+PASS spr.v3.cuda                                                     195 passed    0 failed
+
+195 cases passed, 0 failed (0 kernels with failures, 0 known-broken upstream kernels)

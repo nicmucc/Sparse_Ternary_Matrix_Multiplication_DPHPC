@@ -1,0 +1,12 @@
+<!doctype html><meta charset='utf-8'><title>Helper-0 combine experiment</title>
+<style>body{font:16px system-ui;max-width:1150px;margin:30px auto;padding:0 20px;color:#172033}img{width:100%}</style>
+<h1>Helper-0 combine experiment: v2 versus updated v3</h1>
+<p>Job 4548 · RTX 5060 Ti · smoke run · five samples per metric. All recorded correctness/sanitizer checks passed.</p>
+<p>The updated v3 retains small-batch wins. Across jobs, GPU medians are only 0–3.8% lower than previous v3; unchanged v2 also varies. This is evidence for a small possible benefit, the data do not establish an isolated optimization effect.</p>
+<p><a href='interpretation.md'>Detailed interpretation</a> · <a href='old_new_comparison.csv'>Numerical comparison</a></p>
+<h2>Same-job comparison against v2</h2><img src='01_new_vs_v2.png' alt='Same-job comparison against v2'>
+<p><a href='01_new_vs_v2.pdf'>PDF</a></p>
+<h2>Cross-job changes with unchanged v2 as context</h2><img src='02_old_new_change.png' alt='Cross-job changes with unchanged v2 as context'>
+<p><a href='02_old_new_change.pdf'>PDF</a></p>
+<h2>Absolute latency and sample IQR</h2><img src='K257_N257_z0.5.png' alt='Absolute latency and sample IQR'>
+<p><a href='K257_N257_z0.5.pdf'>PDF</a></p>

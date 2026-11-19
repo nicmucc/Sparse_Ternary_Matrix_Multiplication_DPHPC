@@ -1,0 +1,6 @@
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu tests/test_correctness.cpp -o "/home/araybaut/spr-v2-v3/results/gpu_compare_v2_v3_4548/build/test_correctness"
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu tests/test_gpu_correctness.cpp -o "/home/araybaut/spr-v2-v3/results/gpu_compare_v2_v3_4548/build/test_gpu_correctness"
