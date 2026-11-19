@@ -1,0 +1,32 @@
+{
+  "job": 4561,
+  "samples": 30,
+  "raw_records": 1092,
+  "workloads_per_version": 6,
+  "correctness_cases_per_version": 303,
+  "zero_error_sanitizer_checks": 12,
+  "source_hashes_verified": 15,
+  "input_hashes": {
+    "environment.json": "edb76a9205c6e7e7e36bf0b987f292152c96f858597c745d276c30c7a570ed33",
+    "raw_samples.csv": "1b1cfb72c12cc9077032a7c83c8424b11380414062d7ef0d17f54ad8673c9a20",
+    "timing_summary.csv": "0f776245e84fa6a3b2c3fd5c01905b982f8dae911f8119906ccf3fcd6665e51e",
+    "correctness.json": "57fc150640d13e8ed478e0c3c0b4f06488dd254b4e7a5cca2f0a32e66ec834b1",
+    "failures.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "sanitize_v2_memcheck_M1.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+    "sanitize_v2_memcheck_M33.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+    "sanitize_v2_racecheck_M1.log": "91dbb142f8feb8786cd6fde6ac035e816b67db14e4b7b400a01386ec106b75c4",
+    "sanitize_v2_racecheck_M33.log": "91dbb142f8feb8786cd6fde6ac035e816b67db14e4b7b400a01386ec106b75c4",
+    "sanitize_v2_synccheck_M1.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+    "sanitize_v2_synccheck_M33.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+    "sanitize_v4_memcheck_M1.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+    "sanitize_v4_memcheck_M33.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+    "sanitize_v4_racecheck_M1.log": "91dbb142f8feb8786cd6fde6ac035e816b67db14e4b7b400a01386ec106b75c4",
+    "sanitize_v4_racecheck_M33.log": "91dbb142f8feb8786cd6fde6ac035e816b67db14e4b7b400a01386ec106b75c4",
+    "sanitize_v4_synccheck_M1.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+    "sanitize_v4_synccheck_M33.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+    "correctness_v2_test_correctness.log": "ef7bb369d7e85b9930fedffabd548ba22bbb7d816a64363641b491d561c94b47",
+    "correctness_v2_test_gpu_correctness.log": "0cfa159acd7e7c10e3ada00147e099fb97ea94dd005e71ef91aa7f95ca85c0ed",
+    "correctness_v4_test_correctness.log": "fecaa7b24c9f91f1948c1afcff4e10352e5de1b667d1aeed753bba6c170a4f85",
+    "correctness_v4_test_gpu_correctness.log": "f1d7066335dfb199c051734471127537f5d0e5fbc4aa6cd65fd3a884f210435a"
+  }
+}

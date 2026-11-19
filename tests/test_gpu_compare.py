@@ -43,33 +43,35 @@ def write_csv(path, rows):
         writer.writerows(rows)
 
 
-def fixture(root):
-    rows = [r for version in ("v2", "v3") for M in (1, 33) for r in samples(version, M)]
+def fixture(root, versions=("v2", "v3")):
+    rows = [r for version in versions for M in (1, 33) for r in samples(version, M)]
     write_csv(root / "raw_samples.csv", rows)
-    (root / "environment.json").write_text(json.dumps(dict(versions=["v2", "v3"], status="complete",
+    (root / "environment.json").write_text(json.dumps(dict(versions=versions, status="complete",
         suite="smoke", samples=3, configurations_per_version=2, gpu="Synthetic unit-test data")))
     (root / "failures.json").write_text("[]")
-    runner.summarize(rows, root, ("v2", "v3"))
+    runner.summarize(rows, root, versions)
     return rows
 
 
 class GPUComparisonTest(unittest.TestCase):
     def test_pair_labels_speedup_and_summary_validation(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = Path(d)
-            fixture(root)
-            env, versions, workloads, _, raw = plotter.load_results(root)
-            self.assertEqual(versions, ("v2", "v3"))
-            self.assertEqual(len(workloads), 2)
-            self.assertEqual(len(raw), 40)
-            with (root / "speedups.csv").open() as f:
-                rows = list(csv.DictReader(f))
-            self.assertEqual(len(rows), 6)
-            self.assertTrue(all(float(r["speedup"]) == 2 for r in rows))
-            self.assertIn("v3_ms", rows[0])
-            html = (root / "comparison.html").read_text()
-            self.assertIn("Above 1 favors v3", html)
-            self.assertNotIn("v1", html)
+        for candidate in ("v3", "v4"):
+            with self.subTest(candidate=candidate), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                fixture(root, ("v2", candidate))
+                env, versions, workloads, _, raw = plotter.load_results(root)
+                self.assertEqual(versions, ("v2", candidate))
+                self.assertEqual(len(workloads), 2)
+                self.assertEqual(len(raw), 40)
+                with (root / "speedups.csv").open() as f:
+                    rows = list(csv.DictReader(f))
+                self.assertEqual(len(rows), 6)
+                self.assertTrue(all(float(r["speedup"]) == 2 for r in rows))
+                self.assertIn(f"{candidate}_ms", rows[0])
+                html = (root / "comparison.html").read_text()
+                self.assertIn(f"Above 1 favors {candidate}", html)
+                self.assertNotIn("v1", html)
+                self.assertNotIn("v3" if candidate == "v4" else "v4", html)
 
     def test_previous_v1_v2_pair(self):
         with tempfile.TemporaryDirectory() as d:
@@ -117,13 +119,13 @@ class GPUComparisonTest(unittest.TestCase):
                 plotter.load_results(root)
 
     def test_launch_instrumentation(self):
-        for version in ("v2", "v3"):
+        for version in ("v2", "v3", "v4"):
             source = (ROOT / "gpu" / "spr" / f"spr_{version}.cu").read_text()
             result = runner.instrument(source)
             self.assertEqual(result.count("spr_bench::mark_start();"), 1)
             self.assertEqual(result.count("spr_bench::mark_stop();"), 1)
 
-    def campaign(self, root, fail_correctness=False):
+    def campaign(self, root, fail_correctness=False, versions=("v2", "v3")):
         calls = []
         def command(argv, **kwargs):
             argv = [str(a) for a in argv]
@@ -131,7 +133,7 @@ class GPUComparisonTest(unittest.TestCase):
             program = Path(argv[0]).name
             if fail_correctness and program == "test_gpu_correctness":
                 return subprocess.CompletedProcess(argv, 1, "", "reference mismatch")
-            if program in ("bench_v2", "bench_v3"):
+            if program in ("bench_v2", "bench_v3", "bench_v4"):
                 version, M, K, N, k, zero, seed, count, profile = argv[1:]
                 output = io.StringIO()
                 rows = samples(version, int(M), int(K), int(N), int(k), float(zero), int(count))
@@ -140,7 +142,7 @@ class GPUComparisonTest(unittest.TestCase):
                 writer.writerows(rows)
                 return subprocess.CompletedProcess(argv, 0, output.getvalue(), "PASS")
             return subprocess.CompletedProcess(argv, 0, "PASS", "")
-        args = ["run_gpu_compare.py", "--versions", "v2", "v3", "--suite", "smoke",
+        args = ["run_gpu_compare.py", "--versions", *versions, "--suite", "smoke",
                 "--samples", "3", "--output", str(root)]
         with patch.object(sys, "argv", args), patch.object(runner, "command", side_effect=command), contextlib.redirect_stdout(io.StringIO()):
             if fail_correctness:
@@ -151,24 +153,29 @@ class GPUComparisonTest(unittest.TestCase):
         return calls
 
     def test_smoke_campaign_accounting(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = Path(d) / "run"
-            calls = self.campaign(root)
-            self.assertEqual(sum(Path(c[0]).name in ("test_correctness", "test_gpu_correctness") for c in calls), 4)
-            self.assertEqual(sum(Path(c[0]).name in ("bench_v2", "bench_v3") for c in calls), 12)
-            env, versions, workloads, _, raw = plotter.load_results(root)
-            self.assertEqual(len(workloads), 6)
-            self.assertEqual(len(raw), 120)
-            self.assertEqual(env["status"], "complete")
+        for candidate in ("v3", "v4"):
+            with self.subTest(candidate=candidate), tempfile.TemporaryDirectory() as d:
+                root = Path(d) / "run"
+                calls = self.campaign(root, versions=("v2", candidate))
+                checks = [c for c in calls if Path(c[0]).name in ("test_correctness", "test_gpu_correctness")]
+                self.assertEqual(len(checks), 4)
+                self.assertEqual({c[1] for c in checks}, {"spr.v2.cuda", f"spr.{candidate}.cuda"})
+                self.assertEqual(sum(Path(c[0]).name in ("bench_v2", f"bench_{candidate}") for c in calls), 12)
+                env, versions, workloads, _, raw = plotter.load_results(root)
+                self.assertEqual(versions, ("v2", candidate))
+                self.assertEqual(len(workloads), 6)
+                self.assertEqual(len(raw), 120)
+                self.assertEqual(env["status"], "complete")
 
     def test_correctness_failure_prevents_benchmarking(self):
-        with tempfile.TemporaryDirectory() as d:
-            root = Path(d) / "run"
-            calls = self.campaign(root, fail_correctness=True)
-            self.assertFalse(any(Path(c[0]).name in ("bench_v2", "bench_v3") or
-                                 (Path(c[0]).name == "nvcc" and "--version" not in c) for c in calls))
-            self.assertFalse((root / "comparison.html").exists())
-            self.assertFalse((root / "raw_samples.csv").exists())
+        for candidate in ("v3", "v4"):
+            with self.subTest(candidate=candidate), tempfile.TemporaryDirectory() as d:
+                root = Path(d) / "run"
+                calls = self.campaign(root, fail_correctness=True, versions=("v2", candidate))
+                self.assertFalse(any(Path(c[0]).name in ("bench_v2", "bench_v3", "bench_v4") or
+                                     (Path(c[0]).name == "nvcc" and "--version" not in c) for c in calls))
+                self.assertFalse((root / "comparison.html").exists())
+                self.assertFalse((root / "raw_samples.csv").exists())
 
 
 if __name__ == "__main__":

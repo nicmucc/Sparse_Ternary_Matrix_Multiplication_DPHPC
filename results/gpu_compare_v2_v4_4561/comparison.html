@@ -1,0 +1,63 @@
+<!doctype html><meta charset='utf-8'><title>SPR GPU comparison</title>
+<style>body{font:16px system-ui;max-width:1000px;margin:30px auto}svg{max-width:100%;height:auto}table{border-collapse:collapse}td,th{padding:5px 10px;border:1px solid #ddd}</style>
+<h1>SPR v2 / v4 GPU comparison</h1><p>Speedup = median(v2) / median(v4). Above 1 favors v4. Full measurements and quartiles are in the CSV files.</p>
+<h2>gpu_event: K=257, N=257, 50% zeros</h2><svg viewBox='0 0 800 340' role='img' aria-label='Speedup versus input row count'>
+<path d='M70 290.0H690' stroke='#ddd'/><text x='10' y='295.0'>0.5×</text>
+<path d='M70 210.0H690' stroke='#ddd'/><text x='10' y='215.0'>1×</text>
+<path d='M70 130.0H690' stroke='#ddd'/><text x='10' y='135.0'>2×</text>
+<path d='M70 50.0H690' stroke='#ddd'/><text x='10' y='55.0'>4×</text>
+<text x='70.0' y='315' text-anchor='middle'>1</text>
+<text x='460.6658793182058' y='315' text-anchor='middle'>33</text>
+<text x='690.0' y='315' text-anchor='middle'>257</text>
+<text x='350' y='338'>Input rows M (log scale)</text>
+<polyline points='70.00,147.39 460.67,146.96 690.00,215.31' fill='none' stroke='#2563eb' stroke-width='2'/>
+<circle cx='70.0' cy='147.38806581006853' r='4' fill='#2563eb'><title>M=1, k=4: 1.720×</title></circle>
+<circle cx='460.6658793182058' cy='146.96158879783684' r='4' fill='#2563eb'><title>M=33, k=4: 1.727×</title></circle>
+<circle cx='690.0' cy='215.3098417026464' r='4' fill='#2563eb'><title>M=257, k=4: 0.955×</title></circle>
+<text x='715' y='70' fill='#2563eb'>k=4</text>
+<polyline points='70.00,135.99 460.67,118.16 690.00,206.00' fill='none' stroke='#c2410c' stroke-width='2'/>
+<circle cx='70.0' cy='135.99384542614126' r='4' fill='#c2410c'><title>M=1, k=8: 1.899×</title></circle>
+<circle cx='460.6658793182058' cy='118.15996784432681' r='4' fill='#c2410c'><title>M=33, k=8: 2.216×</title></circle>
+<circle cx='690.0' cy='206.00038372453415' r='4' fill='#c2410c'><title>M=257, k=8: 1.035×</title></circle>
+<text x='715' y='95' fill='#c2410c'>k=8</text>
+</svg>
+<h2>run_wall: K=257, N=257, 50% zeros</h2><svg viewBox='0 0 800 340' role='img' aria-label='Speedup versus input row count'>
+<path d='M70 290.0H690' stroke='#ddd'/><text x='10' y='295.0'>0.5×</text>
+<path d='M70 210.0H690' stroke='#ddd'/><text x='10' y='215.0'>1×</text>
+<path d='M70 130.0H690' stroke='#ddd'/><text x='10' y='135.0'>2×</text>
+<path d='M70 50.0H690' stroke='#ddd'/><text x='10' y='55.0'>4×</text>
+<text x='70.0' y='315' text-anchor='middle'>1</text>
+<text x='460.6658793182058' y='315' text-anchor='middle'>33</text>
+<text x='690.0' y='315' text-anchor='middle'>257</text>
+<text x='350' y='338'>Input rows M (log scale)</text>
+<polyline points='70.00,151.33 460.67,145.14 690.00,215.69' fill='none' stroke='#2563eb' stroke-width='2'/>
+<circle cx='70.0' cy='151.33486533235867' r='4' fill='#2563eb'><title>M=1, k=4: 1.662×</title></circle>
+<circle cx='460.6658793182058' cy='145.14372145575615' r='4' fill='#2563eb'><title>M=33, k=4: 1.754×</title></circle>
+<circle cx='690.0' cy='215.68652953297993' r='4' fill='#2563eb'><title>M=257, k=4: 0.952×</title></circle>
+<text x='715' y='70' fill='#2563eb'>k=4</text>
+<polyline points='70.00,140.02 460.67,122.52 690.00,206.29' fill='none' stroke='#c2410c' stroke-width='2'/>
+<circle cx='70.0' cy='140.01919173753382' r='4' fill='#c2410c'><title>M=1, k=8: 1.834×</title></circle>
+<circle cx='460.6658793182058' cy='122.52373719409448' r='4' fill='#c2410c'><title>M=33, k=8: 2.134×</title></circle>
+<circle cx='690.0' cy='206.29011715021247' r='4' fill='#c2410c'><title>M=257, k=8: 1.033×</title></circle>
+<text x='715' y='95' fill='#c2410c'>k=8</text>
+</svg>
+<h2>end_to_end_wall: K=257, N=257, 50% zeros</h2><svg viewBox='0 0 800 340' role='img' aria-label='Speedup versus input row count'>
+<path d='M70 290.0H690' stroke='#ddd'/><text x='10' y='295.0'>0.5×</text>
+<path d='M70 170.0H690' stroke='#ddd'/><text x='10' y='175.0'>1×</text>
+<path d='M70 50.0H690' stroke='#ddd'/><text x='10' y='55.0'>2×</text>
+<text x='70.0' y='315' text-anchor='middle'>1</text>
+<text x='460.6658793182058' y='315' text-anchor='middle'>33</text>
+<text x='690.0' y='315' text-anchor='middle'>257</text>
+<text x='350' y='338'>Input rows M (log scale)</text>
+<polyline points='70.00,144.82 460.67,154.03 690.00,145.37' fill='none' stroke='#2563eb' stroke-width='2'/>
+<circle cx='70.0' cy='144.82455918356936' r='4' fill='#2563eb'><title>M=1, k=4: 1.157×</title></circle>
+<circle cx='460.6658793182058' cy='154.0280781974768' r='4' fill='#2563eb'><title>M=33, k=4: 1.097×</title></circle>
+<circle cx='690.0' cy='145.37243193767287' r='4' fill='#2563eb'><title>M=257, k=4: 1.153×</title></circle>
+<text x='715' y='70' fill='#2563eb'>k=4</text>
+<polyline points='70.00,103.23 460.67,86.46 690.00,147.05' fill='none' stroke='#c2410c' stroke-width='2'/>
+<circle cx='70.0' cy='103.22966676744014' r='4' fill='#c2410c'><title>M=1, k=8: 1.471×</title></circle>
+<circle cx='460.6658793182058' cy='86.45810448977039' r='4' fill='#c2410c'><title>M=33, k=8: 1.620×</title></circle>
+<circle cx='690.0' cy='147.04773647913845' r='4' fill='#c2410c'><title>M=257, k=8: 1.142×</title></circle>
+<text x='715' y='95' fill='#c2410c'>k=8</text>
+</svg>
+<p>Kernel-event timing excludes bind/finish. End-to-end includes allocation, input conversion/upload, synchronized run, and output download. Sources are unchanged; event hooks exist only in generated build copies.</p>

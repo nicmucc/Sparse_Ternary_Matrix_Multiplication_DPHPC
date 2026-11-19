@@ -146,7 +146,7 @@ def summarize(rows, output, versions=("v1", "v2")):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--suite", choices=("smoke", "full"), default="full")
-    parser.add_argument("--versions", nargs=2, choices=("v1", "v2", "v3"), default=("v2", "v3"),
+    parser.add_argument("--versions", nargs=2, choices=("v1", "v2", "v3", "v4"), default=("v2", "v3"),
                         metavar=("BASELINE", "CANDIDATE"), help="Speedup is baseline / candidate")
     parser.add_argument("--samples", type=int, default=30)
     parser.add_argument("--output", type=Path)

@@ -1,15 +1,54 @@
-# Compare SPR v2 and v3 on the D-INFK student cluster
+# Compare CUDA SPR versions on the D-INFK student cluster
 
 Run from the updated project root. The workflow compiles the current kernel files;
 it does not change them. Default comparison: v2 baseline versus v3 candidate.
 The Slurm job requests the RTX 5060 Ti (`--gpus=5060ti:1`), account `dphpc`,
-four CPU slots, 16 GiB RAM and one hour. It loads CUDA 12.9 and targets `sm_120`.
+three CPU slots, 16 GiB RAM and one hour. It loads CUDA 12.9 and targets `sm_120`.
 GPU selection and module setup follow the [ETH cluster instructions](https://isg.inf.ethz.ch/Main/HelpClusterComputingStudentClusterRunningJobs).
 
 Ensure the new `gpu/spr/spr_v3.cu` is copied to the cluster too. If transferring
 with Git, include it in your commit: an untracked local file will not arrive via pull.
 V3 is benchmarked with its current launch configuration (currently 32 rows by
 8 helpers); this workflow does not tune or modify helper counts.
+
+## V2 versus v4
+
+The runner accepts v1, v2, v3 and v4. Select the baseline and candidate using the
+third and fourth batch-script arguments, after suite and sample count:
+
+```bash
+sbatch bench/gpu_compare.sbatch smoke 30 v2 v4
+# After the smoke job completes successfully:
+sbatch bench/gpu_compare.sbatch full 30 v2 v4
+```
+
+Both submissions run correctness and sanitizer checks for **v2 and v4** before
+timing. These examples use 30 samples even for the short six-workload smoke suite.
+The full suite still has 126 workloads per version. V4 uses cooperative segment
+sums, one barrier and helper-0 tree evaluation; its current launch is `(32,8)`.
+
+Results are `results/gpu_compare_v2_v4_JOBID/`. Speedup is median(v2)/median(v4),
+so values above 1 favor v4. Existing v2/v3 commands without pair arguments continue
+to use v2/v3. For a direct run inside an allocated GPU shell:
+
+```bash
+python3 bench/run_gpu_compare.py --versions v2 v4 --suite smoke --samples 30 --arch sm_120 --sanitize
+```
+
+For standalone v4 correctness:
+
+```bash
+make test-gpu CUDA_ARCH=sm_120 TEST_ARGS="spr.v2.cuda spr.v4.cuda"
+```
+
+Generate plots locally after downloading the result directory:
+
+```bash
+.venv/bin/python bench/plot_gpu_compare.py results/gpu_compare_v2_v4_JOBID
+```
+
+The plotter reads the version labels and sample count from metadata; its CSV,
+PNG/PDF figures and analysis report therefore use v2/v4 labels automatically.
 
 ## Submit
 
@@ -66,7 +105,7 @@ make test-gpu CUDA_ARCH=sm_120 TEST_ARGS="spr.v2.cuda spr.v3.cuda"
 From the login node, request a GPU shell:
 
 ```bash
-srun --pty -A dphpc --gpus=5060ti:1 --cpus-per-task=4 --mem=16G -t 01:00:00 bash --login
+srun --pty -A dphpc --gpus=5060ti:1 --cpus-per-task=3 --mem=16G -t 01:00:00 bash --login
 ```
 
 Inside it, change to the project root and run:

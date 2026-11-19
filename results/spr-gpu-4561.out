@@ -1,0 +1,33 @@
+Correctness v2 test_correctness: PASS
+Correctness v2 test_gpu_correctness: PASS
+Correctness v4 test_correctness: PASS
+Correctness v4 test_gpu_correctness: PASS
+Sanitizer v2 memcheck M=1: PASS
+Sanitizer v2 memcheck M=33: PASS
+Sanitizer v2 racecheck M=1: PASS
+Sanitizer v2 racecheck M=33: PASS
+Sanitizer v2 synccheck M=1: PASS
+Sanitizer v2 synccheck M=33: PASS
+Sanitizer v4 memcheck M=1: PASS
+Sanitizer v4 memcheck M=33: PASS
+Sanitizer v4 racecheck M=1: PASS
+Sanitizer v4 racecheck M=33: PASS
+Sanitizer v4 synccheck M=1: PASS
+Sanitizer v4 synccheck M=33: PASS
+[1/6] v2_M1_K257_N257_k4_z0.5: PASS
+[1/6] v4_M1_K257_N257_k4_z0.5: PASS
+[2/6] v4_M1_K257_N257_k8_z0.5: PASS
+[2/6] v2_M1_K257_N257_k8_z0.5: PASS
+[3/6] v2_M33_K257_N257_k4_z0.5: PASS
+[3/6] v4_M33_K257_N257_k4_z0.5: PASS
+[4/6] v4_M33_K257_N257_k8_z0.5: PASS
+[4/6] v2_M33_K257_N257_k8_z0.5: PASS
+[5/6] v2_M257_K257_N257_k4_z0.5: PASS
+[5/6] v4_M257_K257_N257_k4_z0.5: PASS
+[6/6] v4_M257_K257_N257_k8_z0.5: PASS
+[6/6] v2_M257_K257_N257_k8_z0.5: PASS
+Results: /home/araybaut/spr-v2-v4/results/gpu_compare_v2_v4_4561
+Matched speedup measurements: 18; failed version/configurations: 0
+PNG/PDF plots need numpy and matplotlib; generate them later with:
+python3 bench/plot_gpu_compare.py /home/araybaut/spr-v2-v4/results/gpu_compare_v2_v4_4561
+Completed: /home/araybaut/spr-v2-v4/results/gpu_compare_v2_v4_4561

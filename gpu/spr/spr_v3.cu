@@ -49,7 +49,7 @@ struct BlockMetadata {
 // hence we had jumps of stride K between threads which leads to poor memory coalescing
 // instead we can transpose the matrix (a bit like in the CPU version)
 // and process the X + r*M + m so that each thread works on neighboring memory regions
-__global__ void spr_v2_kernel(const float* X, float* Y, float* scratch,
+__global__ void spr_v3_kernel(const float* X, float* Y, float* scratch,
                               int M, int K, int N, int k, size_t num_blocks,
                               size_t total_segments, const BlockMetadata* blocks,
                               const uint16_t* seg_end, const uint16_t* rows,
@@ -74,8 +74,7 @@ __global__ void spr_v2_kernel(const float* X, float* Y, float* scratch,
     float* buf = active && block.num_seg ? scratch + block.seg * M + m : nullptr;
     
     // accumulate segmented sum between each helper
-    // helper 0 gets 0, 4, 8
-    // helper 1 gets 1, 5, 9  ...
+    // Helper h handles segments h, h + blockDim.y, h + 2 * blockDim.y, ...
     if(active) {
         for(int i = threadIdx.y; i < block.num_seg; i += blockDim.y) {
             const size_t index = block.seg + i;
@@ -139,7 +138,7 @@ __global__ void spr_v2_kernel(const float* X, float* Y, float* scratch,
 
 }
 
-class SPRV2CUDA final : public Kernel {
+class SPRV3CUDA final : public Kernel {
     int K_ = 0, N_ = 0, k_ = 0; // K_: number of input features, N_: number of output features, k_: number of weight columns per SPR block
     int bound_M_ = -1;
 
@@ -167,7 +166,7 @@ class SPRV2CUDA final : public Kernel {
 
     void check_io(const IO& io) const {
         if (io.M < 0 || io.K != K_ || io.N != N_)
-            throw std::invalid_argument("spr.v2.cuda: IO shape differs from prepared weights");
+            throw std::invalid_argument("spr.v3.cuda: IO shape differs from prepared weights");
     }
 
 public:
@@ -177,7 +176,7 @@ public:
         return M >= 0 && K >= 0 && K <= 65535 && N >= 0 && p.k >= 1 && p.k <= 16;
     }
 
-    ~SPRV2CUDA() override {
+    ~SPRV3CUDA() override {
         free_metadata();
 
         cudaFree(d_x_);
@@ -185,15 +184,15 @@ public:
         cudaFree(d_scratch_);
     }
 
-    SPRV2CUDA() = default;
+    SPRV3CUDA() = default;
 
     // prevent copying the owning pointers
-    SPRV2CUDA(const SPRV2CUDA&) = delete;
-    SPRV2CUDA& operator=(const SPRV2CUDA&) = delete;
+    SPRV3CUDA(const SPRV3CUDA&) = delete;
+    SPRV3CUDA& operator=(const SPRV3CUDA&) = delete;
     
     void prepare(const int8_t* W, int K, int N, const Params& p) override {
         if (!supports(0, K, N, p))
-            throw std::invalid_argument("spr.v2.cuda requires 0 <= K <= 65535, N >= 0 and 1 <= k <= 16");
+            throw std::invalid_argument("spr.v3.cuda requires 0 <= K <= 65535, N >= 0 and 1 <= k <= 16");
 
         K_ = K; N_ = N;
         k_ = p.k;
@@ -403,7 +402,7 @@ public:
         if(!io.M || !N_) return;
 
         if(bound_M_ != io.M) {
-            throw std::logic_error("spr.v2.cuda: call bind() before run()");
+            throw std::logic_error("spr.v3.cuda: call bind() before run()");
         }
 
         // In v1 we have very bad thread access of the form:
@@ -428,22 +427,22 @@ public:
             blocks_.size()
         );
         
-        spr_v2_kernel<<<grid, threads>>>(
+        spr_v3_kernel<<<grid, threads>>>(
             d_x_, d_y_, d_scratch_, io.M, K_, N_, k_,
             blocks_.size(), seg_end_.size(),
             d_blocks_, d_seg_end_, d_rows_, d_lvl_meta_,
             d_pos_, d_neg_, d_merges_);
         
-        cuda_check(cudaGetLastError(), "launch spr_v2_kernel");
+        cuda_check(cudaGetLastError(), "launch spr_v3_kernel");
         // the harness uses wall clock timing so I think the run must wait for completion
-        cuda_check(cudaDeviceSynchronize(), "execute spr_v2_kernel");
+        cuda_check(cudaDeviceSynchronize(), "execute spr_v3_kernel");
     }
 
     void finish(IO& io) override {
         check_io(io);
         if (!io.M || !N_) return;
         if (bound_M_ != io.M)
-            throw std::logic_error("spr.v2.cuda: call bind() before finish()");
+            throw std::logic_error("spr.v3.cuda: call bind() before finish()");
         
         // copy Y from device to host
         cuda_check(cudaMemcpy(io.Y, d_y_, io.M * N_ * sizeof(float),
@@ -480,6 +479,6 @@ public:
     }
 };
 
-SPR_REGISTER_KERNEL("spr.v3.cuda", SPRV2CUDA);
+SPR_REGISTER_KERNEL("spr.v3.cuda", SPRV3CUDA);
 } // namespace
 } // namespace spr

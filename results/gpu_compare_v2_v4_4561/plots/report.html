@@ -1,0 +1,11 @@
+<!doctype html><meta charset='utf-8'><title>V2 versus v4 batch scaling</title>
+<style>body{font:16px system-ui;max-width:1150px;margin:30px auto;padding:0 20px;color:#172033}img{width:100%}</style>
+<h1>V2 versus v4: batch scaling</h1>
+<p>Job 4561 · RTX 5060 Ti · K=N=257 · 50% zeros · 30 samples. V4's kernel advantage largely disappears at M=257; end-to-end latency includes additional effects.</p>
+<p><a href='interpretation.md'>Full interpretation</a> · <a href='comparison_us.csv'>Numerical comparison</a></p>
+<h2>Kernel and end-to-end speedup versus M</h2><img src='01_speedup_vs_M.png' alt='Kernel and end-to-end speedup versus M'>
+<p><a href='01_speedup_vs_M.pdf'>PDF</a></p>
+<h2>Amortized GPU time per row</h2><img src='02_amortized_gpu_time.png' alt='Amortized GPU time per row'>
+<p><a href='02_amortized_gpu_time.pdf'>PDF</a></p>
+<h2>Absolute latency and sample IQR</h2><img src='K257_N257_z0.5.png' alt='Absolute latency and sample IQR'>
+<p><a href='K257_N257_z0.5.pdf'>PDF</a></p>
