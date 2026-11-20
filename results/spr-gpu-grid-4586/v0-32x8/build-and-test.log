@@ -1,0 +1,10 @@
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp /home/mmeciani/dphpc/results/spr-gpu-grid-4586/v0-32x8/kernel.cu tests/test_correctness.cpp -o "/home/mmeciani/dphpc/results/spr-gpu-grid-4586/v0-32x8/test_correctness"
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp /home/mmeciani/dphpc/results/spr-gpu-grid-4586/v0-32x8/kernel.cu tests/test_gpu_correctness.cpp -o "/home/mmeciani/dphpc/results/spr-gpu-grid-4586/v0-32x8/test_gpu_correctness"
+PASS spr.v0.cuda                                                     195 passed    0 failed
+
+195 cases passed, 0 failed (0 kernels with failures, 0 known-broken upstream kernels)
+PASS spr.v0.cuda: 108 cases against double-precision reference, each with two bindings and three runs per binding.

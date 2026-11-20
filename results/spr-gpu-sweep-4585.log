@@ -1,0 +1,141 @@
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu gpu/spr/spr_v4.cu bench/bench.cpp -o "/home/mmeciani/dphpc/results/spr-gpu-sweep-4585/build/gpu/bench_gpu"
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu gpu/spr/spr_v4.cu tests/test_correctness.cpp -o "/home/mmeciani/dphpc/results/spr-gpu-sweep-4585/build/gpu/test_correctness"
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu gpu/spr/spr_v4.cu tests/test_gpu_correctness.cpp -o "/home/mmeciani/dphpc/results/spr-gpu-sweep-4585/build/gpu/test_gpu_correctness"
+PASS spr.v0.cuda                                                     195 passed    0 failed
+PASS spr.v1.cuda                                                     195 passed    0 failed
+PASS spr.v2.cuda                                                     195 passed    0 failed
+PASS spr.v3.cuda                                                     195 passed    0 failed
+PASS spr.v4.cuda                                                     195 passed    0 failed
+
+975 cases passed, 0 failed (0 kernels with failures, 0 known-broken upstream kernels)
+PASS spr.v0.cuda: 108 cases against double-precision reference, each with two bindings and three runs per binding.
+PASS spr.v1.cuda: 108 cases against double-precision reference, each with two bindings and three runs per binding.
+PASS spr.v2.cuda: 108 cases against double-precision reference, each with two bindings and three runs per binding.
+PASS spr.v3.cuda: 108 cases against double-precision reference, each with two bindings and three runs per binding.
+PASS spr.v4.cuda: 108 cases against double-precision reference, each with two bindings and three runs per binding.
+s=0.50 spr.v0.cuda                                                            k=4        0.070 ms  prep     267.9 ms 
+s=0.50 spr.v0.cuda                                                            k=8        0.395 ms  prep      21.1 ms 
+s=0.50 spr.v1.cuda                                                            k=4        0.149 ms  prep      15.5 ms 
+s=0.50 spr.v1.cuda                                                            k=8        0.785 ms  prep      16.9 ms 
+s=0.50 spr.v2.cuda                                                            k=4        0.045 ms  prep      15.8 ms 
+s=0.50 spr.v2.cuda                                                            k=8        0.215 ms  prep      16.5 ms 
+s=0.50 spr.v3.cuda                                                            k=4        0.034 ms  prep      15.7 ms 
+s=0.50 spr.v3.cuda                                                            k=8        0.108 ms  prep      16.1 ms 
+s=0.50 spr.v4.cuda                                                            k=4        0.039 ms  prep      15.5 ms 
+s=0.50 spr.v4.cuda                                                            k=8        0.112 ms  prep      16.2 ms 
+s=0.90 spr.v0.cuda                                                            k=4        0.034 ms  prep      11.4 ms 
+s=0.90 spr.v0.cuda                                                            k=8        0.087 ms  prep      10.8 ms 
+s=0.90 spr.v1.cuda                                                            k=4        0.077 ms  prep       7.6 ms 
+s=0.90 spr.v1.cuda                                                            k=8        0.247 ms  prep       7.8 ms 
+s=0.90 spr.v2.cuda                                                            k=4        0.025 ms  prep       7.7 ms 
+s=0.90 spr.v2.cuda                                                            k=8        0.053 ms  prep       7.8 ms 
+s=0.90 spr.v3.cuda                                                            k=4        0.022 ms  prep       7.6 ms 
+s=0.90 spr.v3.cuda                                                            k=8        0.027 ms  prep       7.7 ms 
+s=0.90 spr.v4.cuda                                                            k=4        0.023 ms  prep       7.6 ms 
+s=0.90 spr.v4.cuda                                                            k=8        0.028 ms  prep       7.7 ms 
+s=0.50 spr.v0.cuda                                                            k=4        0.264 ms  prep     269.4 ms 
+s=0.50 spr.v0.cuda                                                            k=8        0.883 ms  prep      22.8 ms 
+s=0.50 spr.v1.cuda                                                            k=4        0.255 ms  prep      15.5 ms 
+s=0.50 spr.v1.cuda                                                            k=8        1.256 ms  prep      16.3 ms 
+s=0.50 spr.v2.cuda                                                            k=4        0.084 ms  prep      15.9 ms 
+s=0.50 spr.v2.cuda                                                            k=8        0.440 ms  prep      17.5 ms 
+s=0.50 spr.v3.cuda                                                            k=4        0.086 ms  prep      16.2 ms 
+s=0.50 spr.v3.cuda                                                            k=8        0.472 ms  prep      17.1 ms 
+s=0.50 spr.v4.cuda                                                            k=4        0.081 ms  prep      16.1 ms 
+s=0.50 spr.v4.cuda                                                            k=8        0.475 ms  prep      17.2 ms 
+s=0.90 spr.v0.cuda                                                            k=4        0.102 ms  prep      11.4 ms 
+s=0.90 spr.v0.cuda                                                            k=8        0.182 ms  prep      10.9 ms 
+s=0.90 spr.v1.cuda                                                            k=4        0.082 ms  prep       7.6 ms 
+s=0.90 spr.v1.cuda                                                            k=8        0.248 ms  prep       7.8 ms 
+s=0.90 spr.v2.cuda                                                            k=4        0.034 ms  prep       7.6 ms 
+s=0.90 spr.v2.cuda                                                            k=8        0.073 ms  prep       7.7 ms 
+s=0.90 spr.v3.cuda                                                            k=4        0.043 ms  prep       7.6 ms 
+s=0.90 spr.v3.cuda                                                            k=8        0.067 ms  prep       7.7 ms 
+s=0.90 spr.v4.cuda                                                            k=4        0.041 ms  prep       7.6 ms 
+s=0.90 spr.v4.cuda                                                            k=8        0.066 ms  prep       7.7 ms 
+s=0.50 spr.v0.cuda                                                            k=4        1.867 ms  prep     270.5 ms 
+s=0.50 spr.v0.cuda                                                            k=8       10.838 ms  prep      23.8 ms 
+s=0.50 spr.v1.cuda                                                            k=4        1.568 ms  prep      15.6 ms 
+s=0.50 spr.v1.cuda                                                            k=8       11.013 ms  prep      17.0 ms 
+s=0.50 spr.v2.cuda                                                            k=4        0.212 ms  prep      16.0 ms 
+s=0.50 spr.v2.cuda                                                            k=8        1.251 ms  prep      16.5 ms 
+s=0.50 spr.v3.cuda                                                            k=4        0.286 ms  prep      15.5 ms 
+s=0.50 spr.v3.cuda                                                            k=8        1.250 ms  prep      16.2 ms 
+s=0.50 spr.v4.cuda                                                            k=4        0.277 ms  prep      15.3 ms 
+s=0.50 spr.v4.cuda                                                            k=8        1.273 ms  prep      16.3 ms 
+s=0.90 spr.v0.cuda                                                            k=4        0.633 ms  prep      11.4 ms 
+s=0.90 spr.v0.cuda                                                            k=8        0.947 ms  prep      10.7 ms 
+s=0.90 spr.v1.cuda                                                            k=4        0.407 ms  prep       7.6 ms 
+s=0.90 spr.v1.cuda                                                            k=8        0.867 ms  prep       7.7 ms 
+s=0.90 spr.v2.cuda                                                            k=4        0.090 ms  prep       7.5 ms 
+s=0.90 spr.v2.cuda                                                            k=8        0.126 ms  prep       7.8 ms 
+s=0.90 spr.v3.cuda                                                            k=4        0.143 ms  prep       7.5 ms 
+s=0.90 spr.v3.cuda                                                            k=8        0.197 ms  prep       7.7 ms 
+s=0.90 spr.v4.cuda                                                            k=4        0.132 ms  prep       7.5 ms 
+s=0.90 spr.v4.cuda                                                            k=8        0.187 ms  prep       7.7 ms 
+s=0.50 spr.v0.cuda                                                            k=4        0.149 ms  prep     348.1 ms 
+s=0.50 spr.v0.cuda                                                            k=8        1.064 ms  prep      88.2 ms 
+s=0.50 spr.v1.cuda                                                            k=4        0.381 ms  prep      63.2 ms 
+s=0.50 spr.v1.cuda                                                            k=8        2.402 ms  prep      65.6 ms 
+s=0.50 spr.v2.cuda                                                            k=4        0.164 ms  prep      62.2 ms 
+s=0.50 spr.v2.cuda                                                            k=8        0.477 ms  prep      65.7 ms 
+s=0.50 spr.v3.cuda                                                            k=4        0.078 ms  prep      62.6 ms 
+s=0.50 spr.v3.cuda                                                            k=8        0.476 ms  prep      63.5 ms 
+s=0.50 spr.v4.cuda                                                            k=4        0.080 ms  prep      62.9 ms 
+s=0.50 spr.v4.cuda                                                            k=8        0.486 ms  prep      64.3 ms 
+s=0.90 spr.v0.cuda                                                            k=4        0.046 ms  prep      44.7 ms 
+s=0.90 spr.v0.cuda                                                            k=8        0.129 ms  prep      42.2 ms 
+s=0.90 spr.v1.cuda                                                            k=4        0.122 ms  prep      30.1 ms 
+s=0.90 spr.v1.cuda                                                            k=8        0.427 ms  prep      29.9 ms 
+s=0.90 spr.v2.cuda                                                            k=4        0.058 ms  prep      29.9 ms 
+s=0.90 spr.v2.cuda                                                            k=8        0.077 ms  prep      30.1 ms 
+s=0.90 spr.v3.cuda                                                            k=4        0.040 ms  prep      29.9 ms 
+s=0.90 spr.v3.cuda                                                            k=8        0.060 ms  prep      29.9 ms 
+s=0.90 spr.v4.cuda                                                            k=4        0.040 ms  prep      30.0 ms 
+s=0.90 spr.v4.cuda                                                            k=8        0.069 ms  prep      30.1 ms 
+s=0.50 spr.v0.cuda                                                            k=4        0.789 ms  prep     337.9 ms 
+s=0.50 spr.v0.cuda                                                            k=8        3.607 ms  prep      89.4 ms 
+s=0.50 spr.v1.cuda                                                            k=4        0.460 ms  prep      62.9 ms 
+s=0.50 spr.v1.cuda                                                            k=8        4.071 ms  prep      65.3 ms 
+s=0.50 spr.v2.cuda                                                            k=4        0.255 ms  prep      63.3 ms 
+s=0.50 spr.v2.cuda                                                            k=8        1.177 ms  prep      65.5 ms 
+s=0.50 spr.v3.cuda                                                            k=4        0.198 ms  prep      62.9 ms 
+s=0.50 spr.v3.cuda                                                            k=8        1.263 ms  prep      64.3 ms 
+s=0.50 spr.v4.cuda                                                            k=4        0.187 ms  prep      62.3 ms 
+s=0.50 spr.v4.cuda                                                            k=8        1.280 ms  prep      64.7 ms 
+s=0.90 spr.v0.cuda                                                            k=4        0.289 ms  prep      44.7 ms 
+s=0.90 spr.v0.cuda                                                            k=8        0.525 ms  prep      42.0 ms 
+s=0.90 spr.v1.cuda                                                            k=4        0.231 ms  prep      30.0 ms 
+s=0.90 spr.v1.cuda                                                            k=8        0.684 ms  prep      30.2 ms 
+s=0.90 spr.v2.cuda                                                            k=4        0.103 ms  prep      30.4 ms 
+s=0.90 spr.v2.cuda                                                            k=8        0.151 ms  prep      30.3 ms 
+s=0.90 spr.v3.cuda                                                            k=4        0.112 ms  prep      29.9 ms 
+s=0.90 spr.v3.cuda                                                            k=8        0.176 ms  prep      30.2 ms 
+s=0.90 spr.v4.cuda                                                            k=4        0.105 ms  prep      30.4 ms 
+s=0.90 spr.v4.cuda                                                            k=8        0.166 ms  prep      30.0 ms 
+s=0.50 spr.v0.cuda                                                            k=4        6.879 ms  prep     351.2 ms 
+s=0.50 spr.v0.cuda                                                            k=8       42.340 ms  prep      90.8 ms 
+s=0.50 spr.v1.cuda                                                            k=4        8.352 ms  prep      63.8 ms 
+s=0.50 spr.v1.cuda                                                            k=8       37.875 ms  prep      65.1 ms 
+s=0.50 spr.v2.cuda                                                            k=4        0.588 ms  prep      63.1 ms 
+s=0.50 spr.v2.cuda                                                            k=8        4.699 ms  prep      63.8 ms 
+s=0.50 spr.v3.cuda                                                            k=4        0.785 ms  prep      61.7 ms 
+s=0.50 spr.v3.cuda                                                            k=8        5.533 ms  prep      63.0 ms 
+s=0.50 spr.v4.cuda                                                            k=4        0.771 ms  prep      61.4 ms 
+s=0.50 spr.v4.cuda                                                            k=8        5.824 ms  prep      63.8 ms 
+s=0.90 spr.v0.cuda                                                            k=4        2.505 ms  prep      46.5 ms 
+s=0.90 spr.v0.cuda                                                            k=8        3.650 ms  prep      43.4 ms 
+s=0.90 spr.v1.cuda                                                            k=4        2.432 ms  prep      31.7 ms 
+s=0.90 spr.v1.cuda                                                            k=8        3.587 ms  prep      31.3 ms 
+s=0.90 spr.v2.cuda                                                            k=4        0.247 ms  prep      31.0 ms 
+s=0.90 spr.v2.cuda                                                            k=8        0.386 ms  prep      31.0 ms 
+s=0.90 spr.v3.cuda                                                            k=4        0.395 ms  prep      31.1 ms 
+s=0.90 spr.v3.cuda                                                            k=8        0.571 ms  prep      30.9 ms 
+s=0.90 spr.v4.cuda                                                            k=4        0.373 ms  prep      30.3 ms 
+s=0.90 spr.v4.cuda                                                            k=8        0.485 ms  prep      31.0 ms 

@@ -1,0 +1,53 @@
+Correctness passed: v0-16x16
+Correctness passed: v1-128
+Correctness passed: v2-128
+Correctness passed: v3-32x8
+Correctness passed: v4-32x8
+Grid workloads: 20/360
+Grid workloads: 40/360
+Grid workloads: 60/360
+Grid workloads: 80/360
+Grid workloads: 100/360
+Grid workloads: 120/360
+Grid workloads: 140/360
+Grid workloads: 160/360
+Grid workloads: 180/360
+Grid workloads: 200/360
+Grid workloads: 220/360
+Grid workloads: 240/360
+Grid workloads: 260/360
+Grid workloads: 280/360
+Grid workloads: 300/360
+Grid workloads: 320/360
+Case failed: v0-16x16 (512, 4096, 11008, 12, 0.5) 42 Case exceeded 60 seconds
+Case failed: v1-128 (512, 4096, 11008, 12, 0.5) 42 Case exceeded 60 seconds
+Case failed: v1-128 (512, 4096, 11008, 16, 0.5) 42 Case exceeded 60 seconds
+Case failed: v0-16x16 (512, 4096, 11008, 16, 0.5) 42 Case exceeded 60 seconds
+Grid workloads: 340/360
+Case failed: v0-16x16 (512, 11008, 4096, 12, 0.5) 42 Case exceeded 60 seconds
+Case failed: v1-128 (512, 11008, 4096, 12, 0.5) 42 Case exceeded 60 seconds
+Case failed: v1-128 (512, 11008, 4096, 16, 0.5) 42 Case exceeded 60 seconds
+Case failed: v0-16x16 (512, 11008, 4096, 16, 0.5) 42 Case exceeded 60 seconds
+Grid workloads: 360/360
+Correctness passed: v0-8x32
+Correctness passed: v0-32x8
+v0 GPU-event winner: (16, 16); eligible: 3/3
+Correctness passed: v1-64
+Correctness passed: v1-256
+v1 GPU-event winner: (256,); eligible: 3/3
+Correctness passed: v2-64
+Correctness passed: v2-256
+v2 GPU-event winner: (128,); eligible: 3/3
+Correctness passed: v3-32x2
+Correctness passed: v3-32x4
+Correctness passed: v3-32x16
+Correctness passed: v3-16x8
+Correctness passed: v3-64x4
+v3 GPU-event winner: (32, 4); eligible: 6/6
+Correctness passed: v4-32x2
+Correctness passed: v4-32x4
+Correctness passed: v4-32x16
+Correctness passed: v4-16x8
+Correctness passed: v4-64x4
+v4 GPU-event winner: (32, 2); eligible: 6/6
+Finished with 8 failed benchmark cases
