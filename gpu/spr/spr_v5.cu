@@ -45,10 +45,9 @@ struct BlockMetadata {
     int width; // num of weight columns in the block
 };
 
-// in v1 the access to x was X + m * K + r for each thread
-// hence we had jumps of stride K between threads which leads to poor memory coalescing
-// instead we can transpose the matrix (a bit like in the CPU version)
-// and process the X + r*M + m so that each thread works on neighboring memory regions
+// V5 uses v2's thread mapping and arithmetic order with shared-memory scratch.
+// Each CUDA block handles one SPR weight block and a tile of input rows.
+// Neighboring threads load neighboring floats from the transposed input.
 __global__ void spr_v5_kernel(const float* X, float* Y, float* scratch,
                               int M, int K, int N, int k, size_t num_blocks,
                               size_t total_segments, const BlockMetadata* blocks,
@@ -65,7 +64,8 @@ __global__ void spr_v5_kernel(const float* X, float* Y, float* scratch,
     const float* x = X + m;
     float* y = Y + m * N + b * k;
     
-    // store buf in shared memory
+    // Store segment sums and in-place merges in segment-major order.
+    // Each thread owns one slot per segment, so no block-wide barrier is needed.
     extern __shared__ float buf[];
 
     // accumulate segmented sum
@@ -119,7 +119,7 @@ class SPRV2CUDA final : public Kernel {
     MergeOp* d_merges_ = nullptr;
     BlockMetadata* d_blocks_ = nullptr;
 
-    // Max segment length for shared mem allocation
+    // Largest segment count among the prepared SPR weight blocks.
     uint16_t max_seg_ = 0;
 
     // GPU input, output and scratch buffers
@@ -367,7 +367,7 @@ public:
             throw std::logic_error("spr.v5.cuda: call bind() before run()");
         }
 
-        size_t num_threads = 128; // chose some value but we have to tune this to the device. Please watch respective cuda training series video
+        size_t num_threads = 64; // chose some value but we have to tune this to the device. Please watch respective cuda training series video
 
         // In v1 we have very bad thread access of the form:
         // Thread 0 --> input row 0, SPR block 0
@@ -388,6 +388,7 @@ public:
         );
 
 
+        // Every CUDA block reserves enough scratch for the largest segment count.
         int shared_mem_size = num_threads * max_seg_ * sizeof(float);
         
         spr_v5_kernel<<<grid, num_threads, shared_mem_size>>>(
