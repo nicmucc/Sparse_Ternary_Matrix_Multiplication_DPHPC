@@ -1,6 +1,7 @@
 #include <cuda_runtime.h>
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <limits>
 #include <utility>
@@ -11,436 +12,316 @@
 namespace spr {
 namespace {
 
+constexpr int kWeightBlockWidth = 2;
+constexpr int kPatternSlots = 8;
+constexpr int kWarpSize = 32;
+constexpr int kWeightBlocksPerWarp = 2;
+constexpr int kRowsPerWarp = kWarpSize / kWeightBlocksPerWarp;
+constexpr int kWarpsPerBlock = 4;
+constexpr int kRowsPerBlock = kRowsPerWarp * kWarpsPerBlock;
+
 void cuda_check(cudaError_t status, const char* operation) {
     if (status != cudaSuccess)
         throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(status));
 }
 
-struct LvlMetadata {
-    // instructions for one tree level
-    uint16_t p_len; // number of positive buffer contributions
-    uint16_t n_len; // number of negative buffer contributions
-    uint16_t m_len; // number of merge operations
+struct LevelMetadata {
+    uint16_t p_len, n_len, m_len;
 };
 
-struct MergeOp { // op: buf[dst] += buf[src]
-    // merging of two sums together
-    uint16_t dst; // destination buffer slot
-    uint16_t src; // source buffer slot
+struct MergeOp {
+    uint16_t dst, src;
 };
 
 struct BlockMetadata {
-    // we process different weight blocks simultaneously on the GPU
-    // each thread must maintain independent cursors into read only metadata arrays
-    // that we have precomputed in preprocess on the CPU
-    // this is similar to what was done for the OpenMP code
-
-    size_t seg; // start of the blocks segments lengths
-    size_t row; // start of the blocks input row indices
-    size_t level; // start of the blocks tree level records
-    size_t pos; // start of positive slot instructions
-    size_t neg; // start of negative slot instructions
-    size_t merge; // start index of merge instructions
-    int num_seg; // num of distinct non zero patterns
-    int width; // num of weight columns in the block
+    size_t level, pos, neg, merge;
+    int width;
 };
 
-// V6 uses v2's thread mapping and global scratch.
-// Neighboring threads load neighboring floats from the transposed input.
-__global__ void spr_v6_kernel(const float* X, float* Y, float* scratch,
-                              int M, int K, int N, int k, size_t num_blocks,
-                              size_t total_segments, const BlockMetadata* blocks,
-                              const uint16_t* seg_len, const uint16_t* rows,
-                              const LvlMetadata* levels, const uint16_t* pos,
-                              const uint16_t* neg, const MergeOp* merges) {
-    
-    size_t m = blockDim.x * blockIdx.x + threadIdx.x;
-    size_t b = blockIdx.y;
-    if(m >= M) return;
-    
+__global__ void spr_v6_kernel(const float* X, float* Y, int M, int K, int N,
+                              size_t num_blocks, const uint8_t* patterns,
+                              const BlockMetadata* blocks, const LevelMetadata* levels,
+                              const uint16_t* pos, const uint16_t* neg,
+                              const MergeOp* merges) {
+    __shared__ float sums[kWarpsPerBlock][kPatternSlots][kWarpSize];
+
+    const int warp = threadIdx.x / kWarpSize;
+    const int lane = threadIdx.x % kWarpSize;
+    const size_t m = size_t(blockIdx.x) * kRowsPerBlock + warp * kRowsPerWarp + lane % kRowsPerWarp;
+    const size_t b = size_t(blockIdx.y) * kWeightBlocksPerWarp + lane / kRowsPerWarp;
+    if (m >= size_t(M) || b >= num_blocks)
+        return;
+
+    auto& warp_sums = sums[warp];
+    for (int slot = 0; slot < kPatternSlots; ++slot)
+        warp_sums[slot][lane] = 0.0f;
+
+    // Both halves visit the same feature and read the same activation rows.
+    for (int r = 0; r < K; ++r) {
+        const uint8_t pattern = patterns[b * K + r];
+        if (pattern != 0)
+            warp_sums[pattern - 1][lane] += X[size_t(r) * M + m];
+    }
+
     const BlockMetadata block = blocks[b];
-
-    const float* x = X + m;
-    float* y = Y + m * N + b * k;
-    
-    // buf for that thread
-    float* buf = scratch + block.seg * M + m;
-    
-    // Use two independent accumulators to shorten the addition dependency chain.
-    // Combining the partial sums changes the floating-point addition order.
-    size_t row = block.row;
-    for(int i = 0; i < block.num_seg; i++) {
-        float t1 = 0.0f, t2 = 0.0f;
-        int len = seg_len[block.seg + i];
-        for(int j = 0; j + 1 < len; j += 2) {
-            t1 += x[rows[row++] * M];
-            t2 += x[rows[row++] * M];
-        }
-        if (len % 2 != 0)
-            t1 += x[rows[row++] * M];
-
-        buf[i * M] = t1 + t2;
-    }
-
+    float* y = Y + m * N + b * kWeightBlockWidth;
     size_t p = block.pos, n = block.neg, merge = block.merge;
-    for(int l = 0; l < block.width; l++) {
-        LvlMetadata lvl = levels[block.level + l];
+    for (int l = 0; l < block.width; ++l) {
+        const LevelMetadata level = levels[block.level + l];
 
-        // calculate the output for that level
-        float t = 0.0f;
-        for (int i = 0; i < lvl.p_len; ++i) t += buf[pos[p++] * M];
-        for (int i = 0; i < lvl.n_len; ++i) t -= buf[neg[n++] * M];
-        y[l] = t; 
+        float sum = 0.0f;
+        for (int i = 0; i < level.p_len; ++i)
+            sum += warp_sums[pos[p++]][lane];
+        for (int i = 0; i < level.n_len; ++i)
+            sum -= warp_sums[neg[n++]][lane];
+        y[l] = sum;
 
-        // compute the merges
-        for(int i = 0; i < lvl.m_len; ++i) {
+        for (int i = 0; i < level.m_len; ++i) {
             const MergeOp op = merges[merge++];
-            buf[op.dst * M] += buf[op.src * M];
+            warp_sums[op.dst][lane] += warp_sums[op.src][lane];
         }
     }
-
 }
 
-class SPRV2CUDA final : public Kernel {
-    int K_ = 0, N_ = 0, k_ = 0; // K_: number of input features, N_: number of output features, k_: number of weight columns per SPR block
+class SPRV6CUDA final : public Kernel {
+    int K_ = 0, N_ = 0;
     int bound_M_ = -1;
+    size_t nonzero_patterns_ = 0;
 
-    // CPU metadata buffers
-    std::vector<uint16_t> seg_len_, rows_, pos_, neg_;
-
-    std::vector<LvlMetadata> lvl_meta_;
+    std::vector<uint8_t> patterns_;
+    std::vector<uint16_t> pos_, neg_;
+    std::vector<LevelMetadata> levels_;
     std::vector<MergeOp> merges_;
     std::vector<BlockMetadata> blocks_;
 
-    // GPU metadata buffers
-    uint16_t* d_seg_len_ = nullptr;
-    uint16_t* d_rows_ = nullptr;
+    uint8_t* d_patterns_ = nullptr;
     uint16_t* d_pos_ = nullptr;
     uint16_t* d_neg_ = nullptr;
-    
-    LvlMetadata* d_lvl_meta_ = nullptr;
+    LevelMetadata* d_levels_ = nullptr;
     MergeOp* d_merges_ = nullptr;
     BlockMetadata* d_blocks_ = nullptr;
 
-    // GPU input, output and scratch buffers
     float* d_x_ = nullptr;
     float* d_y_ = nullptr;
-    float* d_scratch_ = nullptr;
 
     void check_io(const IO& io) const {
         if (io.M < 0 || io.K != K_ || io.N != N_)
             throw std::invalid_argument("spr.v6.cuda: IO shape differs from prepared weights");
     }
 
-public:
-    std::string name() const override { return "spr.v6.cuda"; }
-    bool uses_k() const override { return true; }
-    bool supports(int M, int K, int N, const Params& p) const override {
-        return M >= 0 && K >= 0 && K <= 65535 && N >= 0 && p.k >= 1 && p.k <= 16;
+    void free_metadata() noexcept {
+        cudaFree(d_patterns_);
+        cudaFree(d_pos_);
+        cudaFree(d_neg_);
+        cudaFree(d_levels_);
+        cudaFree(d_merges_);
+        cudaFree(d_blocks_);
+
+        d_patterns_ = nullptr;
+        d_pos_ = nullptr;
+        d_neg_ = nullptr;
+        d_levels_ = nullptr;
+        d_merges_ = nullptr;
+        d_blocks_ = nullptr;
     }
 
-    ~SPRV2CUDA() override {
-        free_metadata();
+public:
+    SPRV6CUDA() = default;
+    SPRV6CUDA(const SPRV6CUDA&) = delete;
+    SPRV6CUDA& operator=(const SPRV6CUDA&) = delete;
 
+    ~SPRV6CUDA() override {
+        free_metadata();
         cudaFree(d_x_);
         cudaFree(d_y_);
-        cudaFree(d_scratch_);
     }
 
-    SPRV2CUDA() = default;
+    std::string name() const override { return "spr.v6.cuda"; }
+    bool uses_k() const override { return true; }
 
-    // prevent copying the owning pointers
-    SPRV2CUDA(const SPRV2CUDA&) = delete;
-    SPRV2CUDA& operator=(const SPRV2CUDA&) = delete;
-    
+    bool supports(int M, int K, int N, const Params& p) const override {
+        constexpr int max_columns = 65535 * kWeightBlocksPerWarp * kWeightBlockWidth;
+        return M >= 0 && K >= 0 && K <= 65535 && N >= 0 && N <= max_columns &&
+               p.k == kWeightBlockWidth;
+    }
+
     void prepare(const int8_t* W, int K, int N, const Params& p) override {
         if (!supports(0, K, N, p))
-            throw std::invalid_argument("spr.v6.cuda requires 0 <= K <= 65535, N >= 0 and 1 <= k <= 16");
+            throw std::invalid_argument("spr.v6.cuda requires k=2 and a supported weight shape");
 
-        K_ = K; N_ = N;
-        k_ = p.k;
+        K_ = K;
+        N_ = N;
         bound_M_ = -1;
+        nonzero_patterns_ = 0;
         free_metadata();
 
-        seg_len_.clear(); rows_.clear();
-        lvl_meta_.clear();
-        pos_.clear(); neg_.clear(); merges_.clear();
+        const size_t num_blocks = (size_t(N) + kWeightBlockWidth - 1) / kWeightBlockWidth;
+        patterns_.resize(num_blocks * K);
+        pos_.clear();
+        neg_.clear();
+        levels_.clear();
+        merges_.clear();
         blocks_.clear();
 
-        for(int c0 = 0; c0 < N; c0 += k_) {
-            int width = std::min(k_, N - c0);
+        for (size_t b = 0; b < num_blocks; ++b) {
+            const int c0 = static_cast<int>(b * kWeightBlockWidth);
+            const int width = std::min(kWeightBlockWidth, N - c0);
+            blocks_.push_back({levels_.size(), pos_.size(), neg_.size(), merges_.size(), width});
 
-            // starting offsets for each weight block --> independent threads need the startinc cursor for each weight block
-            blocks_.push_back({seg_len_.size(), rows_.size(), lvl_meta_.size(),
-                               pos_.size(), neg_.size(), merges_.size(), 0, width});
-
-            // generate base 3 keys
-            struct keyed_t {
-                uint32_t key;
-                uint16_t row; // acts as a row or slot
-
-                bool operator<(const keyed_t& other) const {
-                    return key < other.key;
-                }
-            };
-
-            std::vector<keyed_t> keyed; //(key, row)
+            std::array<bool, kPatternSlots + 1> seen{};
             for (int r = 0; r < K; ++r) {
-                int c_bound = c0 + width;
-                uint32_t key = 0;
-                uint32_t pow3 = 1;
-                for (int c = c0; c < c_bound; ++c) {
-                    const int8_t w = W[r * N + c];
-                    key += (w == 1 ? 1u : (w == -1 ? 2u : 0u)) * pow3;
-                    pow3 *= 3;
+                int pattern = 0;
+                int place = 1;
+                for (int c = 0; c < width; ++c) {
+                    const int8_t weight = W[size_t(r) * N + c0 + c];
+                    pattern += (weight == 1 ? 1 : weight == -1 ? 2 : 0) * place;
+                    place *= 3;
                 }
-                if (key) keyed.push_back({key, (uint16_t)r});
+                patterns_[b * K + r] = static_cast<uint8_t>(pattern);
+                seen[pattern] = true;
+                nonzero_patterns_ += pattern != 0;
             }
 
-            // sort and group into segments
-            std::sort(keyed.begin(), keyed.end());
-            std::vector<keyed_t> live; //(key, slot)
-            uint16_t num_segs = 0; // also means slot number
-            uint16_t current_seg_len = 0;
-            for (size_t t = 0; t < keyed.size(); ++t) {
-                if (t == 0 || keyed[t].key != keyed[t - 1].key) {
-                    if (t > 0) seg_len_.push_back(current_seg_len);
-                    current_seg_len = 0;
-                    live.push_back({keyed[t].key, num_segs});
-                    num_segs += 1;
-                } 
-                rows_.push_back(keyed[t].row);
-                current_seg_len += 1;
-            }
-            if (!keyed.empty()) {
-                seg_len_.push_back(current_seg_len);
+            std::vector<std::pair<int, uint16_t>> live;
+            for (int pattern = 1; pattern <= kPatternSlots; ++pattern) {
+                if (seen[pattern])
+                    live.emplace_back(pattern, pattern - 1);
             }
 
-            blocks_.back().num_seg = num_segs;
-
-
-            // precompute instructions of the tree
             for (int l = 0; l < width; ++l) {
-                std::vector<keyed_t> live_next;
-                uint16_t p_len = 0, n_len = 0, m_len = 0;
-                for (auto [key, slot]: live) {
-                    const int node_curr = key % 3;
-                    const uint32_t node_parent = (uint32_t) key / 3;
-
-                    // track pos and negs
-                    if (node_curr == 1) {
-                        p_len += 1;
+                LevelMetadata level{};
+                std::vector<std::pair<int, uint16_t>> parents;
+                for (const auto& [key, slot] : live) {
+                    const int digit = key % 3;
+                    if (digit == 1) {
                         pos_.push_back(slot);
-                    } else if (node_curr == 2) {
-                        n_len += 1;
+                        ++level.p_len;
+                    } else if (digit == 2) {
                         neg_.push_back(slot);
-                    } 
+                        ++level.n_len;
+                    }
 
-                    if (!node_parent) continue;
-                    // compute merges
-                    if (!live_next.empty() && live_next.back().key == node_parent) {
-                        merges_.push_back({live_next.back().row, slot});
-                        ++m_len;
+                    const int parent = key / 3;
+                    if (parent == 0)
+                        continue;
+                    if (!parents.empty() && parents.back().first == parent) {
+                        merges_.push_back({parents.back().second, slot});
+                        ++level.m_len;
                     } else {
-                        live_next.push_back({node_parent, slot});
+                        parents.emplace_back(parent, slot);
                     }
                 }
-                lvl_meta_.push_back({p_len, n_len, m_len});
-                live = std::move(live_next);
-            } 
+                levels_.push_back(level);
+                live = std::move(parents);
+            }
         }
 
-        if(!blocks_.empty()) { // Block metadata
-            // alloc GPU array and transfer to device
-            size_t bytes = blocks_.size() * sizeof(BlockMetadata);
-            cuda_check(cudaMalloc((void**)&d_blocks_, bytes), "cudaMalloc blocks");
-            cuda_check(cudaMemcpy(d_blocks_, blocks_.data(), bytes,
-                          cudaMemcpyHostToDevice), "cudaMemcpy blocks");
+        if (!patterns_.empty()) {
+            const size_t bytes = patterns_.size() * sizeof(uint8_t);
+            cuda_check(cudaMalloc(&d_patterns_, bytes), "cudaMalloc patterns");
+            cuda_check(cudaMemcpy(d_patterns_, patterns_.data(), bytes, cudaMemcpyHostToDevice),
+                       "cudaMemcpy patterns");
         }
-
-        if(!seg_len_.empty()) { // Segment lengths
-            // alloc GPU array and transfer to device
-            size_t bytes = seg_len_.size() * sizeof(uint16_t);
-            cuda_check(cudaMalloc((void**)&d_seg_len_, bytes), "cudaMalloc seg_len");
-            cuda_check(cudaMemcpy(d_seg_len_, seg_len_.data(), bytes,
-                          cudaMemcpyHostToDevice), "cudaMemcpy seg_len");
+        if (!blocks_.empty()) {
+            const size_t bytes = blocks_.size() * sizeof(BlockMetadata);
+            cuda_check(cudaMalloc(&d_blocks_, bytes), "cudaMalloc blocks");
+            cuda_check(cudaMemcpy(d_blocks_, blocks_.data(), bytes, cudaMemcpyHostToDevice),
+                       "cudaMemcpy blocks");
         }
-
-        if(!rows_.empty()) { // Row indices
-            // alloc GPU array and transfer to device
-            size_t bytes = rows_.size() * sizeof(uint16_t);
-            cuda_check(cudaMalloc((void**)&d_rows_, bytes), "cudaMalloc rows");
-            cuda_check(cudaMemcpy(d_rows_, rows_.data(), bytes,
-                          cudaMemcpyHostToDevice), "cudaMemcpy rows");
+        if (!levels_.empty()) {
+            const size_t bytes = levels_.size() * sizeof(LevelMetadata);
+            cuda_check(cudaMalloc(&d_levels_, bytes), "cudaMalloc levels");
+            cuda_check(cudaMemcpy(d_levels_, levels_.data(), bytes, cudaMemcpyHostToDevice),
+                       "cudaMemcpy levels");
         }
-
-        if(!lvl_meta_.empty()) { // Tree level metadata
-            // alloc GPU array and transfer to device
-            size_t bytes = lvl_meta_.size() * sizeof(LvlMetadata);
-            cuda_check(cudaMalloc((void**)&d_lvl_meta_, bytes), "cudaMalloc levels");
-            cuda_check(cudaMemcpy(d_lvl_meta_, lvl_meta_.data(), bytes,
-                          cudaMemcpyHostToDevice), "cudaMemcpy levels");
+        if (!pos_.empty()) {
+            const size_t bytes = pos_.size() * sizeof(uint16_t);
+            cuda_check(cudaMalloc(&d_pos_, bytes), "cudaMalloc pos");
+            cuda_check(cudaMemcpy(d_pos_, pos_.data(), bytes, cudaMemcpyHostToDevice),
+                       "cudaMemcpy pos");
         }
-
-        if(!pos_.empty()) { // Positive slot indices
-            // alloc GPU array and transfer to device
-            size_t bytes = pos_.size() * sizeof(uint16_t);
-            cuda_check(cudaMalloc((void**)&d_pos_, bytes), "cudaMalloc pos");
-            cuda_check(cudaMemcpy(d_pos_, pos_.data(), bytes,
-                          cudaMemcpyHostToDevice), "cudaMemcpy pos");
+        if (!neg_.empty()) {
+            const size_t bytes = neg_.size() * sizeof(uint16_t);
+            cuda_check(cudaMalloc(&d_neg_, bytes), "cudaMalloc neg");
+            cuda_check(cudaMemcpy(d_neg_, neg_.data(), bytes, cudaMemcpyHostToDevice),
+                       "cudaMemcpy neg");
         }
-
-        if(!neg_.empty()) { // Negative slot indices
-            // alloc GPU array and transfer to device
-            size_t bytes = neg_.size() * sizeof(uint16_t);
-            cuda_check(cudaMalloc((void**)&d_neg_, bytes), "cudaMalloc neg");
-            cuda_check(cudaMemcpy(d_neg_, neg_.data(), bytes, cudaMemcpyHostToDevice), "cudaMemcpy neg");
-        }
-        
-        if(!merges_.empty()) { // Merge instructions
-           // alloc GPU array and transfer to device
-           size_t bytes = merges_.size() * sizeof(MergeOp);
-           cuda_check(cudaMalloc((void**)&d_merges_, bytes), "cudaMalloc merges");
-           cuda_check(cudaMemcpy(d_merges_, merges_.data(), bytes,
-                          cudaMemcpyHostToDevice), "cudaMemcpy merges");
+        if (!merges_.empty()) {
+            const size_t bytes = merges_.size() * sizeof(MergeOp);
+            cuda_check(cudaMalloc(&d_merges_, bytes), "cudaMalloc merges");
+            cuda_check(cudaMemcpy(d_merges_, merges_.data(), bytes, cudaMemcpyHostToDevice),
+                       "cudaMemcpy merges");
         }
     }
 
     void bind(const IO& io) override {
         check_io(io);
-
-        const size_t M = static_cast<size_t>(io.M);
-        const size_t K = static_cast<size_t>(K_);
-        const size_t N = static_cast<size_t>(N_);
-
-        const size_t total_segments = seg_len_.size();
-
+        const size_t M = io.M, K = K_, N = N_;
         const size_t max_floats = std::numeric_limits<size_t>::max() / sizeof(float);
-        if(M && (K > max_floats / M || N > max_floats / M || total_segments > max_floats / M)) {
+        if (M && (K > max_floats / M || N > max_floats / M))
             throw std::overflow_error("SPR CUDA allocation size overflow");
-        }
 
         const size_t x_bytes = M * K * sizeof(float);
         const size_t y_bytes = M * N * sizeof(float);
-        const size_t scratch_bytes = M * total_segments * sizeof(float);
-
-        // free previously allocated buffers
+        bound_M_ = -1;
         cuda_check(cudaFree(d_x_), "cudaFree old X");
-        cuda_check(cudaFree(d_y_), "cudaFree old Y");
-        cuda_check(cudaFree(d_scratch_), "cudaFree old scratch");
-
         d_x_ = nullptr;
+        cuda_check(cudaFree(d_y_), "cudaFree old Y");
         d_y_ = nullptr;
-        d_scratch_ = nullptr;
 
-        // alocate GPU memory
-        if (x_bytes > 0) {
-            cuda_check(cudaMalloc((void**)&d_x_, x_bytes), "cudaMalloc X");
-        }
-        
         if (y_bytes > 0)
-            cuda_check(cudaMalloc((void**)&d_y_, y_bytes), "cudaMalloc Y");
-        
-        if (scratch_bytes > 0)
-            cuda_check(cudaMalloc((void**)&d_scratch_, scratch_bytes), "cudaMalloc scratch");
-
-        // copy the matrix from host to device
+            cuda_check(cudaMalloc(&d_y_, y_bytes), "cudaMalloc Y");
         if (x_bytes > 0) {
-            std::vector<float> Xc(M * K);
+            std::vector<float> transposed(M * K);
+            for (size_t r = 0; r < K; ++r)
+                for (size_t m = 0; m < M; ++m)
+                    transposed[r * M + m] = io.X[m * K + r];
 
-            for (size_t r = 0; r < K; ++r) {
-                for (size_t m = 0; m < M; ++m) {
-                    Xc[r * M + m] = io.X[m * K + r]; // we need to transpose the input for better coalescing
-                }
-            }
-
-            cuda_check(cudaMemcpy(d_x_, Xc.data(), x_bytes, cudaMemcpyHostToDevice), "cudaMemcpy X");
+            cuda_check(cudaMalloc(&d_x_, x_bytes), "cudaMalloc X");
+            cuda_check(cudaMemcpy(d_x_, transposed.data(), x_bytes, cudaMemcpyHostToDevice),
+                       "cudaMemcpy X");
         }
-
-        bound_M_ = io.M; // input is sucessfully bound
+        bound_M_ = io.M;
     }
 
-     void run(IO& io) override {
+    void run(IO& io) override {
         check_io(io);
-
-        if(!io.M || !N_) return;
-
-        if(bound_M_ != io.M) {
+        if (!io.M || !N_)
+            return;
+        if (bound_M_ != io.M)
             throw std::logic_error("spr.v6.cuda: call bind() before run()");
-        }
 
-        size_t num_threads = 128; // chose some value but we have to tune this to the device. Please watch respective cuda training series video
-
-        // In v1 we have very bad thread access of the form:
-        // Thread 0 --> input row 0, SPR block 0
-        // Thread 1 --> input row 0, SPR block 1
-        // Thread 2 --> input row 0, SPR block 2
-        // since neighboring threads process different blocks this leads to warp divergence as well as poor memory access
-
-        // What we want instead within one warp is something of the form
-        // Thread 0 --> input row 0, SPR block b
-        // Thread 1 --> input row 1, SPR block b
-        // Thread 2 --> input row 2, SPR block b
-        // and thus neighboring threads process the same exact block 
-        // this is SIMILAR tot he SIMD approach we did for CPU
-
-        dim3 grid(
-            (io.M + num_threads - 1) / num_threads, 
-            blocks_.size()
-        );
-        
-        spr_v6_kernel<<<grid, num_threads>>>(
-            d_x_, d_y_, d_scratch_, io.M, K_, N_, k_,
-            blocks_.size(), seg_len_.size(),
-            d_blocks_, d_seg_len_, d_rows_, d_lvl_meta_,
-            d_pos_, d_neg_, d_merges_);
-        
+        const dim3 grid((size_t(io.M) + kRowsPerBlock - 1) / kRowsPerBlock,
+                        (blocks_.size() + kWeightBlocksPerWarp - 1) / kWeightBlocksPerWarp);
+        spr_v6_kernel<<<grid, kWarpsPerBlock * kWarpSize>>>(
+            d_x_, d_y_, io.M, K_, N_, blocks_.size(), d_patterns_, d_blocks_,
+            d_levels_, d_pos_, d_neg_, d_merges_);
         cuda_check(cudaGetLastError(), "launch spr_v6_kernel");
-        // the harness uses wall clock timing so I think the run must wait for completion
         cuda_check(cudaDeviceSynchronize(), "execute spr_v6_kernel");
     }
 
     void finish(IO& io) override {
         check_io(io);
-        if (!io.M || !N_) return;
+        if (!io.M || !N_)
+            return;
         if (bound_M_ != io.M)
             throw std::logic_error("spr.v6.cuda: call bind() before finish()");
-        
-        // copy Y from device to host
-        cuda_check(cudaMemcpy(io.Y, d_y_, io.M * N_ * sizeof(float),
+
+        cuda_check(cudaMemcpy(io.Y, d_y_, size_t(io.M) * N_ * sizeof(float),
                               cudaMemcpyDeviceToHost), "download Y");
     }
 
     size_t bytes() const override {
-        return blocks_.size() * sizeof(BlockMetadata) + seg_len_.size() * sizeof(uint16_t) +
-               rows_.size() * sizeof(uint16_t) + lvl_meta_.size() * sizeof(LvlMetadata) +
-               pos_.size() * sizeof(uint16_t) + neg_.size() * sizeof(uint16_t) +
+        return patterns_.size() * sizeof(uint8_t) + blocks_.size() * sizeof(BlockMetadata) +
+               levels_.size() * sizeof(LevelMetadata) + (pos_.size() + neg_.size()) * sizeof(uint16_t) +
                merges_.size() * sizeof(MergeOp);
     }
 
     double adds_per_row() const override {
-        return static_cast<double>(rows_.size()) + pos_.size() + neg_.size() + merges_.size();
-    }
-
-    void free_metadata() noexcept {
-        cudaFree(d_seg_len_);
-        cudaFree(d_rows_);
-        cudaFree(d_pos_);
-        cudaFree(d_neg_);
-        cudaFree(d_lvl_meta_);
-        cudaFree(d_merges_);
-        cudaFree(d_blocks_);
-
-        d_seg_len_ = nullptr;
-        d_rows_ = nullptr;
-        d_pos_ = nullptr;
-        d_neg_ = nullptr;
-        d_lvl_meta_ = nullptr;
-        d_merges_ = nullptr;
-        d_blocks_ = nullptr;
+        return static_cast<double>(nonzero_patterns_) + pos_.size() + neg_.size() + merges_.size();
     }
 };
 
-SPR_REGISTER_KERNEL("spr.v6.cuda", SPRV2CUDA);
+SPR_REGISTER_KERNEL("spr.v6.cuda", SPRV6CUDA);
 } // namespace
 } // namespace spr
