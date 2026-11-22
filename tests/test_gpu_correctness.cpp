@@ -57,7 +57,15 @@ int main(int argc, char** argv) {
                                             static_cast<double>(X[static_cast<size_t>(m) * K + r]) *
                                             W[static_cast<size_t>(r) * N + n];
 
-                            spr::IO io{M, K, N, X.data(), Y.data()};
+                            // Hand X to the kernel in its layout(), like spr::Bound does.
+                            const bool col_major = kernel->layout() == spr::Layout::ColMajor;
+                            std::vector<float> X_kernel(X);
+                            if (col_major)
+                                for (int m = 0; m < M; ++m)
+                                    for (int r = 0; r < K; ++r)
+                                        X_kernel[static_cast<size_t>(r) * M + m] =
+                                            X[static_cast<size_t>(m) * K + r];
+                            spr::IO io{M, K, N, X_kernel.data(), Y.data()};
                             kernel->bind(io);
                             for (int repeat = 0; repeat < 3; ++repeat) {
                                 std::fill(Y.begin(), Y.end(), 123.f);
@@ -65,13 +73,16 @@ int main(int argc, char** argv) {
                                 kernel->finish(io);
                                 const double tolerance = 2e-3 * std::sqrt(std::max(1, K));
                                 for (size_t i = 0; i < Y.size(); ++i) {
-                                    if (!std::isfinite(Y[i]) ||
-                                        std::abs(Y[i] - reference[i]) > tolerance) {
+                                    // reference is row-major: i = m * N + n
+                                    const size_t m = N ? i / N : 0, n = N ? i % N : 0;
+                                    const size_t y_index = col_major ? n * M + m : i;
+                                    if (!std::isfinite(Y[y_index]) ||
+                                        std::abs(Y[y_index] - reference[i]) > tolerance) {
                                         std::fprintf(stderr,
                                             "FAIL %s M=%d K=%d N=%d k=%d pattern=%d "
                                             "binding=%d repeat=%d index=%zu: got %.9g expected %.9g\n",
                                             name.c_str(), M, K, N, k, pattern, binding, repeat,
-                                            i, static_cast<double>(Y[i]), reference[i]);
+                                            i, static_cast<double>(Y[y_index]), reference[i]);
                                         return 1;
                                     }
                                 }

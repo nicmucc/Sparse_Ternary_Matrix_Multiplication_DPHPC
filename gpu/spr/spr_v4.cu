@@ -47,7 +47,7 @@ struct BlockMetadata {
 
 // in v1 the access to x was X + m * K + r for each thread
 // hence we had jumps of stride K between threads which leads to poor memory coalescing
-// instead we can transpose the matrix (a bit like in the CPU version)
+// instead we take X transposed (layout() == ColMajor, converted by the harness like in the CPU version)
 // and process the X + r*M + m so that each thread works on neighboring memory regions
 __global__ void spr_v4_kernel(const float* X, float* Y, float* scratch,
                               int M, int K, int N, int k, size_t num_blocks,
@@ -65,7 +65,7 @@ __global__ void spr_v4_kernel(const float* X, float* Y, float* scratch,
     const BlockMetadata block = blocks[b];
 
     const float* x = active ? X + m : nullptr;
-    float* y = active ? Y + m * N + b * k : nullptr;
+    float* y = active ? Y + b * k * M + m : nullptr; // column-major Y: Y[n * M + m]
     
     // buf for that thread
     float* buf = active && block.num_seg ? scratch + block.seg * M + m : nullptr;
@@ -99,7 +99,7 @@ __global__ void spr_v4_kernel(const float* X, float* Y, float* scratch,
             float t = 0.0f;
             for (int i = 0; i < lvl.p_len; ++i) t += buf[pos[p++] * M];
             for (int i = 0; i < lvl.n_len; ++i) t -= buf[neg[n++] * M];
-            y[l] = t; 
+            y[l * size_t(M)] = t; 
 
             // compute the merges
             for(int i = 0; i < lvl.m_len; ++i) {
@@ -145,6 +145,9 @@ class SPRV4CUDA final : public Kernel {
 public:
     std::string name() const override { return "spr.v4.cuda"; }
     bool uses_k() const override { return true; }
+    // X arrives as X[r * M + m] and Y is written as Y[n * M + m]; the harness converts
+    // outside the timed region, exactly as for the CPU spr.v2+ kernels.
+    Layout layout() const override { return Layout::ColMajor; }
     bool supports(int M, int K, int N, const Params& p) const override {
         return M >= 0 && K >= 0 && K <= 65535 && N >= 0 && p.k >= 1 && p.k <= 16;
     }
@@ -355,15 +358,8 @@ public:
 
         // copy the matrix from host to device
         if (x_bytes > 0) {
-            std::vector<float> Xc(M * K);
-
-            for (size_t r = 0; r < K; ++r) {
-                for (size_t m = 0; m < M; ++m) {
-                    Xc[r * M + m] = io.X[m * K + r]; // we need to transpose the input for better coalescing
-                }
-            }
-
-            cuda_check(cudaMemcpy(d_x_, Xc.data(), x_bytes, cudaMemcpyHostToDevice), "cudaMemcpy X");
+            // io.X is already column-major (layout() == ColMajor), so it is copied as is.
+            cuda_check(cudaMemcpy(d_x_, io.X, x_bytes, cudaMemcpyHostToDevice), "cudaMemcpy X");
         }
 
         bound_M_ = io.M; // input is sucessfully bound

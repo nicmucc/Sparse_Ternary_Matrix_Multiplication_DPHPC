@@ -64,7 +64,7 @@ __global__ void spr_v6_kernel(const float* X, float* Y, int M, int K, int N,
     }
 
     const BlockMetadata block = blocks[b];
-    float* y = Y + m * N + b * kWeightBlockWidth;
+    float* y = Y + b * kWeightBlockWidth * M + m; // column-major Y: Y[n * M + m]
     size_t p = block.pos, n = block.neg, merge = block.merge;
     for (int l = 0; l < block.width; ++l) {
         const LevelMetadata level = levels[block.level + l];
@@ -74,7 +74,7 @@ __global__ void spr_v6_kernel(const float* X, float* Y, int M, int K, int N,
             sum += warp_sums[pos[p++]][lane];
         for (int i = 0; i < level.n_len; ++i)
             sum -= warp_sums[neg[n++]][lane];
-        y[l] = sum;
+        y[l * size_t(M)] = sum;
 
         for (int i = 0; i < level.m_len; ++i) {
             const MergeOp op = merges[merge++];
@@ -138,6 +138,9 @@ public:
 
     std::string name() const override { return "spr.v6.cuda"; }
     bool uses_k() const override { return true; }
+    // X arrives as X[r * M + m] and Y is written as Y[n * M + m]; the harness converts
+    // outside the timed region, exactly as for the CPU spr.v2+ kernels.
+    Layout layout() const override { return Layout::ColMajor; }
 
     bool supports(int M, int K, int N, const Params& p) const override {
         constexpr int max_columns = 65535 * kWeightBlocksPerWarp * kWeightBlockWidth;
@@ -272,14 +275,9 @@ public:
         if (y_bytes > 0)
             cuda_check(cudaMalloc(&d_y_, y_bytes), "cudaMalloc Y");
         if (x_bytes > 0) {
-            std::vector<float> transposed(M * K);
-            for (size_t r = 0; r < K; ++r)
-                for (size_t m = 0; m < M; ++m)
-                    transposed[r * M + m] = io.X[m * K + r];
-
+            // io.X is already column-major (layout() == ColMajor), so it is copied as is.
             cuda_check(cudaMalloc(&d_x_, x_bytes), "cudaMalloc X");
-            cuda_check(cudaMemcpy(d_x_, transposed.data(), x_bytes, cudaMemcpyHostToDevice),
-                       "cudaMemcpy X");
+            cuda_check(cudaMemcpy(d_x_, io.X, x_bytes, cudaMemcpyHostToDevice), "cudaMemcpy X");
         }
         bound_M_ = io.M;
     }
