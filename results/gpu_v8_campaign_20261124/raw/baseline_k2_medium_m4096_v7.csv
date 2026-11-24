@@ -1,0 +1,2 @@
+tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row
+baseline_k2_medium_m4096_v7,studgpu-node01.inf.ethz.ch,gcc 13.3.0,1,4096,2048,8192,0.5,spr.v7.cuda,k=2,48.6765,48.5578,9,542.28,13017732,6.20734,3.24249e-05,1,6.34093e+06

@@ -1,0 +1,10 @@
+tag,threads,M,K,N,sparsity,kernel,param,seed,round,ms
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,0,50.1444
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,1,50.1558
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,2,50.1561
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,3,50.1468
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,4,50.1519
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,5,50.1859
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,6,50.2797
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,7,50.2841
+baseline_k2_medium_m4096_v5,1,4096,2048,8192,0.5,spr.v5.cuda,k=2,42,8,50.2825

@@ -1,0 +1,45 @@
+{
+  "seed": 42,
+  "families": {
+    "small": [
+      1024,
+      4096,
+      [
+        256,
+        4096,
+        16384
+      ]
+    ],
+    "medium": [
+      2048,
+      8192,
+      [
+        256,
+        4096,
+        16384
+      ]
+    ],
+    "large": [
+      4096,
+      14336,
+      [
+        256,
+        4096,
+        16384,
+        100000
+      ]
+    ]
+  },
+  "versions": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "binary": "/home/nmucciaccio/Sparse_Ternary_Matrix_Multiplication_DPHPC/build/release/gpu/bench_gpu"
+}

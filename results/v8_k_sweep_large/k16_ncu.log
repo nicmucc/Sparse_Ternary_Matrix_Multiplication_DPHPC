@@ -1,0 +1,7 @@
+==WARNING== Note: Running with uncontrolled GPU caches. Profiling results may be inconsistent.
+==PROF== Connected to process 316597 (/home/nmucciaccio/Sparse_Ternary_Matrix_Multiplication_DPHPC/results/v8_profile_M4096_K4096_N14336_k4_s05/bench_v8_ncu)
+==PROF== Profiling "spr_v8_kernel" - 0 (1/1): 0%
+==WARNING== Launching the workload is taking more time than expected. If this continues to hang, terminate the profile and re-try by profiling the range of all related launches using '--replay-mode range'. See https://docs.nvidia.com/nsight-compute/ProfilingGuide/index.html#replay for more details.
+....50%....100% - 47 passes
+==PROF== Disconnected from process 316597
+==PROF== Report: /home/nmucciaccio/Sparse_Ternary_Matrix_Multiplication_DPHPC/results/v8_k_sweep_large/v8_K4096_N14336_M4096_k16_z0.5.ncu-repz

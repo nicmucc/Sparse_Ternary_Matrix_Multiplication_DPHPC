@@ -1,0 +1,13 @@
+family,M,K,N,kernel,reason
+large,16384,4096,14336,spr.v0.cuda,global scratch exceeds device VRAM
+large,16384,4096,14336,spr.v1.cuda,global scratch exceeds device VRAM
+large,16384,4096,14336,spr.v2.cuda,global scratch exceeds device VRAM
+large,16384,4096,14336,spr.v3.cuda,global scratch exceeds device VRAM
+large,16384,4096,14336,spr.v4.cuda,global scratch exceeds device VRAM
+large,100000,4096,14336,spr.v0.cuda,global scratch exceeds device VRAM
+large,100000,4096,14336,spr.v1.cuda,global scratch exceeds device VRAM
+large,100000,4096,14336,spr.v2.cuda,global scratch exceeds device VRAM
+large,100000,4096,14336,spr.v3.cuda,global scratch exceeds device VRAM
+large,100000,4096,14336,spr.v4.cuda,global scratch exceeds device VRAM
+large,100000,4096,14336,spr.v7.cuda,global scratch exceeds device VRAM
+large,100000,4096,14336,spr.v2.cuda k=2,global scratch exceeds device VRAM

@@ -1,0 +1,2 @@
+tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row
+compare_medium_m4096_v8_k16,studgpu-node01.inf.ethz.ch,gcc 13.3.0,1,4096,2048,8192,0.5,spr.v8.cuda,k=16,41.9195,41.8698,9,507.135,8399804,4.00534,9.91821e-05,1,9.43596e+06

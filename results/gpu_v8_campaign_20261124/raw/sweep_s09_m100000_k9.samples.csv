@@ -1,0 +1,4 @@
+tag,threads,M,K,N,sparsity,kernel,param,seed,round,ms
+sweep_s09_m100000_k9,1,100000,4096,14336,0.9,spr.v8.cuda,k=9,42,0,3841.57
+sweep_s09_m100000_k9,1,100000,4096,14336,0.9,spr.v8.cuda,k=9,42,1,3841.63
+sweep_s09_m100000_k9,1,100000,4096,14336,0.9,spr.v8.cuda,k=9,42,2,3841.45

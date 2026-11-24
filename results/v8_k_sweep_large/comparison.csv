@@ -1,0 +1,6 @@
+tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row
+run,studgpu-node01.inf.ethz.ch,gcc 12.4.0,1,4096,4096,14336,0.5,spr.v8.cuda,k=4,286.402,286.341,9,1252.79,29330400,3.99595,3.8147e-05,1,1.45362e+07
+run,studgpu-node01.inf.ethz.ch,gcc 12.4.0,1,4096,4096,14336,0.5,spr.v8.cuda,k=5,234.89,234.832,9,883.419,26978464,3.67552,0.000114441,1,1.36922e+07
+run,studgpu-node01.inf.ethz.ch,gcc 12.4.0,1,4096,4096,14336,0.5,spr.v8.cuda,k=6,202.834,202.771,9,881.072,28989392,3.94949,0.000106812,1,1.59111e+07
+run,studgpu-node01.inf.ethz.ch,gcc 12.4.0,1,4096,4096,14336,0.5,spr.v8.cuda,k=7,177.806,177.798,9,953.173,34955870,4.76236,0.000137329,1,2.12692e+07
+run,studgpu-node01.inf.ethz.ch,gcc 12.4.0,1,4096,4096,14336,0.5,spr.v8.cuda,k=8,197.953,197.928,9,1031.19,41095888,5.59887,0.000175476,1,2.71969e+07

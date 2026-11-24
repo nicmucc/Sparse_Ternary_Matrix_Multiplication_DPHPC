@@ -1,0 +1,5 @@
+/usr/local/cuda
+/usr/local/cuda-13
+/usr/local/cuda-13.4
+/usr/local/cuda-13.4/compute-sanitizer/compute-sanitizer
+/usr/local/cuda-13.4/bin/compute-sanitizer

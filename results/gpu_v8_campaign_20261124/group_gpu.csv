@@ -1,0 +1,7 @@
+group,slurm_job,gpu,gpu_uuid,gpu_memory,driver
+compare_small,5380,NVIDIA GeForce RTX 5060 Ti,GPU-5f443b02-155b-b9e2-97f2-b13a2024ea9d,16311 MiB,615.71.09
+compare_medium,5381,NVIDIA GeForce RTX 5060 Ti,GPU-5f443b02-155b-b9e2-97f2-b13a2024ea9d,16311 MiB,615.71.09
+compare_large,5382,NVIDIA GeForce RTX 5060 Ti,GPU-855e6b37-d4fb-11df-3015-6fef4d0cfdb6,16311 MiB,615.71.09
+sweep_s05,5384,NVIDIA GeForce RTX 5060 Ti,GPU-855e6b37-d4fb-11df-3015-6fef4d0cfdb6,16311 MiB,615.71.09
+sweep_s09,5385,NVIDIA GeForce RTX 5060 Ti,GPU-855e6b37-d4fb-11df-3015-6fef4d0cfdb6,16311 MiB,615.71.09
+baseline_k2,5392,NVIDIA GeForce RTX 5060 Ti,GPU-855e6b37-d4fb-11df-3015-6fef4d0cfdb6,16311 MiB,615.71.09

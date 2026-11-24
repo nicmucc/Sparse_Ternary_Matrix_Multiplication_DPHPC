@@ -1,0 +1,6 @@
+tag,threads,M,K,N,sparsity,kernel,param,seed,round,ms
+baseline_k2_large_m16384_v7,1,16384,4096,14336,0.5,spr.v7.cuda,k=2,42,0,3106.45
+baseline_k2_large_m16384_v7,1,16384,4096,14336,0.5,spr.v7.cuda,k=2,42,1,3106.31
+baseline_k2_large_m16384_v7,1,16384,4096,14336,0.5,spr.v7.cuda,k=2,42,2,3106.64
+baseline_k2_large_m16384_v7,1,16384,4096,14336,0.5,spr.v7.cuda,k=2,42,3,3106.32
+baseline_k2_large_m16384_v7,1,16384,4096,14336,0.5,spr.v7.cuda,k=2,42,4,3106.33

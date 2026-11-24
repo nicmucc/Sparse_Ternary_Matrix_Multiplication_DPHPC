@@ -1,0 +1,60 @@
+name, uuid, memory.total [MiB], driver_version
+NVIDIA GeForce RTX 5060 Ti, GPU-855e6b37-d4fb-11df-3015-6fef4d0cfdb6, 16311 MiB, 615.71.09
+[1/29] baseline_k2_small_m256_v2
+    0.742 ms; 9 rounds
+[2/29] baseline_k2_small_m256_v5
+    0.779 ms; 9 rounds
+[3/29] baseline_k2_small_m256_v7
+    0.726 ms; 9 rounds
+[4/29] baseline_k2_small_m4096_v2
+    12.266 ms; 9 rounds
+[5/29] baseline_k2_small_m4096_v5
+    12.469 ms; 9 rounds
+[6/29] baseline_k2_small_m4096_v7
+    12.142 ms; 9 rounds
+[7/29] baseline_k2_small_m16384_v2
+    154.121 ms; 5 rounds
+[8/29] baseline_k2_small_m16384_v5
+    151.241 ms; 5 rounds
+[9/29] baseline_k2_small_m16384_v7
+    148.005 ms; 5 rounds
+[10/29] baseline_k2_medium_m256_v2
+    2.998 ms; 9 rounds
+[11/29] baseline_k2_medium_m256_v5
+    3.106 ms; 9 rounds
+[12/29] baseline_k2_medium_m256_v7
+    2.967 ms; 9 rounds
+[13/29] baseline_k2_medium_m4096_v2
+    49.596 ms; 9 rounds
+[14/29] baseline_k2_medium_m4096_v5
+    50.156 ms; 9 rounds
+[15/29] baseline_k2_medium_m4096_v7
+    48.676 ms; 9 rounds
+[16/29] baseline_k2_medium_m16384_v2
+    808.295 ms; 5 rounds
+[17/29] baseline_k2_medium_m16384_v5
+    806.274 ms; 5 rounds
+[18/29] baseline_k2_medium_m16384_v7
+    796.125 ms; 5 rounds
+[19/29] baseline_k2_large_m256_v2
+    10.620 ms; 9 rounds
+[20/29] baseline_k2_large_m256_v5
+    10.939 ms; 9 rounds
+[21/29] baseline_k2_large_m256_v7
+    10.584 ms; 9 rounds
+[22/29] baseline_k2_large_m4096_v2
+    460.850 ms; 9 rounds
+[23/29] baseline_k2_large_m4096_v5
+    461.344 ms; 9 rounds
+[24/29] baseline_k2_large_m4096_v7
+    453.562 ms; 9 rounds
+[25/29] baseline_k2_large_m16384_v2
+    3132.960 ms; 5 rounds
+[26/29] baseline_k2_large_m16384_v5
+    3134.710 ms; 5 rounds
+[27/29] baseline_k2_large_m16384_v7
+    3106.330 ms; 5 rounds
+[28/29] baseline_k2_large_m100000_v5
+    20994.100 ms; 3 rounds
+[29/29] baseline_k2_large_m100000_v7
+    21050.200 ms; 3 rounds

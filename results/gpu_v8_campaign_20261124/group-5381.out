@@ -1,0 +1,62 @@
+name, uuid, memory.total [MiB], driver_version
+NVIDIA GeForce RTX 5060 Ti, GPU-5f443b02-155b-b9e2-97f2-b13a2024ea9d, 16311 MiB, 615.71.09
+[1/30] compare_medium_m256_v0_k4
+    27.827 ms; 9 rounds
+[2/30] compare_medium_m256_v1_k4
+    35.697 ms; 9 rounds
+[3/30] compare_medium_m256_v2_k4
+    2.147 ms; 9 rounds
+[4/30] compare_medium_m256_v3_k4
+    3.009 ms; 9 rounds
+[5/30] compare_medium_m256_v4_k4
+    2.912 ms; 9 rounds
+[6/30] compare_medium_m256_v5_k4
+    5.244 ms; 9 rounds
+[7/30] compare_medium_m256_v6_k2
+    5.748 ms; 9 rounds
+[8/30] compare_medium_m256_v7_k4
+    1.999 ms; 9 rounds
+[9/30] compare_medium_m256_v8_k4
+    1.906 ms; 9 rounds
+[10/30] compare_medium_m256_v8_k16
+    2.848 ms; 9 rounds
+[11/30] compare_medium_m4096_v0_k4
+    453.915 ms; 9 rounds
+[12/30] compare_medium_m4096_v1_k4
+    577.442 ms; 9 rounds
+[13/30] compare_medium_m4096_v2_k4
+    64.657 ms; 9 rounds
+[14/30] compare_medium_m4096_v3_k4
+    58.210 ms; 9 rounds
+[15/30] compare_medium_m4096_v4_k4
+    53.637 ms; 9 rounds
+[16/30] compare_medium_m4096_v5_k4
+    91.059 ms; 9 rounds
+[17/30] compare_medium_m4096_v6_k2
+    91.521 ms; 9 rounds
+[18/30] compare_medium_m4096_v7_k4
+    33.084 ms; 9 rounds
+[19/30] compare_medium_m4096_v8_k4
+    30.758 ms; 9 rounds
+[20/30] compare_medium_m4096_v8_k16
+    41.919 ms; 9 rounds
+[21/30] compare_medium_m16384_v0_k4
+    1815.410 ms; 5 rounds
+[22/30] compare_medium_m16384_v1_k4
+    2310.780 ms; 5 rounds
+[23/30] compare_medium_m16384_v2_k4
+    581.929 ms; 5 rounds
+[24/30] compare_medium_m16384_v3_k4
+    655.998 ms; 5 rounds
+[25/30] compare_medium_m16384_v4_k4
+    638.791 ms; 5 rounds
+[26/30] compare_medium_m16384_v5_k4
+    717.062 ms; 5 rounds
+[27/30] compare_medium_m16384_v6_k2
+    392.800 ms; 5 rounds
+[28/30] compare_medium_m16384_v7_k4
+    520.184 ms; 5 rounds
+[29/30] compare_medium_m16384_v8_k4
+    497.401 ms; 5 rounds
+[30/30] compare_medium_m16384_v8_k16
+    185.672 ms; 5 rounds
