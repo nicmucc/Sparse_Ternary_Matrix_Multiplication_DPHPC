@@ -62,7 +62,7 @@ __global__ void spr_v5_kernel(const float* X, float* Y, float* scratch,
     const BlockMetadata block = blocks[b];
 
     const float* x = X + m;
-    float* y = Y + m * N + b * k;
+    float* y = Y + b * k * M + m; // column-major Y: Y[n * M + m]
     
     // Store segment sums and in-place merges in segment-major order.
     // Each thread owns one slot per segment, so no block-wide barrier is needed.
@@ -86,7 +86,7 @@ __global__ void spr_v5_kernel(const float* X, float* Y, float* scratch,
         float t = 0.0f;
         for (int i = 0; i < lvl.p_len; ++i) t += buf[pos[p++] * blockDim.x + threadIdx.x];
         for (int i = 0; i < lvl.n_len; ++i) t -= buf[neg[n++] * blockDim.x + threadIdx.x];
-        y[l] = t; 
+        y[l * size_t(M)] = t; 
 
         // compute the merges
         for(int i = 0; i < lvl.m_len; ++i) {
@@ -135,6 +135,9 @@ class SPRV2CUDA final : public Kernel {
 public:
     std::string name() const override { return "spr.v5.cuda"; }
     bool uses_k() const override { return true; }
+    // X arrives as X[r * M + m] and Y is written as Y[n * M + m]; the harness converts
+    // outside the timed region, exactly as for the CPU spr.v2+ kernels.
+    Layout layout() const override { return Layout::ColMajor; }
     bool supports(int M, int K, int N, const Params& p) const override {
         return M >= 0 && K >= 0 && K <= 65535 && N >= 0 && p.k >= 1 && p.k <= 16;
     }
@@ -344,15 +347,8 @@ public:
         
         // copy the matrix from host to device
         if (x_bytes > 0) {
-            std::vector<float> Xc(M * K);
-
-            for (size_t r = 0; r < K; ++r) {
-                for (size_t m = 0; m < M; ++m) {
-                    Xc[r * M + m] = io.X[m * K + r]; // we need to transpose the input for better coalescing
-                }
-            }
-
-            cuda_check(cudaMemcpy(d_x_, Xc.data(), x_bytes, cudaMemcpyHostToDevice), "cudaMemcpy X");
+            // io.X is already column-major (layout() == ColMajor), so it is copied as is.
+            cuda_check(cudaMemcpy(d_x_, io.X, x_bytes, cudaMemcpyHostToDevice), "cudaMemcpy X");
         }
 
         bound_M_ = io.M; // input is sucessfully bound

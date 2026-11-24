@@ -39,8 +39,9 @@ double milliseconds(Clock::time_point start) {
 
 // Full reference for small problems; evenly spaced output samples for large ones.
 // Always checks every output for NaN/Inf. Validation is outside all timed regions.
+// X is row-major; Y is in the kernel's layout() (row-major or column-major).
 double verify(const std::vector<float>& X, const std::vector<int8_t>& W,
-              const std::vector<float>& Y, int M, int K, int N) {
+              const std::vector<float>& Y, int M, int K, int N, bool y_col_major) {
     for (float y : Y)
         if (!std::isfinite(y)) throw std::runtime_error("non-finite output");
     const bool full = double(M) * K * N <= 1e7;
@@ -57,7 +58,8 @@ double verify(const std::vector<float>& X, const std::vector<int8_t>& W,
             }
         for (int ni = 0; ni < nn; ++ni) {
             const int n = nn == 1 ? 0 : ni * (N - 1) / (nn - 1);
-            error = std::max(error, std::abs(double(Y[size_t(m) * N + n]) - sums[ni]));
+            const size_t i = y_col_major ? size_t(n) * M + m : size_t(m) * N + n;
+            error = std::max(error, std::abs(double(Y[i]) - sums[ni]));
         }
     }
     if (error > 2e-3 * std::sqrt(K))
@@ -92,7 +94,14 @@ int main(int argc, char** argv) {
         }
         std::vector<float> X(size_t(M) * K), Y(size_t(M) * N);
         for (auto& x : X) x = (int(rng() % 2001) - 1000) / 1000.f;
-        spr::IO io{M, K, N, X.data(), Y.data()};
+        // Give the kernel X in the layout it asks for, converted outside every timed region
+        // (same contract as spr::Bound in include/spr/harness.hpp).
+        const bool col_major = kernel->layout() == spr::Layout::ColMajor;
+        std::vector<float> X_kernel(X);
+        if (col_major)
+            for (int m = 0; m < M; ++m)
+                for (int r = 0; r < K; ++r) X_kernel[size_t(r) * M + m] = X[size_t(m) * K + r];
+        spr::IO io{M, K, N, X_kernel.data(), Y.data()};
         spr_bench::check(cudaFree(nullptr)); // Initialize CUDA before measuring preparation.
         const auto prep_start = Clock::now();
         kernel->prepare(W.data(), K, N, p);
@@ -105,11 +114,11 @@ int main(int argc, char** argv) {
         if (profile) {
             kernel->run(io);
             kernel->finish(io);
-            verify(X, W, Y, M, K, N);
+            verify(X, W, Y, M, K, N, col_major);
             return 0;
         }
         kernel->finish(io);
-        double error = verify(X, W, Y, M, K, N);
+        double error = verify(X, W, Y, M, K, N, col_major);
         const size_t metadata_bytes = kernel->bytes();
         const double adds = kernel->adds_per_row();
         auto emit = [&](const char* metric, int sample, double ms) {
@@ -147,7 +156,7 @@ int main(int argc, char** argv) {
             }
         }
         kernel->finish(io);
-        error = verify(X, W, Y, M, K, N);
+        error = verify(X, W, Y, M, K, N, col_major);
         std::fprintf(stderr, "%s M=%d K=%d N=%d k=%d zeros=%.2f: PASS, final max error %.6g\n",
                      version.c_str(), M, K, N, p.k, zeros, error);
         spr_bench::check(cudaEventDestroy(spr_bench::start));
