@@ -1,0 +1,4 @@
+tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row,effective_threads,verify_ms
+run,studgpu-node01.inf.ethz.ch,gcc 13.3.0,1,512,4096,4096,0.5,lib.dense_blas,-,190.204,189.343,30,38.7328,67108864,32,4.19617e-05,1,0,0,202.387
+run,studgpu-node01.inf.ethz.ch,gcc 13.3.0,1,512,4096,4096,0.5,lib.eigen_dense,-,197.841,196.073,30,38.5185,67108864,32,3.8147e-05,1,0,0,205.93
+run,studgpu-node01.inf.ethz.ch,gcc 13.3.0,1,512,4096,4096,0.5,lib.eigen_sparse,-,2784.74,2737.16,30,590.863,67122668,32.0066,5.34058e-05,1,0,0,2748.51
