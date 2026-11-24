@@ -1,0 +1,66 @@
+name, uuid, memory.total [MiB], driver_version
+NVIDIA GeForce RTX 5060 Ti, GPU-855e6b37-d4fb-11df-3015-6fef4d0cfdb6, 16311 MiB, 615.71.09
+[1/32] sweep_s09_m4096_k1
+    118.576 ms; 9 rounds
+[2/32] sweep_s09_m4096_k2
+    113.518 ms; 9 rounds
+[3/32] sweep_s09_m4096_k3
+    108.415 ms; 9 rounds
+[4/32] sweep_s09_m4096_k4
+    103.409 ms; 9 rounds
+[5/32] sweep_s09_m4096_k5
+    98.755 ms; 9 rounds
+[6/32] sweep_s09_m4096_k6
+    94.530 ms; 9 rounds
+[7/32] sweep_s09_m4096_k7
+    90.629 ms; 9 rounds
+[8/32] sweep_s09_m4096_k8
+    86.752 ms; 9 rounds
+[9/32] sweep_s09_m4096_k9
+    83.110 ms; 9 rounds
+[10/32] sweep_s09_m4096_k10
+    79.769 ms; 9 rounds
+[11/32] sweep_s09_m4096_k11
+    76.838 ms; 9 rounds
+[12/32] sweep_s09_m4096_k12
+    74.404 ms; 9 rounds
+[13/32] sweep_s09_m4096_k13
+    72.082 ms; 9 rounds
+[14/32] sweep_s09_m4096_k14
+    69.019 ms; 9 rounds
+[15/32] sweep_s09_m4096_k15
+    67.535 ms; 9 rounds
+[16/32] sweep_s09_m4096_k16
+    66.400 ms; 9 rounds
+[17/32] sweep_s09_m100000_k1
+    5570.600 ms; 3 rounds
+[18/32] sweep_s09_m100000_k2
+    5309.180 ms; 3 rounds
+[19/32] sweep_s09_m100000_k3
+    5056.090 ms; 3 rounds
+[20/32] sweep_s09_m100000_k4
+    4825.090 ms; 3 rounds
+[21/32] sweep_s09_m100000_k5
+    4592.560 ms; 3 rounds
+[22/32] sweep_s09_m100000_k6
+    4393.880 ms; 3 rounds
+[23/32] sweep_s09_m100000_k7
+    4199.340 ms; 3 rounds
+[24/32] sweep_s09_m100000_k8
+    4015.320 ms; 3 rounds
+[25/32] sweep_s09_m100000_k9
+    3841.570 ms; 3 rounds
+[26/32] sweep_s09_m100000_k10
+    3679.310 ms; 3 rounds
+[27/32] sweep_s09_m100000_k11
+    3529.560 ms; 3 rounds
+[28/32] sweep_s09_m100000_k12
+    3390.810 ms; 3 rounds
+[29/32] sweep_s09_m100000_k13
+    3255.700 ms; 3 rounds
+[30/32] sweep_s09_m100000_k14
+    3123.110 ms; 3 rounds
+[31/32] sweep_s09_m100000_k15
+    3007.110 ms; 3 rounds
+[32/32] sweep_s09_m100000_k16
+    2896.460 ms; 3 rounds

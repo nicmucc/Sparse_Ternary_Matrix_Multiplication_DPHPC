@@ -1,0 +1,6 @@
+tag,threads,M,K,N,sparsity,kernel,param,seed,round,ms
+compare_large_m16384_v8_k16,1,16384,4096,14336,0.5,spr.v8.cuda,k=16,42,0,654.735
+compare_large_m16384_v8_k16,1,16384,4096,14336,0.5,spr.v8.cuda,k=16,42,1,654.767
+compare_large_m16384_v8_k16,1,16384,4096,14336,0.5,spr.v8.cuda,k=16,42,2,654.687
+compare_large_m16384_v8_k16,1,16384,4096,14336,0.5,spr.v8.cuda,k=16,42,3,654.694
+compare_large_m16384_v8_k16,1,16384,4096,14336,0.5,spr.v8.cuda,k=16,42,4,655.355

@@ -1,0 +1,27 @@
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2026 NVIDIA Corporation
+Built on Tue_Sep_01_08:45:21_PDT_2026
+Cuda compilation tools, release 13.4, V13.4.92
+Build cuda_13.4.r13.4/compiler.38855100_0
+name, uuid, memory.total [MiB], driver_version
+NVIDIA GeForce RTX 5060 Ti, GPU-81c76c32-1b0c-fe70-81ee-af20c0c58593, 16311 MiB, 615.71.09
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu gpu/spr/spr_v4.cu gpu/spr/spr_v5.cu gpu/spr/spr_v6.cu gpu/spr/spr_v7.cu gpu/spr/spr_v8.cu tests/test_correctness.cpp -o "build/release/gpu/test_correctness"
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu gpu/spr/spr_v4.cu gpu/spr/spr_v5.cu gpu/spr/spr_v6.cu gpu/spr/spr_v7.cu gpu/spr/spr_v8.cu tests/test_gpu_correctness.cpp -o "build/release/gpu/test_gpu_correctness"
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu gpu/spr/spr_v4.cu gpu/spr/spr_v5.cu gpu/spr/spr_v6.cu gpu/spr/spr_v7.cu gpu/spr/spr_v8.cu bench/bench.cpp -o "build/release/gpu/bench_gpu"
+"build/release/gpu/test_correctness" spr.v8.cuda
+PASS spr.v8.cuda                                                     361 passed    0 failed
+
+361 cases passed, 0 failed (0 kernels with failures, 0 known-broken upstream kernels)
+"build/release/gpu/test_gpu_correctness" spr.v8.cuda
+PASS spr.v8.cuda: 108 cases against double-precision reference, each with two bindings and three runs per binding.
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/spr/spr_v8.cu tests/test_gpu_v8_correctness.cpp -o "build/release/gpu/test_gpu_v8_correctness"
+PASS spr.v8.cuda: 671 exact-reference cases, all k=1..16, two bindings and two runs per case
+/var/spool/slurm/d/job05408/slurm_script: line 20: compute-sanitizer: command not found

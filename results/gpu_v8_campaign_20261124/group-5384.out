@@ -1,0 +1,98 @@
+name, uuid, memory.total [MiB], driver_version
+NVIDIA GeForce RTX 5060 Ti, GPU-855e6b37-d4fb-11df-3015-6fef4d0cfdb6, 16311 MiB, 615.71.09
+[1/48] sweep_s05_m4096_k1
+    600.328 ms; 9 rounds
+[2/48] sweep_s05_m4096_k2
+    450.810 ms; 9 rounds
+[3/48] sweep_s05_m4096_k3
+    350.709 ms; 9 rounds
+[4/48] sweep_s05_m4096_k4
+    282.489 ms; 9 rounds
+[5/48] sweep_s05_m4096_k5
+    233.684 ms; 9 rounds
+[6/48] sweep_s05_m4096_k6
+    199.230 ms; 9 rounds
+[7/48] sweep_s05_m4096_k7
+    175.391 ms; 9 rounds
+[8/48] sweep_s05_m4096_k8
+    168.878 ms; 9 rounds
+[9/48] sweep_s05_m4096_k9
+    176.303 ms; 9 rounds
+[10/48] sweep_s05_m4096_k10
+    179.087 ms; 9 rounds
+[11/48] sweep_s05_m4096_k11
+    175.006 ms; 9 rounds
+[12/48] sweep_s05_m4096_k12
+    171.951 ms; 9 rounds
+[13/48] sweep_s05_m4096_k13
+    169.609 ms; 9 rounds
+[14/48] sweep_s05_m4096_k14
+    159.193 ms; 9 rounds
+[15/48] sweep_s05_m4096_k15
+    156.963 ms; 9 rounds
+[16/48] sweep_s05_m4096_k16
+    148.909 ms; 9 rounds
+[17/48] sweep_s05_m16384_k1
+    4157.320 ms; 5 rounds
+[18/48] sweep_s05_m16384_k2
+    3089.490 ms; 5 rounds
+[19/48] sweep_s05_m16384_k3
+    2403.830 ms; 5 rounds
+[20/48] sweep_s05_m16384_k4
+    1938.570 ms; 5 rounds
+[21/48] sweep_s05_m16384_k5
+    1600.630 ms; 5 rounds
+[22/48] sweep_s05_m16384_k6
+    1365.440 ms; 5 rounds
+[23/48] sweep_s05_m16384_k7
+    1186.170 ms; 5 rounds
+[24/48] sweep_s05_m16384_k8
+    1055.570 ms; 5 rounds
+[25/48] sweep_s05_m16384_k9
+    961.775 ms; 5 rounds
+[26/48] sweep_s05_m16384_k10
+    896.892 ms; 5 rounds
+[27/48] sweep_s05_m16384_k11
+    843.261 ms; 5 rounds
+[28/48] sweep_s05_m16384_k12
+    799.065 ms; 5 rounds
+[29/48] sweep_s05_m16384_k13
+    768.851 ms; 5 rounds
+[30/48] sweep_s05_m16384_k14
+    719.985 ms; 5 rounds
+[31/48] sweep_s05_m16384_k15
+    693.319 ms; 5 rounds
+[32/48] sweep_s05_m16384_k16
+    654.703 ms; 5 rounds
+[33/48] sweep_s05_m100000_k1
+    27817.500 ms; 3 rounds
+[34/48] sweep_s05_m100000_k2
+    20875.400 ms; 3 rounds
+[35/48] sweep_s05_m100000_k3
+    16243.500 ms; 3 rounds
+[36/48] sweep_s05_m100000_k4
+    13124.200 ms; 3 rounds
+[37/48] sweep_s05_m100000_k5
+    10844.100 ms; 3 rounds
+[38/48] sweep_s05_m100000_k6
+    9230.700 ms; 3 rounds
+[39/48] sweep_s05_m100000_k7
+    8010.210 ms; 3 rounds
+[40/48] sweep_s05_m100000_k8
+    7086.400 ms; 3 rounds
+[41/48] sweep_s05_m100000_k9
+    6403.270 ms; 3 rounds
+[42/48] sweep_s05_m100000_k10
+    5906.320 ms; 3 rounds
+[43/48] sweep_s05_m100000_k11
+    5513.910 ms; 3 rounds
+[44/48] sweep_s05_m100000_k12
+    5186.710 ms; 3 rounds
+[45/48] sweep_s05_m100000_k13
+    4937.570 ms; 3 rounds
+[46/48] sweep_s05_m100000_k14
+    4625.370 ms; 3 rounds
+[47/48] sweep_s05_m100000_k15
+    4422.230 ms; 3 rounds
+[48/48] sweep_s05_m100000_k16
+    4167.550 ms; 3 rounds

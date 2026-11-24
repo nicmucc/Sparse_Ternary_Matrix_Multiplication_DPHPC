@@ -1,0 +1,8 @@
+s=0.50 spr.v8.cuda                                                            k=9      184.758 ms  prep    1469.6 ms 
+s=0.50 spr.v8.cuda                                                            k=10     205.515 ms  prep    1101.9 ms 
+s=0.50 spr.v8.cuda                                                            k=11     182.748 ms  prep    1051.0 ms 
+s=0.50 spr.v8.cuda                                                            k=12     177.885 ms  prep    1034.0 ms 
+s=0.50 spr.v8.cuda                                                            k=13     168.840 ms  prep    1004.8 ms 
+s=0.50 spr.v8.cuda                                                            k=14     157.076 ms  prep     948.0 ms 
+s=0.50 spr.v8.cuda                                                            k=15     157.299 ms  prep     939.2 ms 
+s=0.50 spr.v8.cuda                                                            k=16     153.656 ms  prep     906.0 ms 

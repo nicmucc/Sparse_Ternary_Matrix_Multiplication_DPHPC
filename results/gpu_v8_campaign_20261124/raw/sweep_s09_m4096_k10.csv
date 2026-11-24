@@ -1,0 +1,2 @@
+tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row
+sweep_s09_m4096_k10,studgpu-node01.inf.ethz.ch,gcc 13.3.0,1,4096,4096,14336,0.9,spr.v8.cuda,k=10,79.7694,79.7488,9,686.852,11622958,1.5835,3.05176e-05,1,5.5671e+06

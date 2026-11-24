@@ -1,0 +1,2 @@
+tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row
+baseline_k2_small_m16384_v7,studgpu-node01.inf.ethz.ch,gcc 13.3.0,1,16384,1024,4096,0.5,spr.v7.cuda,k=2,148.005,147.996,5,309.497,3363008,6.41443,1.23978e-05,1,1.59754e+06

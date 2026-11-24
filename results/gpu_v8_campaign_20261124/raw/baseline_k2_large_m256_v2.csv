@@ -1,0 +1,2 @@
+tag,machine,compiler,threads,M,K,N,sparsity,kernel,param,median_ms,min_ms,rounds,prep_ms,bytes,bits_per_weight,max_err,ok,adds_per_row
+baseline_k2_large_m256_v2,studgpu-node01.inf.ethz.ch,gcc 13.3.0,1,256,4096,14336,0.5,spr.v2.cuda,k=2,10.62,10.5917,9,1424.17,44867670,6.11273,6.10352e-05,1,2.21041e+07
