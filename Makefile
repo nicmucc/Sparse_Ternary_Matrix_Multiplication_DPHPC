@@ -126,7 +126,7 @@ GPU_TEST_BIN := $(GPU_BUILD_DIR)/test_correctness
 GPU_EDGE_TEST_BIN := $(GPU_BUILD_DIR)/test_gpu_correctness
 GPU_BENCH_BIN := $(GPU_BUILD_DIR)/bench_gpu
 GPU_KERNEL_SRCS := $(wildcard gpu/spr/*.cu)
-GPU_COMMON_SRCS := cpu/core.cpp $(GPU_KERNEL_SRCS)
+GPU_COMMON_SRCS := cpu/core.cpp gpu/libs.cu $(GPU_KERNEL_SRCS)
 GPU_BENCH_SRCS := $(GPU_COMMON_SRCS) bench/bench.cpp
 GPU_SRCS := $(GPU_COMMON_SRCS) tests/test_correctness.cpp
 GPU_EDGE_TEST_SRCS := $(GPU_COMMON_SRCS) tests/test_gpu_correctness.cpp
@@ -189,19 +189,19 @@ $(GPU_TEST_BIN): $(GPU_SRCS) $(GPU_HEADERS) Makefile
 	@mkdir -p "$(@D)"
 	$(NVCC) -ccbin "$(CXX)" $(CPPFLAGS) $(NVCCFLAGS) \
 		-arch=$(CUDA_ARCH) -Xcompiler=-fopenmp \
-		$(GPU_SRCS) -o "$@"
+		$(GPU_SRCS) -lcublas -o "$@"
 
 $(GPU_BENCH_BIN): $(GPU_BENCH_SRCS) $(GPU_HEADERS) Makefile
 	@mkdir -p "$(@D)"
 	$(NVCC) -ccbin "$(CXX)" $(CPPFLAGS) $(NVCCFLAGS) \
 		-arch=$(CUDA_ARCH) -Xcompiler=-fopenmp \
-		$(GPU_BENCH_SRCS) -o "$@"
+		$(GPU_BENCH_SRCS) -lcublas -o "$@"
 
 $(GPU_EDGE_TEST_BIN): $(GPU_EDGE_TEST_SRCS) $(GPU_HEADERS) Makefile
 	@mkdir -p "$(@D)"
 	$(NVCC) -ccbin "$(CXX)" $(CPPFLAGS) $(NVCCFLAGS) \
 		-arch=$(CUDA_ARCH) -Xcompiler=-fopenmp \
-		$(GPU_EDGE_TEST_SRCS) -o "$@"
+		$(GPU_EDGE_TEST_SRCS) -lcublas -o "$@"
 
 bench-gpu: $(GPU_BENCH_BIN)
 	$(RUN_ENV) "$(GPU_BENCH_BIN)" $(BENCH_ARGS)
