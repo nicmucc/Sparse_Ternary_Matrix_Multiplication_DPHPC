@@ -1,0 +1,316 @@
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = cpu/core.cpp gpu/spr/spr_v0.cu gpu/spr/spr_v1.cu gpu/spr/spr_v2.cu gpu/spr/spr_v3.cu gpu/spr/spr_v4.cu gpu/spr/spr_v5.cu gpu/spr/spr_v6.cu gpu/spr/spr_v7.cu gpu/spr/spr_v8.cu gpu/spr/spr_v8_wide.cu bench/bench.cpp 
+
+Resource usage:
+ Common:
+  GLOBAL:0
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v0.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__0dc5eed3_9_spr_v0_cu_6f0468d3_75658313spr_v0_kernelEPKNS0_11DeviceBlockEPKNS0_11DeviceLevelEPKiS8_S8_S8_S8_PKfPfSB_iiimm:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:1008 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v0.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v1.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__b57989b6_9_spr_v1_cu_6f0468d3_75661213spr_v1_kernelEPKfPfS3_iiiimmPKNS0_13BlockMetadataEPKtS8_PKNS0_11LvlMetadataES8_S8_PKNS0_7MergeOpE:
+  REG:44 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:1008 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v1.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v2.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__a7cc2658_9_spr_v2_cu_6f0468d3_75663813spr_v2_kernelEPKfPfS3_iiiimmPKNS0_13BlockMetadataEPKtS8_PKNS0_11LvlMetadataES8_S8_PKNS0_7MergeOpE:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:1008 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v2.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v3.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__1f70413d_9_spr_v3_cu_6f0468d3_75666313spr_v3_kernelEPKfPfS3_iiiimmPKNS0_13BlockMetadataEPKtS8_PKNS0_11LvlMetadataES8_S8_PKNS0_7MergeOpE:
+  REG:40 STACK:0 SHARED:3072 LOCAL:0 CONSTANT[0]:1008 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v3.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v4.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__82a77984_9_spr_v4_cu_6f0468d3_75668413spr_v4_kernelEPKfPfS3_iiiimmPKNS0_13BlockMetadataEPKtS8_PKNS0_11LvlMetadataES8_S8_PKNS0_7MergeOpE:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:1008 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v4.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v5.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__3a1b1ee1_9_spr_v5_cu_6f0468d3_75671013spr_v5_kernelEPKfPfS3_iiiimmPKNS0_13BlockMetadataEPKtS8_PKNS0_11LvlMetadataES8_S8_PKNS0_7MergeOpE:
+  REG:40 STACK:0 SHARED:1024 LOCAL:0 CONSTANT[0]:1008 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v5.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v6.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__28aeb10f_9_spr_v6_cu_6f0468d3_75674013spr_v6_kernelEPKfPfiiimPKhPKNS0_13BlockMetadataEPKNS0_13LevelMetadataEPKtSD_PKNS0_7MergeOpE:
+  REG:40 STACK:0 SHARED:5120 LOCAL:0 CONSTANT[0]:984 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v6.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v7.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__9012d66a_9_spr_v7_cu_6f0468d3_75676413spr_v7_kernelEPKfPfS3_iiiPKNS0_13BlockMetadataEPKNS0_4LeafEPKtPKNS0_13LevelMetadataESB_SB_PKNS0_7MergeOpE:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:992 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v7.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v8.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi16EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi15EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi14EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi13EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi12EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi11EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi10EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi9EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi8EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi7EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi6EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi5EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi4EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi3EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi2EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr48_GLOBAL__N__c871c63c_9_spr_v8_cu_71f114a6_75679313spr_v8_kernelILi1EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v8.cu
+ptxasOptions =  --generate-line-info 
+
+Fatbin elf code:
+================
+arch = sm_120
+code version = [1,8]
+host = linux
+compile_size = 64bit
+identifier = gpu/spr/spr_v8_wide.cu
+
+Resource usage:
+ Common:
+  GLOBAL:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi32EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:56 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi24EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:48 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi16EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi15EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi14EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi13EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi12EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi11EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi10EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi9EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi8EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi7EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi6EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi5EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi4EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi3EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi2EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+ Function _ZN3spr54_GLOBAL__N__1c9ca7d3_14_spr_v8_wide_cu_7136a2e3_75682518spr_v8_wide_kernelILi1EEEvPKfPfiPKNS0_13BlockMetadataEPKNS0_4SlotEPKt:
+  REG:40 STACK:0 SHARED:0 LOCAL:0 CONSTANT[0]:944 TEXTURE:0 SURFACE:0 SAMPLER:0
+
+Fatbin ptx code:
+================
+arch = sm_120
+code version = [9,4]
+host = linux
+compile_size = 64bit
+compressed
+identifier = gpu/spr/spr_v8_wide.cu
+ptxasOptions =  --generate-line-info 

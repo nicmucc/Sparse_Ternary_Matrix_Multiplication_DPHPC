@@ -1,0 +1,8 @@
+name, uuid, memory.total [MiB]
+NVIDIA GeForce RTX 5060 Ti, GPU-7baf1c1f-50c3-5af9-9f30-9b4c7340fa90, 16311 MiB
+s=0.50 spr.v8.wide.cuda                                                       k=32       4.744 ms  prep     568.0 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32      15.155 ms  prep    1011.4 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32      29.838 ms  prep    1860.0 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32      35.364 ms  prep     458.9 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32     121.943 ms  prep    1013.1 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32     243.007 ms  prep    1919.4 ms 

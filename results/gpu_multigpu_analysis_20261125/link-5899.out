@@ -1,0 +1,9 @@
+name, uuid, pcie.link.gen.max, pcie.link.width.max
+NVIDIA GeForce RTX 5060 Ti, GPU-7baf1c1f-50c3-5af9-9f30-9b4c7340fa90, 3, 16
+L2 MiB: 32.0, SMs: 36
+H2D,8,1.2993,6.456
+D2H,8,1.1707,7.165
+H2D,64,10.3740,6.469
+D2H,64,9.3866,7.149
+H2D,512,82.8364,6.481
+D2H,512,75.1892,7.140

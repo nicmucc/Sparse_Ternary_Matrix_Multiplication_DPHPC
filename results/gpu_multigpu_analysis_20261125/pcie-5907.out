@@ -1,0 +1,47 @@
+pci.bus_id, pcie.link.gen.max, pcie.link.width.max, pcie.link.gen.current, pcie.link.width.current
+00000000:0D:00.0, 3, 16, 1, 8
+-+-[0000:00]-+-00.0  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D DMI2
+ |           +-01.0-[01]--
+ |           +-02.0-[02-08]----00.0-[03-08]--+-04.0-[04]--+-00.0  NVIDIA Corporation Device 2d04
+ |           |                               |            \-00.1  NVIDIA Corporation Device 22eb
+ |           |                               +-08.0-[05]--
+ |           |                               +-0c.0-[06]--+-00.0  NVIDIA Corporation Device 2d04
+ |           |                               |            \-00.1  NVIDIA Corporation Device 22eb
+ |           |                               +-10.0-[07]--+-00.0  NVIDIA Corporation Device 2d04
+ |           |                               |            \-00.1  NVIDIA Corporation Device 22eb
+ |           |                               \-14.0-[08]--+-00.0  NVIDIA Corporation Device 2d04
+ |           |                                            \-00.1  NVIDIA Corporation Device 22eb
+ |           +-03.0-[09-0f]----00.0-[0a-0f]--+-04.0-[0b]--
+ |           |                               +-08.0-[0c]--+-00.0  NVIDIA Corporation Device 2d04
+ |           |                               |            \-00.1  NVIDIA Corporation Device 22eb
+ |           |                               +-0c.0-[0d]--+-00.0  NVIDIA Corporation Device 2d04
+ |           |                               |            \-00.1  NVIDIA Corporation Device 22eb
+ |           |                               +-10.0-[0e]--+-00.0  NVIDIA Corporation Device 2d04
+ |           |                               |            \-00.1  NVIDIA Corporation Device 22eb
+ |           |                               \-14.0-[0f]--+-00.0  NVIDIA Corporation Device 2d04
+ |           |                                            \-00.1  NVIDIA Corporation Device 22eb
+ |           +-04.0  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Crystal Beach DMA Channel 0
+ |           +-04.1  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Crystal Beach DMA Channel 1
+ |           +-04.2  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Crystal Beach DMA Channel 2
+ |           +-04.3  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Crystal Beach DMA Channel 3
+ |           +-04.4  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Crystal Beach DMA Channel 4
+ |           +-04.5  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Crystal Beach DMA Channel 5
+ |           +-04.6  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Crystal Beach DMA Channel 6
+ |           +-04.7  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Crystal Beach DMA Channel 7
+ |           +-05.0  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D Map/VTd_Misc/System Management
+ |           +-05.1  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D IIO Hot Plug
+ |           +-05.2  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D IIO RAS/Control Status/Global Errors
+ |           +-05.4  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D I/O APIC
+ |           +-11.0  Intel Corporation C610/X99 series chipset SPSR
+ |           +-11.4  Intel Corporation C610/X99 series chipset sSATA Controller [AHCI mode]
+ |           +-14.0  Intel Corporation C610/X99 series chipset USB xHCI Host Controller
+ |           +-16.0  Intel Corporation C610/X99 series chipset MEI Controller #1
+ |           +-16.1  Intel Corporation C610/X99 series chipset MEI Controller #2
+ |           +-1a.0  Intel Corporation C610/X99 series chipset USB Enhanced Host Controller #2
+ |           +-1c.0-[10]--
+ |           +-1c.7-[11-12]----00.0-[12]----00.0  ASPEED Technology, Inc. ASPEED Graphics Family
+ |           +-1d.0  Intel Corporation C610/X99 series chipset USB Enhanced Host Controller #1
+ |           +-1f.0  Intel Corporation C610/X99 series chipset LPC Controller
+ |           +-1f.2  Intel Corporation C610/X99 series chipset 6-Port SATA Controller [AHCI mode]
+ |           \-1f.3  Intel Corporation C610/X99 series chipset SMBus Controller
+ +-[0000:7f]-+-08.0  Intel Corporation Xeon E7 v4/Xeon E5 v4/Xeon E3 v4/Xeon D QPI Link 0

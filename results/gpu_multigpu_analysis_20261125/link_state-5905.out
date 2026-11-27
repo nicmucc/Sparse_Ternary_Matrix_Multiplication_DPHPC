@@ -1,0 +1,2 @@
+name, uuid, pcie.link.gen.max, pcie.link.width.max, pcie.link.gen.current, pcie.link.width.current
+NVIDIA GeForce RTX 5060 Ti, GPU-7baf1c1f-50c3-5af9-9f30-9b4c7340fa90, 3, 16, 1, 8

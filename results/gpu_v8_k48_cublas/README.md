@@ -1,0 +1,7 @@
+# SPR v8 k=48 and dense cuBLAS
+
+Job 6292 runs both repository kernels on one RTX 5060 Ti with native sm_120 code. The job log records the GPU UUID, CUDA compiler, commit and source hashes. The shared benchmark generates FP32 X and iid ternary W at seed 42, with target zero fractions of 0.50, 0.90 and 0.99. Each pair receives identical inputs. lib.cublas.cuda expands W to dense FP32 during preparation and calls cublasSgemm with its default handle settings. spr.v8.wide.cuda builds its compressed weights and uses a fixed block width of 48 for every measurement.
+
+Timings are median synchronized inference time in milliseconds. They exclude preparation, layout conversion and host-device transfers. Each configuration first checks up to four rows against the FP64 reference. For M up to 512 there are 5 warmups and 21 timed rounds, for M=4096 there are 2 and 9, and for M=16384 there are 2 and 5. These pairs rotate timing order within one process. At M=100000 each kernel runs in a separate process on the same allocated GPU with 1 warmup and 3 timed rounds. This limits simultaneous host/device buffer allocation. Results reflect one seed and the library settings selected by the repo.
+
+Submit `sbatch results/gpu_v8_k48_cublas/run.sbatch` from the repo root and use `python3 results/gpu_v8_k48_cublas/report.py results/gpu_v8_k48_cublas/JOBID` on the resulting directory. The script checks the correctness flags and recomputes the medians from samples.csv before generating comparison.csv and speedups.pdf. A ratio above one means v8 has lower latency.

@@ -1,0 +1,20 @@
+name, uuid, memory.total [MiB], driver_version
+NVIDIA GeForce RTX 5060 Ti, GPU-424afe07-7fe0-fb51-c3a8-bcf8f37453a6, 16311 MiB, 615.71.09
+s=0.50 spr.v8.cuda                                                            k=16       5.399 ms  prep     553.5 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=24       4.930 ms  prep     216.6 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32       4.828 ms  prep     196.2 ms 
+s=0.50 spr.v8.cuda                                                            k=16     144.314 ms  prep    1036.2 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=24     129.485 ms  prep     774.8 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32     122.377 ms  prep     695.8 ms 
+s=0.50 spr.v8.cuda                                                            k=16     641.471 ms  prep    1019.2 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=24     558.760 ms  prep     783.1 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32     518.836 ms  prep     708.5 ms 
+s=0.90 spr.v8.cuda                                                            k=16      65.859 ms  prep     583.9 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=24      84.374 ms  prep     405.8 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=32     102.042 ms  prep     400.8 ms 
+s=0.50 spr.v8.cuda                                                            k=16    4093.107 ms  prep    1221.0 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=24    3495.346 ms  prep    1041.9 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=32    3215.325 ms  prep     987.9 ms 
+s=0.90 spr.v8.cuda                                                            k=16    2895.547 ms  prep     670.0 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=24    2444.087 ms  prep     761.5 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=32    2710.552 ms  prep     737.7 ms 

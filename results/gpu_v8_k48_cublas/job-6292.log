@@ -1,0 +1,51 @@
+name, uuid, driver_version, memory.total [MiB]
+NVIDIA GeForce RTX 5060 Ti, GPU-81c76c32-1b0c-fe70-81ee-af20c0c58593, 615.71.09, 16311 MiB
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2026 NVIDIA Corporation
+Built on Tue_Sep_01_08:45:21_PDT_2026
+Cuda compilation tools, release 13.4, V13.4.92
+Build cuda_13.4.r13.4/compiler.38855100_0
+23c513962c98e496debc9bc96af56126b576a421
+eb46e62fdf27215f36c28a97290a2e5e2d613481f72c64ceb68bc9b4a339dcf2  gpu/libs.cu
+35a6cba73ca36cc538657d9803cd7168970cae2281aa977bf2431ff9669aa680  gpu/spr/spr_v8_wide.cu
+43d54a7b726dcb587f44661f2f0fadb4b87ebd58bda9c0bb19c64a2eb412c0ab  bench/bench.cpp
+d0f03cbd38d7d3b195535fd65ee0977f22556d64c66eaea5eb3f5a1d002089da  include/spr/harness.hpp
+nvcc -ccbin "g++" -Iinclude -O3 -lineinfo -std=c++17 \
+	-arch=sm_120 -Xcompiler=-fopenmp \
+	cpu/core.cpp gpu/libs.cu gpu/spr/spr_v8_wide.cu bench/bench.cpp -lcublas -o "results/gpu_v8_k48_cublas/6292/build/gpu/bench_gpu"
+s=0.50 lib.cublas.cuda                                                                   0.628 ms  prep     549.7 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=48       3.333 ms  prep     919.8 ms 
+s=0.50 lib.cublas.cuda                                                                   0.186 ms  prep     272.9 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=48       0.600 ms  prep      60.3 ms 
+s=0.50 lib.cublas.cuda                                                                   1.181 ms  prep     315.0 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=48       4.760 ms  prep     251.4 ms 
+s=0.50 lib.cublas.cuda                                                                  26.636 ms  prep     456.3 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=48     115.722 ms  prep     905.4 ms 
+s=0.50 lib.cublas.cuda                                                                 102.716 ms  prep     461.9 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=48     509.910 ms  prep     907.5 ms 
+s=0.90 lib.cublas.cuda                                                                   0.626 ms  prep     453.4 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=48       3.209 ms  prep     702.4 ms 
+s=0.90 lib.cublas.cuda                                                                   0.182 ms  prep     252.9 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=48       0.594 ms  prep      45.8 ms 
+s=0.90 lib.cublas.cuda                                                                   1.173 ms  prep     300.3 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=48       4.627 ms  prep     188.5 ms 
+s=0.90 lib.cublas.cuda                                                                  26.614 ms  prep     442.9 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=48     112.427 ms  prep     687.0 ms 
+s=0.90 lib.cublas.cuda                                                                 102.762 ms  prep     456.1 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=48     495.666 ms  prep     670.7 ms 
+s=0.99 lib.cublas.cuda                                                                   0.624 ms  prep     446.2 ms 
+s=0.99 spr.v8.wide.cuda                                                       k=48       0.402 ms  prep     206.0 ms 
+s=0.99 lib.cublas.cuda                                                                   0.181 ms  prep     427.8 ms 
+s=0.99 spr.v8.wide.cuda                                                       k=48       0.124 ms  prep      18.7 ms 
+s=0.99 lib.cublas.cuda                                                                   1.178 ms  prep     315.0 ms 
+s=0.99 spr.v8.wide.cuda                                                       k=48       0.646 ms  prep      63.6 ms 
+s=0.99 lib.cublas.cuda                                                                  26.699 ms  prep     446.5 ms 
+s=0.99 spr.v8.wide.cuda                                                       k=48      16.720 ms  prep     208.6 ms 
+s=0.99 lib.cublas.cuda                                                                 102.551 ms  prep     441.7 ms 
+s=0.99 spr.v8.wide.cuda                                                       k=48      80.766 ms  prep     206.6 ms 
+s=0.50 lib.cublas.cuda                                                                 662.678 ms  prep     552.6 ms 
+s=0.50 spr.v8.wide.cuda                                                       k=48    3205.428 ms  prep    1268.8 ms 
+s=0.90 lib.cublas.cuda                                                                 656.088 ms  prep     529.6 ms 
+s=0.90 spr.v8.wide.cuda                                                       k=48    3108.856 ms  prep    1025.5 ms 
+s=0.99 lib.cublas.cuda                                                                 652.398 ms  prep     514.4 ms 
+s=0.99 spr.v8.wide.cuda                                                       k=48     514.412 ms  prep     492.8 ms 
